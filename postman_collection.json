@@ -1,0 +1,538 @@
+{
+  "info": {
+    "name": "Admin Mock API (Full)",
+    "_postman_id": "mock-admin-collection-full",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/auth/login"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"admin_id\": 1, \"role\": \"superadmin\"}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/auth/logout"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users/1"
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New User\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed User\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users/1"
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users/bulk-delete"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ids\": [1, 2, 3]}"
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Status Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/users/bulk-update-status"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ids\": [1, 2, 3], \"status\": \"inactive\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lectures",
+      "item": [
+        {
+          "name": "List Lectures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get Lecture by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures/1"
+            }
+          }
+        },
+        {
+          "name": "Create Lecture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New Lecture\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Lecture",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed Lecture\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete Lecture",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures/1"
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Lectures",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures/bulk-delete"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ids\": [1, 2, 3]}"
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Status Lectures",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/lectures/bulk-update-status"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ids\": [1, 2, 3], \"status\": \"inactive\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "item": [
+        {
+          "name": "List Applications",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/applications?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get Application by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/applications/1"
+            }
+          }
+        },
+        {
+          "name": "Create Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/applications"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New Application\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Application",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/applications/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed Application\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete Application",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/applications/1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Posts",
+      "item": [
+        {
+          "name": "List Study Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-posts?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get Study Post by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-posts/1"
+            }
+          }
+        },
+        {
+          "name": "Create Study Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-posts"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New Study Post\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Study Post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-posts/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed Study Post\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete Study Post",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-posts/1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Groups",
+      "item": [
+        {
+          "name": "List Study Groups",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-groups?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get Study Group by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-groups/1"
+            }
+          }
+        },
+        {
+          "name": "Create Study Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-groups"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New Study Group\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Study Group",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-groups/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed Study Group\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete Study Group",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-groups/1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Reviews",
+      "item": [
+        {
+          "name": "List Study Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-reviews?page_size=10&sort=-created_at&status=active&q=test"
+            }
+          }
+        },
+        {
+          "name": "Get Study Review by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-reviews/1"
+            }
+          }
+        },
+        {
+          "name": "Create Study Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-reviews"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"New Study Review\", \"status\": \"active\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Study Review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-reviews/1"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Renamed Study Review\"}"
+            }
+          }
+        },
+        {
+          "name": "Delete Study Review",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:5173/api/admin/study-reviews/1"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
