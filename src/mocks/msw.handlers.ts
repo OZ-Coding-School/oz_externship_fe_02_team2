@@ -1,0 +1,3861 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { http, HttpResponse, delay } from 'msw'
+
+type Row = {
+  id: number
+  title: string
+  status: 'active' | 'inactive' | 'archived'
+  created_at: string
+  updated_at: string
+} & Record<string, any>
+type ListResp = { results: Row[]; next_cursor: string | null; total: number }
+
+const db: Record<string, Row[]> = {
+  lectures: [
+    {
+      id: 1,
+      title: 'Lecture #1',
+      status: 'archived',
+      created_at: '2025-06-11T10:36:00.108519Z',
+      updated_at: '2025-06-11T10:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 2,
+      title: 'Lecture #2',
+      status: 'archived',
+      created_at: '2025-07-31T06:36:00.108519Z',
+      updated_at: '2025-08-04T06:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 3,
+      title: 'Lecture #3',
+      status: 'archived',
+      created_at: '2025-06-05T14:36:00.108519Z',
+      updated_at: '2025-07-03T14:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 4,
+      title: 'Lecture #4',
+      status: 'active',
+      created_at: '2025-06-17T00:36:00.108519Z',
+      updated_at: '2025-06-18T00:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 5,
+      title: 'Lecture #5',
+      status: 'archived',
+      created_at: '2025-08-04T06:36:00.108519Z',
+      updated_at: '2025-08-20T06:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 6,
+      title: 'Lecture #6',
+      status: 'archived',
+      created_at: '2025-06-21T07:36:00.108519Z',
+      updated_at: '2025-07-13T07:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 7,
+      title: 'Lecture #7',
+      status: 'inactive',
+      created_at: '2025-08-02T23:36:00.108519Z',
+      updated_at: '2025-08-20T23:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 8,
+      title: 'Lecture #8',
+      status: 'inactive',
+      created_at: '2025-05-26T08:36:00.108519Z',
+      updated_at: '2025-06-17T08:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 9,
+      title: 'Lecture #9',
+      status: 'inactive',
+      created_at: '2025-07-27T09:36:00.108519Z',
+      updated_at: '2025-08-02T09:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 10,
+      title: 'Lecture #10',
+      status: 'inactive',
+      created_at: '2025-08-20T01:36:00.108519Z',
+      updated_at: '2025-08-23T01:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 11,
+      title: 'Lecture #11',
+      status: 'active',
+      created_at: '2025-06-15T05:36:00.108519Z',
+      updated_at: '2025-07-10T05:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 12,
+      title: 'Lecture #12',
+      status: 'inactive',
+      created_at: '2025-06-24T10:36:00.108519Z',
+      updated_at: '2025-07-23T10:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 13,
+      title: 'Lecture #13',
+      status: 'archived',
+      created_at: '2025-06-22T04:36:00.108519Z',
+      updated_at: '2025-07-18T04:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 14,
+      title: 'Lecture #14',
+      status: 'active',
+      created_at: '2025-06-19T07:36:00.108519Z',
+      updated_at: '2025-07-11T07:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 15,
+      title: 'Lecture #15',
+      status: 'inactive',
+      created_at: '2025-06-08T06:36:00.108519Z',
+      updated_at: '2025-07-02T06:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 16,
+      title: 'Lecture #16',
+      status: 'active',
+      created_at: '2025-05-14T06:36:00.108519Z',
+      updated_at: '2025-06-10T06:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 17,
+      title: 'Lecture #17',
+      status: 'inactive',
+      created_at: '2025-07-26T23:36:00.108519Z',
+      updated_at: '2025-08-15T23:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 18,
+      title: 'Lecture #18',
+      status: 'archived',
+      created_at: '2025-07-15T02:36:00.108519Z',
+      updated_at: '2025-07-21T02:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 19,
+      title: 'Lecture #19',
+      status: 'active',
+      created_at: '2025-06-02T16:36:00.108519Z',
+      updated_at: '2025-06-22T16:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 20,
+      title: 'Lecture #20',
+      status: 'active',
+      created_at: '2025-06-23T14:36:00.108519Z',
+      updated_at: '2025-06-30T14:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 21,
+      title: 'Lecture #21',
+      status: 'archived',
+      created_at: '2025-07-14T05:36:00.108519Z',
+      updated_at: '2025-08-12T05:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 22,
+      title: 'Lecture #22',
+      status: 'active',
+      created_at: '2025-06-05T03:36:00.108519Z',
+      updated_at: '2025-07-01T03:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 23,
+      title: 'Lecture #23',
+      status: 'inactive',
+      created_at: '2025-05-18T12:36:00.108519Z',
+      updated_at: '2025-06-12T12:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 24,
+      title: 'Lecture #24',
+      status: 'archived',
+      created_at: '2025-07-28T11:36:00.108519Z',
+      updated_at: '2025-08-03T11:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 25,
+      title: 'Lecture #25',
+      status: 'inactive',
+      created_at: '2025-08-03T17:36:00.108519Z',
+      updated_at: '2025-08-18T17:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 26,
+      title: 'Lecture #26',
+      status: 'active',
+      created_at: '2025-08-13T05:36:00.108519Z',
+      updated_at: '2025-08-17T05:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 27,
+      title: 'Lecture #27',
+      status: 'archived',
+      created_at: '2025-05-27T19:36:00.108519Z',
+      updated_at: '2025-06-09T19:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 28,
+      title: 'Lecture #28',
+      status: 'archived',
+      created_at: '2025-07-16T06:36:00.108519Z',
+      updated_at: '2025-07-20T06:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 29,
+      title: 'Lecture #29',
+      status: 'active',
+      created_at: '2025-08-20T12:36:00.108519Z',
+      updated_at: '2025-09-16T12:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 30,
+      title: 'Lecture #30',
+      status: 'archived',
+      created_at: '2025-06-12T08:36:00.108519Z',
+      updated_at: '2025-07-07T08:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 31,
+      title: 'Lecture #31',
+      status: 'inactive',
+      created_at: '2025-06-16T11:36:00.108519Z',
+      updated_at: '2025-06-28T11:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 32,
+      title: 'Lecture #32',
+      status: 'active',
+      created_at: '2025-06-25T05:36:00.108519Z',
+      updated_at: '2025-07-12T05:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 33,
+      title: 'Lecture #33',
+      status: 'inactive',
+      created_at: '2025-06-04T20:36:00.108519Z',
+      updated_at: '2025-06-28T20:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 34,
+      title: 'Lecture #34',
+      status: 'active',
+      created_at: '2025-08-17T04:36:00.108519Z',
+      updated_at: '2025-08-30T04:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 35,
+      title: 'Lecture #35',
+      status: 'archived',
+      created_at: '2025-08-30T14:36:00.108519Z',
+      updated_at: '2025-09-27T14:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 36,
+      title: 'Lecture #36',
+      status: 'active',
+      created_at: '2025-06-28T08:36:00.108519Z',
+      updated_at: '2025-07-14T08:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 37,
+      title: 'Lecture #37',
+      status: 'archived',
+      created_at: '2025-05-15T17:36:00.108519Z',
+      updated_at: '2025-05-31T17:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 38,
+      title: 'Lecture #38',
+      status: 'active',
+      created_at: '2025-08-12T02:36:00.108519Z',
+      updated_at: '2025-09-05T02:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 39,
+      title: 'Lecture #39',
+      status: 'active',
+      created_at: '2025-06-16T03:36:00.108519Z',
+      updated_at: '2025-07-01T03:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 40,
+      title: 'Lecture #40',
+      status: 'inactive',
+      created_at: '2025-05-05T02:36:00.108519Z',
+      updated_at: '2025-06-02T02:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 41,
+      title: 'Lecture #41',
+      status: 'archived',
+      created_at: '2025-08-24T06:36:00.108519Z',
+      updated_at: '2025-09-21T06:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 42,
+      title: 'Lecture #42',
+      status: 'active',
+      created_at: '2025-08-20T14:36:00.108519Z',
+      updated_at: '2025-09-04T14:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 43,
+      title: 'Lecture #43',
+      status: 'archived',
+      created_at: '2025-08-14T16:36:00.108519Z',
+      updated_at: '2025-08-29T16:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 44,
+      title: 'Lecture #44',
+      status: 'archived',
+      created_at: '2025-07-28T21:36:00.108519Z',
+      updated_at: '2025-08-24T21:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 45,
+      title: 'Lecture #45',
+      status: 'archived',
+      created_at: '2025-08-03T20:36:00.108519Z',
+      updated_at: '2025-08-27T20:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 46,
+      title: 'Lecture #46',
+      status: 'archived',
+      created_at: '2025-06-01T04:36:00.108519Z',
+      updated_at: '2025-06-13T04:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 47,
+      title: 'Lecture #47',
+      status: 'active',
+      created_at: '2025-07-05T21:36:00.108519Z',
+      updated_at: '2025-07-19T21:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 48,
+      title: 'Lecture #48',
+      status: 'active',
+      created_at: '2025-08-03T11:36:00.108519Z',
+      updated_at: '2025-08-13T11:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 49,
+      title: 'Lecture #49',
+      status: 'active',
+      created_at: '2025-06-17T06:36:00.108519Z',
+      updated_at: '2025-06-17T06:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 50,
+      title: 'Lecture #50',
+      status: 'active',
+      created_at: '2025-08-02T11:36:00.108519Z',
+      updated_at: '2025-08-30T11:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 51,
+      title: 'Lecture #51',
+      status: 'inactive',
+      created_at: '2025-08-21T21:36:00.108519Z',
+      updated_at: '2025-08-28T21:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 52,
+      title: 'Lecture #52',
+      status: 'archived',
+      created_at: '2025-08-03T20:36:00.108519Z',
+      updated_at: '2025-08-07T20:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 53,
+      title: 'Lecture #53',
+      status: 'inactive',
+      created_at: '2025-07-30T22:36:00.108519Z',
+      updated_at: '2025-08-24T22:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 54,
+      title: 'Lecture #54',
+      status: 'inactive',
+      created_at: '2025-08-19T10:36:00.108519Z',
+      updated_at: '2025-09-09T10:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 55,
+      title: 'Lecture #55',
+      status: 'archived',
+      created_at: '2025-07-08T00:36:00.108519Z',
+      updated_at: '2025-07-22T00:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 56,
+      title: 'Lecture #56',
+      status: 'active',
+      created_at: '2025-06-05T17:36:00.108519Z',
+      updated_at: '2025-06-25T17:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 57,
+      title: 'Lecture #57',
+      status: 'active',
+      created_at: '2025-07-10T14:36:00.108519Z',
+      updated_at: '2025-07-20T14:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 58,
+      title: 'Lecture #58',
+      status: 'inactive',
+      created_at: '2025-08-07T07:36:00.108519Z',
+      updated_at: '2025-08-24T07:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 59,
+      title: 'Lecture #59',
+      status: 'inactive',
+      created_at: '2025-07-08T08:36:00.108519Z',
+      updated_at: '2025-07-16T08:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 60,
+      title: 'Lecture #60',
+      status: 'archived',
+      created_at: '2025-05-12T11:36:00.108519Z',
+      updated_at: '2025-05-26T11:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 61,
+      title: 'Lecture #61',
+      status: 'active',
+      created_at: '2025-08-24T17:36:00.108519Z',
+      updated_at: '2025-09-10T17:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 62,
+      title: 'Lecture #62',
+      status: 'inactive',
+      created_at: '2025-05-05T06:36:00.108519Z',
+      updated_at: '2025-05-10T06:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 63,
+      title: 'Lecture #63',
+      status: 'inactive',
+      created_at: '2025-07-01T07:36:00.108519Z',
+      updated_at: '2025-07-28T07:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 64,
+      title: 'Lecture #64',
+      status: 'inactive',
+      created_at: '2025-08-10T01:36:00.108519Z',
+      updated_at: '2025-08-10T01:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 65,
+      title: 'Lecture #65',
+      status: 'inactive',
+      created_at: '2025-05-04T23:36:00.108519Z',
+      updated_at: '2025-05-13T23:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 66,
+      title: 'Lecture #66',
+      status: 'active',
+      created_at: '2025-08-12T07:36:00.108519Z',
+      updated_at: '2025-08-21T07:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 67,
+      title: 'Lecture #67',
+      status: 'active',
+      created_at: '2025-06-17T14:36:00.108519Z',
+      updated_at: '2025-07-04T14:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 68,
+      title: 'Lecture #68',
+      status: 'inactive',
+      created_at: '2025-08-24T12:36:00.108519Z',
+      updated_at: '2025-09-11T12:36:00.108519Z',
+      category: 'BE',
+    },
+    {
+      id: 69,
+      title: 'Lecture #69',
+      status: 'active',
+      created_at: '2025-08-23T21:36:00.108519Z',
+      updated_at: '2025-08-25T21:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 70,
+      title: 'Lecture #70',
+      status: 'active',
+      created_at: '2025-06-16T11:36:00.108519Z',
+      updated_at: '2025-07-07T11:36:00.108519Z',
+      category: 'PM',
+    },
+    {
+      id: 71,
+      title: 'Lecture #71',
+      status: 'archived',
+      created_at: '2025-08-15T19:36:00.108519Z',
+      updated_at: '2025-08-22T19:36:00.108519Z',
+      category: 'FE',
+    },
+    {
+      id: 72,
+      title: 'Lecture #72',
+      status: 'archived',
+      created_at: '2025-06-13T11:36:00.108519Z',
+      updated_at: '2025-06-26T11:36:00.108519Z',
+      category: 'AI',
+    },
+    {
+      id: 73,
+      title: 'Lecture #73',
+      status: 'archived',
+      created_at: '2025-05-04T05:36:00.108519Z',
+      updated_at: '2025-05-10T05:36:00.108519Z',
+      category: 'AI',
+    },
+  ],
+  users: [
+    {
+      id: 1,
+      title: 'User #1',
+      status: 'active',
+      created_at: '2025-08-01T05:36:00.108519Z',
+      updated_at: '2025-08-13T05:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 2,
+      title: 'User #2',
+      status: 'inactive',
+      created_at: '2025-06-10T04:36:00.108519Z',
+      updated_at: '2025-06-24T04:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 3,
+      title: 'User #3',
+      status: 'archived',
+      created_at: '2025-08-29T23:36:00.108519Z',
+      updated_at: '2025-09-17T23:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 4,
+      title: 'User #4',
+      status: 'archived',
+      created_at: '2025-08-21T20:36:00.108519Z',
+      updated_at: '2025-08-27T20:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 5,
+      title: 'User #5',
+      status: 'active',
+      created_at: '2025-08-15T02:36:00.108519Z',
+      updated_at: '2025-09-12T02:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 6,
+      title: 'User #6',
+      status: 'inactive',
+      created_at: '2025-07-15T04:36:00.108519Z',
+      updated_at: '2025-07-20T04:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 7,
+      title: 'User #7',
+      status: 'archived',
+      created_at: '2025-06-02T04:36:00.108519Z',
+      updated_at: '2025-06-21T04:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 8,
+      title: 'User #8',
+      status: 'archived',
+      created_at: '2025-08-29T16:36:00.108519Z',
+      updated_at: '2025-09-24T16:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 9,
+      title: 'User #9',
+      status: 'active',
+      created_at: '2025-05-03T16:36:00.108519Z',
+      updated_at: '2025-05-06T16:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 10,
+      title: 'User #10',
+      status: 'archived',
+      created_at: '2025-08-17T10:36:00.108519Z',
+      updated_at: '2025-09-09T10:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 11,
+      title: 'User #11',
+      status: 'active',
+      created_at: '2025-07-28T04:36:00.108519Z',
+      updated_at: '2025-08-16T04:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 12,
+      title: 'User #12',
+      status: 'archived',
+      created_at: '2025-07-19T07:36:00.108519Z',
+      updated_at: '2025-08-09T07:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 13,
+      title: 'User #13',
+      status: 'active',
+      created_at: '2025-06-27T22:36:00.108519Z',
+      updated_at: '2025-07-05T22:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 14,
+      title: 'User #14',
+      status: 'inactive',
+      created_at: '2025-06-11T00:36:00.108519Z',
+      updated_at: '2025-07-07T00:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 15,
+      title: 'User #15',
+      status: 'active',
+      created_at: '2025-08-31T03:36:00.108519Z',
+      updated_at: '2025-09-24T03:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 16,
+      title: 'User #16',
+      status: 'inactive',
+      created_at: '2025-07-29T08:36:00.108519Z',
+      updated_at: '2025-08-21T08:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 17,
+      title: 'User #17',
+      status: 'active',
+      created_at: '2025-06-02T00:36:00.108519Z',
+      updated_at: '2025-06-19T00:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 18,
+      title: 'User #18',
+      status: 'active',
+      created_at: '2025-08-21T15:36:00.108519Z',
+      updated_at: '2025-09-18T15:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 19,
+      title: 'User #19',
+      status: 'archived',
+      created_at: '2025-08-27T02:36:00.108519Z',
+      updated_at: '2025-09-14T02:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 20,
+      title: 'User #20',
+      status: 'inactive',
+      created_at: '2025-07-07T09:36:00.108519Z',
+      updated_at: '2025-07-08T09:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 21,
+      title: 'User #21',
+      status: 'inactive',
+      created_at: '2025-05-08T12:36:00.108519Z',
+      updated_at: '2025-06-05T12:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 22,
+      title: 'User #22',
+      status: 'active',
+      created_at: '2025-06-05T06:36:00.108519Z',
+      updated_at: '2025-06-26T06:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 23,
+      title: 'User #23',
+      status: 'inactive',
+      created_at: '2025-05-23T20:36:00.108519Z',
+      updated_at: '2025-06-20T20:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 24,
+      title: 'User #24',
+      status: 'active',
+      created_at: '2025-05-28T09:36:00.108519Z',
+      updated_at: '2025-06-26T09:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 25,
+      title: 'User #25',
+      status: 'inactive',
+      created_at: '2025-05-21T08:36:00.108519Z',
+      updated_at: '2025-06-18T08:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 26,
+      title: 'User #26',
+      status: 'inactive',
+      created_at: '2025-08-08T14:36:00.108519Z',
+      updated_at: '2025-09-06T14:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 27,
+      title: 'User #27',
+      status: 'archived',
+      created_at: '2025-05-20T16:36:00.108519Z',
+      updated_at: '2025-06-16T16:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 28,
+      title: 'User #28',
+      status: 'archived',
+      created_at: '2025-07-28T08:36:00.108519Z',
+      updated_at: '2025-08-22T08:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 29,
+      title: 'User #29',
+      status: 'inactive',
+      created_at: '2025-07-14T12:36:00.108519Z',
+      updated_at: '2025-08-10T12:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 30,
+      title: 'User #30',
+      status: 'inactive',
+      created_at: '2025-08-05T23:36:00.108519Z',
+      updated_at: '2025-08-16T23:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 31,
+      title: 'User #31',
+      status: 'active',
+      created_at: '2025-08-03T13:36:00.108519Z',
+      updated_at: '2025-08-24T13:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 32,
+      title: 'User #32',
+      status: 'active',
+      created_at: '2025-07-20T05:36:00.108519Z',
+      updated_at: '2025-08-16T05:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 33,
+      title: 'User #33',
+      status: 'inactive',
+      created_at: '2025-07-17T17:36:00.108519Z',
+      updated_at: '2025-08-02T17:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 34,
+      title: 'User #34',
+      status: 'active',
+      created_at: '2025-05-15T20:36:00.108519Z',
+      updated_at: '2025-05-25T20:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 35,
+      title: 'User #35',
+      status: 'archived',
+      created_at: '2025-05-11T05:36:00.108519Z',
+      updated_at: '2025-05-16T05:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 36,
+      title: 'User #36',
+      status: 'inactive',
+      created_at: '2025-08-27T10:36:00.108519Z',
+      updated_at: '2025-09-15T10:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 37,
+      title: 'User #37',
+      status: 'archived',
+      created_at: '2025-05-30T03:36:00.108519Z',
+      updated_at: '2025-06-12T03:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 38,
+      title: 'User #38',
+      status: 'archived',
+      created_at: '2025-08-17T01:36:00.108519Z',
+      updated_at: '2025-09-14T01:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 39,
+      title: 'User #39',
+      status: 'inactive',
+      created_at: '2025-07-30T12:36:00.108519Z',
+      updated_at: '2025-08-21T12:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 40,
+      title: 'User #40',
+      status: 'archived',
+      created_at: '2025-06-25T20:36:00.108519Z',
+      updated_at: '2025-07-16T20:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 41,
+      title: 'User #41',
+      status: 'inactive',
+      created_at: '2025-05-28T16:36:00.108519Z',
+      updated_at: '2025-06-03T16:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 42,
+      title: 'User #42',
+      status: 'inactive',
+      created_at: '2025-08-22T16:36:00.108519Z',
+      updated_at: '2025-09-20T16:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 43,
+      title: 'User #43',
+      status: 'active',
+      created_at: '2025-07-21T16:36:00.108519Z',
+      updated_at: '2025-08-17T16:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 44,
+      title: 'User #44',
+      status: 'inactive',
+      created_at: '2025-05-08T04:36:00.108519Z',
+      updated_at: '2025-05-24T04:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 45,
+      title: 'User #45',
+      status: 'archived',
+      created_at: '2025-07-10T03:36:00.108519Z',
+      updated_at: '2025-07-22T03:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 46,
+      title: 'User #46',
+      status: 'inactive',
+      created_at: '2025-06-22T09:36:00.108519Z',
+      updated_at: '2025-06-28T09:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 47,
+      title: 'User #47',
+      status: 'archived',
+      created_at: '2025-05-03T01:36:00.108519Z',
+      updated_at: '2025-05-24T01:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 48,
+      title: 'User #48',
+      status: 'inactive',
+      created_at: '2025-06-13T19:36:00.108519Z',
+      updated_at: '2025-06-22T19:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 49,
+      title: 'User #49',
+      status: 'inactive',
+      created_at: '2025-05-17T13:36:00.108519Z',
+      updated_at: '2025-05-26T13:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 50,
+      title: 'User #50',
+      status: 'archived',
+      created_at: '2025-07-06T19:36:00.108519Z',
+      updated_at: '2025-07-25T19:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 51,
+      title: 'User #51',
+      status: 'archived',
+      created_at: '2025-07-02T23:36:00.108519Z',
+      updated_at: '2025-07-16T23:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 52,
+      title: 'User #52',
+      status: 'archived',
+      created_at: '2025-06-26T22:36:00.108519Z',
+      updated_at: '2025-07-21T22:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 53,
+      title: 'User #53',
+      status: 'archived',
+      created_at: '2025-06-08T11:36:00.108519Z',
+      updated_at: '2025-06-17T11:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 54,
+      title: 'User #54',
+      status: 'active',
+      created_at: '2025-06-10T18:36:00.108519Z',
+      updated_at: '2025-06-20T18:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 55,
+      title: 'User #55',
+      status: 'active',
+      created_at: '2025-06-06T04:36:00.108519Z',
+      updated_at: '2025-06-13T04:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 56,
+      title: 'User #56',
+      status: 'inactive',
+      created_at: '2025-08-28T12:36:00.108519Z',
+      updated_at: '2025-09-04T12:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 57,
+      title: 'User #57',
+      status: 'inactive',
+      created_at: '2025-05-15T11:36:00.108519Z',
+      updated_at: '2025-05-29T11:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 58,
+      title: 'User #58',
+      status: 'archived',
+      created_at: '2025-06-19T07:36:00.108519Z',
+      updated_at: '2025-07-11T07:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 59,
+      title: 'User #59',
+      status: 'active',
+      created_at: '2025-06-29T01:36:00.108519Z',
+      updated_at: '2025-07-06T01:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 60,
+      title: 'User #60',
+      status: 'active',
+      created_at: '2025-06-04T13:36:00.108519Z',
+      updated_at: '2025-07-02T13:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 61,
+      title: 'User #61',
+      status: 'archived',
+      created_at: '2025-08-03T08:36:00.108519Z',
+      updated_at: '2025-08-28T08:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 62,
+      title: 'User #62',
+      status: 'active',
+      created_at: '2025-07-03T12:36:00.108519Z',
+      updated_at: '2025-07-20T12:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 63,
+      title: 'User #63',
+      status: 'inactive',
+      created_at: '2025-07-04T09:36:00.108519Z',
+      updated_at: '2025-07-29T09:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 64,
+      title: 'User #64',
+      status: 'inactive',
+      created_at: '2025-06-24T20:36:00.108519Z',
+      updated_at: '2025-07-13T20:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 65,
+      title: 'User #65',
+      status: 'archived',
+      created_at: '2025-06-13T14:36:00.108519Z',
+      updated_at: '2025-07-11T14:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 66,
+      title: 'User #66',
+      status: 'active',
+      created_at: '2025-05-16T20:36:00.108519Z',
+      updated_at: '2025-05-30T20:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 67,
+      title: 'User #67',
+      status: 'inactive',
+      created_at: '2025-05-12T22:36:00.108519Z',
+      updated_at: '2025-05-26T22:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 68,
+      title: 'User #68',
+      status: 'archived',
+      created_at: '2025-05-15T17:36:00.108519Z',
+      updated_at: '2025-05-23T17:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 69,
+      title: 'User #69',
+      status: 'inactive',
+      created_at: '2025-06-12T06:36:00.108519Z',
+      updated_at: '2025-06-20T06:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 70,
+      title: 'User #70',
+      status: 'inactive',
+      created_at: '2025-06-01T04:36:00.108519Z',
+      updated_at: '2025-06-08T04:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 71,
+      title: 'User #71',
+      status: 'active',
+      created_at: '2025-07-21T20:36:00.108519Z',
+      updated_at: '2025-07-23T20:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 72,
+      title: 'User #72',
+      status: 'active',
+      created_at: '2025-08-02T01:36:00.108519Z',
+      updated_at: '2025-08-24T01:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 73,
+      title: 'User #73',
+      status: 'inactive',
+      created_at: '2025-08-04T11:36:00.108519Z',
+      updated_at: '2025-08-17T11:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 74,
+      title: 'User #74',
+      status: 'active',
+      created_at: '2025-06-22T23:36:00.108519Z',
+      updated_at: '2025-07-05T23:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 75,
+      title: 'User #75',
+      status: 'archived',
+      created_at: '2025-05-17T00:36:00.108519Z',
+      updated_at: '2025-05-29T00:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 76,
+      title: 'User #76',
+      status: 'inactive',
+      created_at: '2025-08-28T19:36:00.108519Z',
+      updated_at: '2025-09-09T19:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 77,
+      title: 'User #77',
+      status: 'inactive',
+      created_at: '2025-05-03T02:36:00.108519Z',
+      updated_at: '2025-05-12T02:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 78,
+      title: 'User #78',
+      status: 'archived',
+      created_at: '2025-06-23T14:36:00.108519Z',
+      updated_at: '2025-07-16T14:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 79,
+      title: 'User #79',
+      status: 'active',
+      created_at: '2025-05-09T06:36:00.108519Z',
+      updated_at: '2025-05-24T06:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 80,
+      title: 'User #80',
+      status: 'inactive',
+      created_at: '2025-07-06T22:36:00.108519Z',
+      updated_at: '2025-07-06T22:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 81,
+      title: 'User #81',
+      status: 'inactive',
+      created_at: '2025-06-06T16:36:00.108519Z',
+      updated_at: '2025-07-01T16:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 82,
+      title: 'User #82',
+      status: 'active',
+      created_at: '2025-08-09T23:36:00.108519Z',
+      updated_at: '2025-09-07T23:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 83,
+      title: 'User #83',
+      status: 'inactive',
+      created_at: '2025-06-24T13:36:00.108519Z',
+      updated_at: '2025-07-23T13:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 84,
+      title: 'User #84',
+      status: 'active',
+      created_at: '2025-06-19T16:36:00.108519Z',
+      updated_at: '2025-06-19T16:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 85,
+      title: 'User #85',
+      status: 'inactive',
+      created_at: '2025-07-08T09:36:00.108519Z',
+      updated_at: '2025-08-04T09:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 86,
+      title: 'User #86',
+      status: 'inactive',
+      created_at: '2025-08-25T05:36:00.108519Z',
+      updated_at: '2025-09-06T05:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 87,
+      title: 'User #87',
+      status: 'inactive',
+      created_at: '2025-07-04T03:36:00.108519Z',
+      updated_at: '2025-07-14T03:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 88,
+      title: 'User #88',
+      status: 'active',
+      created_at: '2025-05-27T00:36:00.108519Z',
+      updated_at: '2025-06-04T00:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 89,
+      title: 'User #89',
+      status: 'active',
+      created_at: '2025-08-28T14:36:00.108519Z',
+      updated_at: '2025-09-14T14:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 90,
+      title: 'User #90',
+      status: 'archived',
+      created_at: '2025-08-02T17:36:00.108519Z',
+      updated_at: '2025-08-04T17:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 91,
+      title: 'User #91',
+      status: 'active',
+      created_at: '2025-05-27T13:36:00.108519Z',
+      updated_at: '2025-06-26T13:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 92,
+      title: 'User #92',
+      status: 'active',
+      created_at: '2025-05-16T13:36:00.108519Z',
+      updated_at: '2025-06-04T13:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 93,
+      title: 'User #93',
+      status: 'active',
+      created_at: '2025-08-14T22:36:00.108519Z',
+      updated_at: '2025-09-04T22:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 94,
+      title: 'User #94',
+      status: 'inactive',
+      created_at: '2025-08-03T23:36:00.108519Z',
+      updated_at: '2025-08-25T23:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 95,
+      title: 'User #95',
+      status: 'archived',
+      created_at: '2025-08-09T18:36:00.108519Z',
+      updated_at: '2025-08-28T18:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 96,
+      title: 'User #96',
+      status: 'inactive',
+      created_at: '2025-08-17T08:36:00.108519Z',
+      updated_at: '2025-09-16T08:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 97,
+      title: 'User #97',
+      status: 'inactive',
+      created_at: '2025-06-18T13:36:00.108519Z',
+      updated_at: '2025-07-17T13:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 98,
+      title: 'User #98',
+      status: 'archived',
+      created_at: '2025-06-06T01:36:00.108519Z',
+      updated_at: '2025-06-18T01:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 99,
+      title: 'User #99',
+      status: 'archived',
+      created_at: '2025-08-21T19:36:00.108519Z',
+      updated_at: '2025-09-12T19:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 100,
+      title: 'User #100',
+      status: 'inactive',
+      created_at: '2025-08-17T15:36:00.108519Z',
+      updated_at: '2025-09-10T15:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 101,
+      title: 'User #101',
+      status: 'archived',
+      created_at: '2025-06-16T10:36:00.108519Z',
+      updated_at: '2025-07-11T10:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 102,
+      title: 'User #102',
+      status: 'archived',
+      created_at: '2025-07-17T20:36:00.108519Z',
+      updated_at: '2025-07-30T20:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 103,
+      title: 'User #103',
+      status: 'inactive',
+      created_at: '2025-08-22T21:36:00.108519Z',
+      updated_at: '2025-09-11T21:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 104,
+      title: 'User #104',
+      status: 'inactive',
+      created_at: '2025-05-15T00:36:00.108519Z',
+      updated_at: '2025-06-10T00:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 105,
+      title: 'User #105',
+      status: 'inactive',
+      created_at: '2025-07-07T02:36:00.108519Z',
+      updated_at: '2025-07-27T02:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 106,
+      title: 'User #106',
+      status: 'archived',
+      created_at: '2025-08-12T00:36:00.108519Z',
+      updated_at: '2025-08-17T00:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 107,
+      title: 'User #107',
+      status: 'archived',
+      created_at: '2025-06-09T05:36:00.108519Z',
+      updated_at: '2025-06-28T05:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 108,
+      title: 'User #108',
+      status: 'archived',
+      created_at: '2025-07-03T00:36:00.108519Z',
+      updated_at: '2025-07-29T00:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 109,
+      title: 'User #109',
+      status: 'active',
+      created_at: '2025-07-28T03:36:00.108519Z',
+      updated_at: '2025-08-24T03:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 110,
+      title: 'User #110',
+      status: 'inactive',
+      created_at: '2025-07-26T23:36:00.108519Z',
+      updated_at: '2025-08-02T23:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 111,
+      title: 'User #111',
+      status: 'inactive',
+      created_at: '2025-06-13T16:36:00.108519Z',
+      updated_at: '2025-06-25T16:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 112,
+      title: 'User #112',
+      status: 'inactive',
+      created_at: '2025-06-29T03:36:00.108519Z',
+      updated_at: '2025-07-04T03:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 113,
+      title: 'User #113',
+      status: 'inactive',
+      created_at: '2025-07-17T05:36:00.108519Z',
+      updated_at: '2025-07-27T05:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 114,
+      title: 'User #114',
+      status: 'active',
+      created_at: '2025-06-03T05:36:00.108519Z',
+      updated_at: '2025-06-20T05:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 115,
+      title: 'User #115',
+      status: 'archived',
+      created_at: '2025-08-07T11:36:00.108519Z',
+      updated_at: '2025-08-14T11:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 116,
+      title: 'User #116',
+      status: 'active',
+      created_at: '2025-06-29T20:36:00.108519Z',
+      updated_at: '2025-07-23T20:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 117,
+      title: 'User #117',
+      status: 'inactive',
+      created_at: '2025-07-01T17:36:00.108519Z',
+      updated_at: '2025-07-23T17:36:00.108519Z',
+      role: 'superadmin',
+    },
+    {
+      id: 118,
+      title: 'User #118',
+      status: 'inactive',
+      created_at: '2025-05-22T13:36:00.108519Z',
+      updated_at: '2025-05-24T13:36:00.108519Z',
+      role: 'admin',
+    },
+    {
+      id: 119,
+      title: 'User #119',
+      status: 'inactive',
+      created_at: '2025-07-10T15:36:00.108519Z',
+      updated_at: '2025-07-17T15:36:00.108519Z',
+      role: 'viewer',
+    },
+    {
+      id: 120,
+      title: 'User #120',
+      status: 'archived',
+      created_at: '2025-06-18T02:36:00.108519Z',
+      updated_at: '2025-07-03T02:36:00.108519Z',
+      role: 'viewer',
+    },
+  ],
+  applications: [
+    {
+      id: 1,
+      title: 'Application #1',
+      status: 'archived',
+      created_at: '2025-07-18T00:36:00.108519Z',
+      updated_at: '2025-08-10T00:36:00.108519Z',
+      applicant_id: 43,
+    },
+    {
+      id: 2,
+      title: 'Application #2',
+      status: 'inactive',
+      created_at: '2025-07-16T15:36:00.108519Z',
+      updated_at: '2025-07-30T15:36:00.108519Z',
+      applicant_id: 40,
+    },
+    {
+      id: 3,
+      title: 'Application #3',
+      status: 'archived',
+      created_at: '2025-07-30T06:36:00.108519Z',
+      updated_at: '2025-08-02T06:36:00.108519Z',
+      applicant_id: 25,
+    },
+    {
+      id: 4,
+      title: 'Application #4',
+      status: 'archived',
+      created_at: '2025-07-22T10:36:00.108519Z',
+      updated_at: '2025-08-14T10:36:00.108519Z',
+      applicant_id: 98,
+    },
+    {
+      id: 5,
+      title: 'Application #5',
+      status: 'active',
+      created_at: '2025-06-04T08:36:00.108519Z',
+      updated_at: '2025-06-10T08:36:00.108519Z',
+      applicant_id: 95,
+    },
+    {
+      id: 6,
+      title: 'Application #6',
+      status: 'archived',
+      created_at: '2025-07-01T05:36:00.108519Z',
+      updated_at: '2025-07-24T05:36:00.108519Z',
+      applicant_id: 98,
+    },
+    {
+      id: 7,
+      title: 'Application #7',
+      status: 'active',
+      created_at: '2025-06-24T18:36:00.108519Z',
+      updated_at: '2025-07-03T18:36:00.108519Z',
+      applicant_id: 107,
+    },
+    {
+      id: 8,
+      title: 'Application #8',
+      status: 'inactive',
+      created_at: '2025-08-07T04:36:00.108519Z',
+      updated_at: '2025-08-14T04:36:00.108519Z',
+      applicant_id: 23,
+    },
+    {
+      id: 9,
+      title: 'Application #9',
+      status: 'archived',
+      created_at: '2025-07-24T13:36:00.108519Z',
+      updated_at: '2025-08-15T13:36:00.108519Z',
+      applicant_id: 17,
+    },
+    {
+      id: 10,
+      title: 'Application #10',
+      status: 'archived',
+      created_at: '2025-07-27T12:36:00.108519Z',
+      updated_at: '2025-07-28T12:36:00.108519Z',
+      applicant_id: 38,
+    },
+    {
+      id: 11,
+      title: 'Application #11',
+      status: 'inactive',
+      created_at: '2025-06-03T09:36:00.108519Z',
+      updated_at: '2025-06-23T09:36:00.108519Z',
+      applicant_id: 14,
+    },
+    {
+      id: 12,
+      title: 'Application #12',
+      status: 'inactive',
+      created_at: '2025-05-12T13:36:00.108519Z',
+      updated_at: '2025-05-30T13:36:00.108519Z',
+      applicant_id: 61,
+    },
+    {
+      id: 13,
+      title: 'Application #13',
+      status: 'active',
+      created_at: '2025-06-30T23:36:00.108519Z',
+      updated_at: '2025-07-10T23:36:00.108519Z',
+      applicant_id: 7,
+    },
+    {
+      id: 14,
+      title: 'Application #14',
+      status: 'active',
+      created_at: '2025-07-29T22:36:00.108519Z',
+      updated_at: '2025-08-01T22:36:00.108519Z',
+      applicant_id: 52,
+    },
+    {
+      id: 15,
+      title: 'Application #15',
+      status: 'archived',
+      created_at: '2025-06-30T11:36:00.108519Z',
+      updated_at: '2025-07-18T11:36:00.108519Z',
+      applicant_id: 88,
+    },
+    {
+      id: 16,
+      title: 'Application #16',
+      status: 'archived',
+      created_at: '2025-08-25T09:36:00.108519Z',
+      updated_at: '2025-08-29T09:36:00.108519Z',
+      applicant_id: 39,
+    },
+    {
+      id: 17,
+      title: 'Application #17',
+      status: 'archived',
+      created_at: '2025-08-21T06:36:00.108519Z',
+      updated_at: '2025-08-24T06:36:00.108519Z',
+      applicant_id: 98,
+    },
+    {
+      id: 18,
+      title: 'Application #18',
+      status: 'archived',
+      created_at: '2025-07-08T18:36:00.108519Z',
+      updated_at: '2025-07-27T18:36:00.108519Z',
+      applicant_id: 29,
+    },
+    {
+      id: 19,
+      title: 'Application #19',
+      status: 'inactive',
+      created_at: '2025-05-23T21:36:00.108519Z',
+      updated_at: '2025-06-04T21:36:00.108519Z',
+      applicant_id: 117,
+    },
+    {
+      id: 20,
+      title: 'Application #20',
+      status: 'archived',
+      created_at: '2025-07-06T04:36:00.108519Z',
+      updated_at: '2025-08-02T04:36:00.108519Z',
+      applicant_id: 55,
+    },
+    {
+      id: 21,
+      title: 'Application #21',
+      status: 'active',
+      created_at: '2025-07-22T19:36:00.108519Z',
+      updated_at: '2025-08-10T19:36:00.108519Z',
+      applicant_id: 79,
+    },
+    {
+      id: 22,
+      title: 'Application #22',
+      status: 'active',
+      created_at: '2025-05-29T10:36:00.108519Z',
+      updated_at: '2025-06-28T10:36:00.108519Z',
+      applicant_id: 81,
+    },
+    {
+      id: 23,
+      title: 'Application #23',
+      status: 'active',
+      created_at: '2025-08-04T05:36:00.108519Z',
+      updated_at: '2025-08-25T05:36:00.108519Z',
+      applicant_id: 21,
+    },
+    {
+      id: 24,
+      title: 'Application #24',
+      status: 'active',
+      created_at: '2025-08-01T08:36:00.108519Z',
+      updated_at: '2025-08-18T08:36:00.108519Z',
+      applicant_id: 21,
+    },
+    {
+      id: 25,
+      title: 'Application #25',
+      status: 'archived',
+      created_at: '2025-08-31T00:36:00.108519Z',
+      updated_at: '2025-09-14T00:36:00.108519Z',
+      applicant_id: 77,
+    },
+    {
+      id: 26,
+      title: 'Application #26',
+      status: 'active',
+      created_at: '2025-07-02T04:36:00.108519Z',
+      updated_at: '2025-07-03T04:36:00.108519Z',
+      applicant_id: 37,
+    },
+    {
+      id: 27,
+      title: 'Application #27',
+      status: 'inactive',
+      created_at: '2025-06-02T04:36:00.108519Z',
+      updated_at: '2025-06-24T04:36:00.108519Z',
+      applicant_id: 10,
+    },
+    {
+      id: 28,
+      title: 'Application #28',
+      status: 'inactive',
+      created_at: '2025-06-05T06:36:00.108519Z',
+      updated_at: '2025-07-04T06:36:00.108519Z',
+      applicant_id: 101,
+    },
+    {
+      id: 29,
+      title: 'Application #29',
+      status: 'archived',
+      created_at: '2025-05-21T17:36:00.108519Z',
+      updated_at: '2025-06-08T17:36:00.108519Z',
+      applicant_id: 103,
+    },
+    {
+      id: 30,
+      title: 'Application #30',
+      status: 'active',
+      created_at: '2025-05-04T07:36:00.108519Z',
+      updated_at: '2025-05-17T07:36:00.108519Z',
+      applicant_id: 70,
+    },
+    {
+      id: 31,
+      title: 'Application #31',
+      status: 'inactive',
+      created_at: '2025-08-02T17:36:00.108519Z',
+      updated_at: '2025-08-06T17:36:00.108519Z',
+      applicant_id: 106,
+    },
+    {
+      id: 32,
+      title: 'Application #32',
+      status: 'active',
+      created_at: '2025-08-13T11:36:00.108519Z',
+      updated_at: '2025-08-14T11:36:00.108519Z',
+      applicant_id: 102,
+    },
+    {
+      id: 33,
+      title: 'Application #33',
+      status: 'archived',
+      created_at: '2025-07-22T18:36:00.108519Z',
+      updated_at: '2025-08-14T18:36:00.108519Z',
+      applicant_id: 118,
+    },
+    {
+      id: 34,
+      title: 'Application #34',
+      status: 'inactive',
+      created_at: '2025-07-25T23:36:00.108519Z',
+      updated_at: '2025-07-28T23:36:00.108519Z',
+      applicant_id: 89,
+    },
+    {
+      id: 35,
+      title: 'Application #35',
+      status: 'inactive',
+      created_at: '2025-07-23T15:36:00.108519Z',
+      updated_at: '2025-08-04T15:36:00.108519Z',
+      applicant_id: 65,
+    },
+    {
+      id: 36,
+      title: 'Application #36',
+      status: 'active',
+      created_at: '2025-06-22T22:36:00.108519Z',
+      updated_at: '2025-07-06T22:36:00.108519Z',
+      applicant_id: 77,
+    },
+    {
+      id: 37,
+      title: 'Application #37',
+      status: 'inactive',
+      created_at: '2025-08-26T00:36:00.108519Z',
+      updated_at: '2025-09-18T00:36:00.108519Z',
+      applicant_id: 78,
+    },
+    {
+      id: 38,
+      title: 'Application #38',
+      status: 'active',
+      created_at: '2025-07-30T13:36:00.108519Z',
+      updated_at: '2025-08-01T13:36:00.108519Z',
+      applicant_id: 87,
+    },
+    {
+      id: 39,
+      title: 'Application #39',
+      status: 'active',
+      created_at: '2025-05-15T19:36:00.108519Z',
+      updated_at: '2025-06-02T19:36:00.108519Z',
+      applicant_id: 98,
+    },
+    {
+      id: 40,
+      title: 'Application #40',
+      status: 'active',
+      created_at: '2025-06-06T05:36:00.108519Z',
+      updated_at: '2025-06-24T05:36:00.108519Z',
+      applicant_id: 98,
+    },
+    {
+      id: 41,
+      title: 'Application #41',
+      status: 'archived',
+      created_at: '2025-05-27T08:36:00.108519Z',
+      updated_at: '2025-06-11T08:36:00.108519Z',
+      applicant_id: 84,
+    },
+    {
+      id: 42,
+      title: 'Application #42',
+      status: 'archived',
+      created_at: '2025-07-06T05:36:00.108519Z',
+      updated_at: '2025-07-11T05:36:00.108519Z',
+      applicant_id: 56,
+    },
+    {
+      id: 43,
+      title: 'Application #43',
+      status: 'inactive',
+      created_at: '2025-06-10T22:36:00.108519Z',
+      updated_at: '2025-06-12T22:36:00.108519Z',
+      applicant_id: 45,
+    },
+    {
+      id: 44,
+      title: 'Application #44',
+      status: 'archived',
+      created_at: '2025-07-10T03:36:00.108519Z',
+      updated_at: '2025-07-20T03:36:00.108519Z',
+      applicant_id: 14,
+    },
+    {
+      id: 45,
+      title: 'Application #45',
+      status: 'inactive',
+      created_at: '2025-05-14T08:36:00.108519Z',
+      updated_at: '2025-05-24T08:36:00.108519Z',
+      applicant_id: 89,
+    },
+    {
+      id: 46,
+      title: 'Application #46',
+      status: 'inactive',
+      created_at: '2025-06-29T04:36:00.108519Z',
+      updated_at: '2025-07-20T04:36:00.108519Z',
+      applicant_id: 105,
+    },
+    {
+      id: 47,
+      title: 'Application #47',
+      status: 'inactive',
+      created_at: '2025-05-25T20:36:00.108519Z',
+      updated_at: '2025-05-26T20:36:00.108519Z',
+      applicant_id: 12,
+    },
+    {
+      id: 48,
+      title: 'Application #48',
+      status: 'active',
+      created_at: '2025-07-22T05:36:00.108519Z',
+      updated_at: '2025-08-01T05:36:00.108519Z',
+      applicant_id: 99,
+    },
+    {
+      id: 49,
+      title: 'Application #49',
+      status: 'active',
+      created_at: '2025-07-10T21:36:00.108519Z',
+      updated_at: '2025-08-05T21:36:00.108519Z',
+      applicant_id: 85,
+    },
+    {
+      id: 50,
+      title: 'Application #50',
+      status: 'inactive',
+      created_at: '2025-05-11T20:36:00.108519Z',
+      updated_at: '2025-05-25T20:36:00.108519Z',
+      applicant_id: 7,
+    },
+    {
+      id: 51,
+      title: 'Application #51',
+      status: 'archived',
+      created_at: '2025-08-06T21:36:00.108519Z',
+      updated_at: '2025-08-17T21:36:00.108519Z',
+      applicant_id: 97,
+    },
+    {
+      id: 52,
+      title: 'Application #52',
+      status: 'active',
+      created_at: '2025-06-28T17:36:00.108519Z',
+      updated_at: '2025-07-12T17:36:00.108519Z',
+      applicant_id: 27,
+    },
+    {
+      id: 53,
+      title: 'Application #53',
+      status: 'inactive',
+      created_at: '2025-07-27T20:36:00.108519Z',
+      updated_at: '2025-07-31T20:36:00.108519Z',
+      applicant_id: 57,
+    },
+    {
+      id: 54,
+      title: 'Application #54',
+      status: 'active',
+      created_at: '2025-05-10T15:36:00.108519Z',
+      updated_at: '2025-05-25T15:36:00.108519Z',
+      applicant_id: 4,
+    },
+    {
+      id: 55,
+      title: 'Application #55',
+      status: 'active',
+      created_at: '2025-06-11T18:36:00.108519Z',
+      updated_at: '2025-07-06T18:36:00.108519Z',
+      applicant_id: 91,
+    },
+    {
+      id: 56,
+      title: 'Application #56',
+      status: 'active',
+      created_at: '2025-08-11T04:36:00.108519Z',
+      updated_at: '2025-08-28T04:36:00.108519Z',
+      applicant_id: 71,
+    },
+    {
+      id: 57,
+      title: 'Application #57',
+      status: 'active',
+      created_at: '2025-07-10T11:36:00.108519Z',
+      updated_at: '2025-07-17T11:36:00.108519Z',
+      applicant_id: 60,
+    },
+    {
+      id: 58,
+      title: 'Application #58',
+      status: 'active',
+      created_at: '2025-08-15T17:36:00.108519Z',
+      updated_at: '2025-09-10T17:36:00.108519Z',
+      applicant_id: 64,
+    },
+    {
+      id: 59,
+      title: 'Application #59',
+      status: 'archived',
+      created_at: '2025-05-03T15:36:00.108519Z',
+      updated_at: '2025-05-12T15:36:00.108519Z',
+      applicant_id: 91,
+    },
+    {
+      id: 60,
+      title: 'Application #60',
+      status: 'inactive',
+      created_at: '2025-07-28T00:36:00.108519Z',
+      updated_at: '2025-08-23T00:36:00.108519Z',
+      applicant_id: 61,
+    },
+    {
+      id: 61,
+      title: 'Application #61',
+      status: 'active',
+      created_at: '2025-07-30T23:36:00.108519Z',
+      updated_at: '2025-08-16T23:36:00.108519Z',
+      applicant_id: 50,
+    },
+    {
+      id: 62,
+      title: 'Application #62',
+      status: 'archived',
+      created_at: '2025-08-06T18:36:00.108519Z',
+      updated_at: '2025-08-22T18:36:00.108519Z',
+      applicant_id: 113,
+    },
+    {
+      id: 63,
+      title: 'Application #63',
+      status: 'inactive',
+      created_at: '2025-08-14T11:36:00.108519Z',
+      updated_at: '2025-08-22T11:36:00.108519Z',
+      applicant_id: 44,
+    },
+    {
+      id: 64,
+      title: 'Application #64',
+      status: 'active',
+      created_at: '2025-05-03T21:36:00.108519Z',
+      updated_at: '2025-05-11T21:36:00.108519Z',
+      applicant_id: 37,
+    },
+    {
+      id: 65,
+      title: 'Application #65',
+      status: 'archived',
+      created_at: '2025-05-31T04:36:00.108519Z',
+      updated_at: '2025-06-26T04:36:00.108519Z',
+      applicant_id: 75,
+    },
+    {
+      id: 66,
+      title: 'Application #66',
+      status: 'active',
+      created_at: '2025-06-07T22:36:00.108519Z',
+      updated_at: '2025-07-04T22:36:00.108519Z',
+      applicant_id: 58,
+    },
+    {
+      id: 67,
+      title: 'Application #67',
+      status: 'inactive',
+      created_at: '2025-06-23T22:36:00.108519Z',
+      updated_at: '2025-07-04T22:36:00.108519Z',
+      applicant_id: 71,
+    },
+    {
+      id: 68,
+      title: 'Application #68',
+      status: 'inactive',
+      created_at: '2025-05-25T20:36:00.108519Z',
+      updated_at: '2025-06-06T20:36:00.108519Z',
+      applicant_id: 120,
+    },
+    {
+      id: 69,
+      title: 'Application #69',
+      status: 'active',
+      created_at: '2025-07-21T07:36:00.108519Z',
+      updated_at: '2025-08-12T07:36:00.108519Z',
+      applicant_id: 74,
+    },
+    {
+      id: 70,
+      title: 'Application #70',
+      status: 'inactive',
+      created_at: '2025-07-13T06:36:00.108519Z',
+      updated_at: '2025-08-09T06:36:00.108519Z',
+      applicant_id: 6,
+    },
+    {
+      id: 71,
+      title: 'Application #71',
+      status: 'archived',
+      created_at: '2025-07-21T14:36:00.108519Z',
+      updated_at: '2025-08-05T14:36:00.108519Z',
+      applicant_id: 117,
+    },
+    {
+      id: 72,
+      title: 'Application #72',
+      status: 'archived',
+      created_at: '2025-05-20T01:36:00.108519Z',
+      updated_at: '2025-06-01T01:36:00.108519Z',
+      applicant_id: 102,
+    },
+    {
+      id: 73,
+      title: 'Application #73',
+      status: 'inactive',
+      created_at: '2025-05-17T17:36:00.108519Z',
+      updated_at: '2025-05-21T17:36:00.108519Z',
+      applicant_id: 5,
+    },
+    {
+      id: 74,
+      title: 'Application #74',
+      status: 'archived',
+      created_at: '2025-08-14T21:36:00.108519Z',
+      updated_at: '2025-09-13T21:36:00.108519Z',
+      applicant_id: 43,
+    },
+    {
+      id: 75,
+      title: 'Application #75',
+      status: 'inactive',
+      created_at: '2025-05-12T10:36:00.108519Z',
+      updated_at: '2025-06-08T10:36:00.108519Z',
+      applicant_id: 13,
+    },
+    {
+      id: 76,
+      title: 'Application #76',
+      status: 'archived',
+      created_at: '2025-06-24T23:36:00.108519Z',
+      updated_at: '2025-06-24T23:36:00.108519Z',
+      applicant_id: 19,
+    },
+    {
+      id: 77,
+      title: 'Application #77',
+      status: 'active',
+      created_at: '2025-07-09T17:36:00.108519Z',
+      updated_at: '2025-07-13T17:36:00.108519Z',
+      applicant_id: 61,
+    },
+    {
+      id: 78,
+      title: 'Application #78',
+      status: 'archived',
+      created_at: '2025-05-23T05:36:00.108519Z',
+      updated_at: '2025-06-02T05:36:00.108519Z',
+      applicant_id: 89,
+    },
+    {
+      id: 79,
+      title: 'Application #79',
+      status: 'inactive',
+      created_at: '2025-07-11T17:36:00.108519Z',
+      updated_at: '2025-07-13T17:36:00.108519Z',
+      applicant_id: 110,
+    },
+    {
+      id: 80,
+      title: 'Application #80',
+      status: 'inactive',
+      created_at: '2025-06-05T20:36:00.108519Z',
+      updated_at: '2025-06-17T20:36:00.108519Z',
+      applicant_id: 81,
+    },
+    {
+      id: 81,
+      title: 'Application #81',
+      status: 'archived',
+      created_at: '2025-05-31T22:36:00.108519Z',
+      updated_at: '2025-06-27T22:36:00.108519Z',
+      applicant_id: 5,
+    },
+    {
+      id: 82,
+      title: 'Application #82',
+      status: 'archived',
+      created_at: '2025-06-13T11:36:00.108519Z',
+      updated_at: '2025-06-20T11:36:00.108519Z',
+      applicant_id: 88,
+    },
+    {
+      id: 83,
+      title: 'Application #83',
+      status: 'archived',
+      created_at: '2025-05-06T04:36:00.108519Z',
+      updated_at: '2025-05-13T04:36:00.108519Z',
+      applicant_id: 12,
+    },
+    {
+      id: 84,
+      title: 'Application #84',
+      status: 'archived',
+      created_at: '2025-07-07T10:36:00.108519Z',
+      updated_at: '2025-07-31T10:36:00.108519Z',
+      applicant_id: 91,
+    },
+    {
+      id: 85,
+      title: 'Application #85',
+      status: 'active',
+      created_at: '2025-05-12T10:36:00.108519Z',
+      updated_at: '2025-05-26T10:36:00.108519Z',
+      applicant_id: 89,
+    },
+    {
+      id: 86,
+      title: 'Application #86',
+      status: 'inactive',
+      created_at: '2025-07-24T13:36:00.108519Z',
+      updated_at: '2025-07-25T13:36:00.108519Z',
+      applicant_id: 102,
+    },
+    {
+      id: 87,
+      title: 'Application #87',
+      status: 'inactive',
+      created_at: '2025-08-24T04:36:00.108519Z',
+      updated_at: '2025-09-04T04:36:00.108519Z',
+      applicant_id: 56,
+    },
+    {
+      id: 88,
+      title: 'Application #88',
+      status: 'inactive',
+      created_at: '2025-08-13T06:36:00.108519Z',
+      updated_at: '2025-08-29T06:36:00.108519Z',
+      applicant_id: 73,
+    },
+  ],
+  'study-posts': [
+    {
+      id: 1,
+      title: 'StudyPost #1',
+      status: 'active',
+      created_at: '2025-06-05T08:36:00.108519Z',
+      updated_at: '2025-06-10T08:36:00.108519Z',
+      tags: ['sql'],
+    },
+    {
+      id: 2,
+      title: 'StudyPost #2',
+      status: 'archived',
+      created_at: '2025-05-12T01:36:00.108519Z',
+      updated_at: '2025-05-31T01:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 3,
+      title: 'StudyPost #3',
+      status: 'active',
+      created_at: '2025-05-06T19:36:00.108519Z',
+      updated_at: '2025-05-10T19:36:00.108519Z',
+      tags: ['docker', 'aws'],
+    },
+    {
+      id: 4,
+      title: 'StudyPost #4',
+      status: 'inactive',
+      created_at: '2025-07-29T16:36:00.108519Z',
+      updated_at: '2025-07-29T16:36:00.108519Z',
+      tags: ['sql', 'python'],
+    },
+    {
+      id: 5,
+      title: 'StudyPost #5',
+      status: 'inactive',
+      created_at: '2025-08-21T23:36:00.108519Z',
+      updated_at: '2025-09-20T23:36:00.108519Z',
+      tags: ['docker', 'aws', 'sql'],
+    },
+    {
+      id: 6,
+      title: 'StudyPost #6',
+      status: 'inactive',
+      created_at: '2025-07-29T23:36:00.108519Z',
+      updated_at: '2025-08-25T23:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 7,
+      title: 'StudyPost #7',
+      status: 'active',
+      created_at: '2025-05-13T22:36:00.108519Z',
+      updated_at: '2025-05-16T22:36:00.108519Z',
+      tags: ['sql', 'docker'],
+    },
+    {
+      id: 8,
+      title: 'StudyPost #8',
+      status: 'inactive',
+      created_at: '2025-06-19T04:36:00.108519Z',
+      updated_at: '2025-07-11T04:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 9,
+      title: 'StudyPost #9',
+      status: 'archived',
+      created_at: '2025-07-27T13:36:00.108519Z',
+      updated_at: '2025-08-14T13:36:00.108519Z',
+      tags: ['react', 'aws', 'python'],
+    },
+    {
+      id: 10,
+      title: 'StudyPost #10',
+      status: 'inactive',
+      created_at: '2025-05-24T06:36:00.108519Z',
+      updated_at: '2025-06-12T06:36:00.108519Z',
+      tags: ['python'],
+    },
+    {
+      id: 11,
+      title: 'StudyPost #11',
+      status: 'archived',
+      created_at: '2025-06-13T05:36:00.108519Z',
+      updated_at: '2025-07-04T05:36:00.108519Z',
+      tags: ['python', 'react', 'docker'],
+    },
+    {
+      id: 12,
+      title: 'StudyPost #12',
+      status: 'inactive',
+      created_at: '2025-06-10T12:36:00.108519Z',
+      updated_at: '2025-06-19T12:36:00.108519Z',
+      tags: ['sql'],
+    },
+    {
+      id: 13,
+      title: 'StudyPost #13',
+      status: 'active',
+      created_at: '2025-07-15T14:36:00.108519Z',
+      updated_at: '2025-07-19T14:36:00.108519Z',
+      tags: ['docker', 'aws'],
+    },
+    {
+      id: 14,
+      title: 'StudyPost #14',
+      status: 'archived',
+      created_at: '2025-08-09T07:36:00.108519Z',
+      updated_at: '2025-08-13T07:36:00.108519Z',
+      tags: ['sql', 'docker'],
+    },
+    {
+      id: 15,
+      title: 'StudyPost #15',
+      status: 'inactive',
+      created_at: '2025-05-17T08:36:00.108519Z',
+      updated_at: '2025-05-25T08:36:00.108519Z',
+      tags: ['docker', 'react'],
+    },
+    {
+      id: 16,
+      title: 'StudyPost #16',
+      status: 'active',
+      created_at: '2025-07-03T11:36:00.108519Z',
+      updated_at: '2025-07-07T11:36:00.108519Z',
+      tags: ['aws', 'docker', 'react'],
+    },
+    {
+      id: 17,
+      title: 'StudyPost #17',
+      status: 'inactive',
+      created_at: '2025-05-22T01:36:00.108519Z',
+      updated_at: '2025-05-22T01:36:00.108519Z',
+      tags: ['react', 'aws', 'python'],
+    },
+    {
+      id: 18,
+      title: 'StudyPost #18',
+      status: 'inactive',
+      created_at: '2025-06-05T14:36:00.108519Z',
+      updated_at: '2025-06-26T14:36:00.108519Z',
+      tags: ['aws', 'docker', 'react'],
+    },
+    {
+      id: 19,
+      title: 'StudyPost #19',
+      status: 'active',
+      created_at: '2025-06-06T06:36:00.108519Z',
+      updated_at: '2025-06-21T06:36:00.108519Z',
+      tags: ['sql', 'docker', 'aws'],
+    },
+    {
+      id: 20,
+      title: 'StudyPost #20',
+      status: 'archived',
+      created_at: '2025-08-02T17:36:00.108519Z',
+      updated_at: '2025-08-04T17:36:00.108519Z',
+      tags: ['docker', 'aws'],
+    },
+    {
+      id: 21,
+      title: 'StudyPost #21',
+      status: 'active',
+      created_at: '2025-08-17T09:36:00.108519Z',
+      updated_at: '2025-08-18T09:36:00.108519Z',
+      tags: ['aws', 'react'],
+    },
+    {
+      id: 22,
+      title: 'StudyPost #22',
+      status: 'archived',
+      created_at: '2025-08-19T06:36:00.108519Z',
+      updated_at: '2025-09-16T06:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 23,
+      title: 'StudyPost #23',
+      status: 'archived',
+      created_at: '2025-07-04T02:36:00.108519Z',
+      updated_at: '2025-07-25T02:36:00.108519Z',
+      tags: ['sql', 'aws', 'docker'],
+    },
+    {
+      id: 24,
+      title: 'StudyPost #24',
+      status: 'inactive',
+      created_at: '2025-05-27T14:36:00.108519Z',
+      updated_at: '2025-05-31T14:36:00.108519Z',
+      tags: ['react', 'aws', 'docker'],
+    },
+    {
+      id: 25,
+      title: 'StudyPost #25',
+      status: 'archived',
+      created_at: '2025-07-10T05:36:00.108519Z',
+      updated_at: '2025-07-11T05:36:00.108519Z',
+      tags: ['python', 'aws'],
+    },
+    {
+      id: 26,
+      title: 'StudyPost #26',
+      status: 'inactive',
+      created_at: '2025-07-06T06:36:00.108519Z',
+      updated_at: '2025-08-02T06:36:00.108519Z',
+      tags: ['docker'],
+    },
+    {
+      id: 27,
+      title: 'StudyPost #27',
+      status: 'active',
+      created_at: '2025-06-22T17:36:00.108519Z',
+      updated_at: '2025-07-03T17:36:00.108519Z',
+      tags: ['docker', 'python'],
+    },
+    {
+      id: 28,
+      title: 'StudyPost #28',
+      status: 'archived',
+      created_at: '2025-08-15T23:36:00.108519Z',
+      updated_at: '2025-08-17T23:36:00.108519Z',
+      tags: ['sql'],
+    },
+    {
+      id: 29,
+      title: 'StudyPost #29',
+      status: 'inactive',
+      created_at: '2025-08-29T12:36:00.108519Z',
+      updated_at: '2025-09-23T12:36:00.108519Z',
+      tags: ['python'],
+    },
+    {
+      id: 30,
+      title: 'StudyPost #30',
+      status: 'active',
+      created_at: '2025-05-22T19:36:00.108519Z',
+      updated_at: '2025-05-28T19:36:00.108519Z',
+      tags: ['python', 'sql', 'react'],
+    },
+    {
+      id: 31,
+      title: 'StudyPost #31',
+      status: 'archived',
+      created_at: '2025-07-20T09:36:00.108519Z',
+      updated_at: '2025-08-14T09:36:00.108519Z',
+      tags: ['docker'],
+    },
+    {
+      id: 32,
+      title: 'StudyPost #32',
+      status: 'archived',
+      created_at: '2025-05-14T09:36:00.108519Z',
+      updated_at: '2025-05-18T09:36:00.108519Z',
+      tags: ['python', 'react'],
+    },
+    {
+      id: 33,
+      title: 'StudyPost #33',
+      status: 'active',
+      created_at: '2025-06-08T13:36:00.108519Z',
+      updated_at: '2025-06-12T13:36:00.108519Z',
+      tags: ['python', 'docker'],
+    },
+    {
+      id: 34,
+      title: 'StudyPost #34',
+      status: 'active',
+      created_at: '2025-08-29T08:36:00.108519Z',
+      updated_at: '2025-09-06T08:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 35,
+      title: 'StudyPost #35',
+      status: 'active',
+      created_at: '2025-06-25T10:36:00.108519Z',
+      updated_at: '2025-07-18T10:36:00.108519Z',
+      tags: ['aws', 'docker'],
+    },
+    {
+      id: 36,
+      title: 'StudyPost #36',
+      status: 'inactive',
+      created_at: '2025-06-26T19:36:00.108519Z',
+      updated_at: '2025-06-29T19:36:00.108519Z',
+      tags: ['python', 'react', 'docker'],
+    },
+    {
+      id: 37,
+      title: 'StudyPost #37',
+      status: 'inactive',
+      created_at: '2025-05-22T16:36:00.108519Z',
+      updated_at: '2025-06-07T16:36:00.108519Z',
+      tags: ['react', 'sql'],
+    },
+    {
+      id: 38,
+      title: 'StudyPost #38',
+      status: 'archived',
+      created_at: '2025-07-01T01:36:00.108519Z',
+      updated_at: '2025-07-14T01:36:00.108519Z',
+      tags: ['aws'],
+    },
+    {
+      id: 39,
+      title: 'StudyPost #39',
+      status: 'active',
+      created_at: '2025-05-31T23:36:00.108519Z',
+      updated_at: '2025-06-02T23:36:00.108519Z',
+      tags: ['sql', 'python'],
+    },
+    {
+      id: 40,
+      title: 'StudyPost #40',
+      status: 'archived',
+      created_at: '2025-08-23T09:36:00.108519Z',
+      updated_at: '2025-08-31T09:36:00.108519Z',
+      tags: ['sql', 'docker', 'python'],
+    },
+    {
+      id: 41,
+      title: 'StudyPost #41',
+      status: 'inactive',
+      created_at: '2025-06-15T21:36:00.108519Z',
+      updated_at: '2025-06-24T21:36:00.108519Z',
+      tags: ['sql', 'aws', 'react'],
+    },
+    {
+      id: 42,
+      title: 'StudyPost #42',
+      status: 'archived',
+      created_at: '2025-05-21T15:36:00.108519Z',
+      updated_at: '2025-05-24T15:36:00.108519Z',
+      tags: ['sql', 'python', 'aws'],
+    },
+    {
+      id: 43,
+      title: 'StudyPost #43',
+      status: 'inactive',
+      created_at: '2025-07-05T06:36:00.108519Z',
+      updated_at: '2025-07-18T06:36:00.108519Z',
+      tags: ['aws', 'sql'],
+    },
+    {
+      id: 44,
+      title: 'StudyPost #44',
+      status: 'inactive',
+      created_at: '2025-05-30T10:36:00.108519Z',
+      updated_at: '2025-06-09T10:36:00.108519Z',
+      tags: ['docker', 'sql'],
+    },
+    {
+      id: 45,
+      title: 'StudyPost #45',
+      status: 'inactive',
+      created_at: '2025-08-11T16:36:00.108519Z',
+      updated_at: '2025-09-09T16:36:00.108519Z',
+      tags: ['react'],
+    },
+    {
+      id: 46,
+      title: 'StudyPost #46',
+      status: 'inactive',
+      created_at: '2025-05-17T11:36:00.108519Z',
+      updated_at: '2025-05-19T11:36:00.108519Z',
+      tags: ['docker'],
+    },
+    {
+      id: 47,
+      title: 'StudyPost #47',
+      status: 'active',
+      created_at: '2025-05-20T09:36:00.108519Z',
+      updated_at: '2025-06-06T09:36:00.108519Z',
+      tags: ['sql', 'docker', 'aws'],
+    },
+    {
+      id: 48,
+      title: 'StudyPost #48',
+      status: 'archived',
+      created_at: '2025-08-16T00:36:00.108519Z',
+      updated_at: '2025-08-27T00:36:00.108519Z',
+      tags: ['react', 'docker'],
+    },
+    {
+      id: 49,
+      title: 'StudyPost #49',
+      status: 'active',
+      created_at: '2025-06-16T04:36:00.108519Z',
+      updated_at: '2025-06-27T04:36:00.108519Z',
+      tags: ['sql', 'python', 'react'],
+    },
+    {
+      id: 50,
+      title: 'StudyPost #50',
+      status: 'active',
+      created_at: '2025-06-07T22:36:00.108519Z',
+      updated_at: '2025-06-14T22:36:00.108519Z',
+      tags: ['sql', 'docker'],
+    },
+    {
+      id: 51,
+      title: 'StudyPost #51',
+      status: 'active',
+      created_at: '2025-08-17T05:36:00.108519Z',
+      updated_at: '2025-09-04T05:36:00.108519Z',
+      tags: ['sql', 'react'],
+    },
+    {
+      id: 52,
+      title: 'StudyPost #52',
+      status: 'archived',
+      created_at: '2025-06-14T16:36:00.108519Z',
+      updated_at: '2025-07-10T16:36:00.108519Z',
+      tags: ['react', 'python'],
+    },
+    {
+      id: 53,
+      title: 'StudyPost #53',
+      status: 'inactive',
+      created_at: '2025-07-27T15:36:00.108519Z',
+      updated_at: '2025-08-20T15:36:00.108519Z',
+      tags: ['docker', 'react'],
+    },
+    {
+      id: 54,
+      title: 'StudyPost #54',
+      status: 'archived',
+      created_at: '2025-08-08T09:36:00.108519Z',
+      updated_at: '2025-08-26T09:36:00.108519Z',
+      tags: ['react', 'python'],
+    },
+    {
+      id: 55,
+      title: 'StudyPost #55',
+      status: 'active',
+      created_at: '2025-05-28T17:36:00.108519Z',
+      updated_at: '2025-05-28T17:36:00.108519Z',
+      tags: ['sql', 'python', 'aws'],
+    },
+    {
+      id: 56,
+      title: 'StudyPost #56',
+      status: 'active',
+      created_at: '2025-07-08T23:36:00.108519Z',
+      updated_at: '2025-07-18T23:36:00.108519Z',
+      tags: ['docker', 'sql'],
+    },
+    {
+      id: 57,
+      title: 'StudyPost #57',
+      status: 'active',
+      created_at: '2025-05-23T19:36:00.108519Z',
+      updated_at: '2025-06-11T19:36:00.108519Z',
+      tags: ['python'],
+    },
+    {
+      id: 58,
+      title: 'StudyPost #58',
+      status: 'archived',
+      created_at: '2025-08-10T18:36:00.108519Z',
+      updated_at: '2025-08-11T18:36:00.108519Z',
+      tags: ['docker'],
+    },
+    {
+      id: 59,
+      title: 'StudyPost #59',
+      status: 'inactive',
+      created_at: '2025-07-05T16:36:00.108519Z',
+      updated_at: '2025-07-18T16:36:00.108519Z',
+      tags: ['aws', 'sql', 'python'],
+    },
+    {
+      id: 60,
+      title: 'StudyPost #60',
+      status: 'inactive',
+      created_at: '2025-08-03T21:36:00.108519Z',
+      updated_at: '2025-08-06T21:36:00.108519Z',
+      tags: ['react', 'docker'],
+    },
+    {
+      id: 61,
+      title: 'StudyPost #61',
+      status: 'inactive',
+      created_at: '2025-06-05T16:36:00.108519Z',
+      updated_at: '2025-06-23T16:36:00.108519Z',
+      tags: ['docker', 'react', 'aws'],
+    },
+    {
+      id: 62,
+      title: 'StudyPost #62',
+      status: 'active',
+      created_at: '2025-07-11T18:36:00.108519Z',
+      updated_at: '2025-07-12T18:36:00.108519Z',
+      tags: ['docker'],
+    },
+    {
+      id: 63,
+      title: 'StudyPost #63',
+      status: 'inactive',
+      created_at: '2025-08-04T09:36:00.108519Z',
+      updated_at: '2025-08-28T09:36:00.108519Z',
+      tags: ['docker', 'react'],
+    },
+    {
+      id: 64,
+      title: 'StudyPost #64',
+      status: 'inactive',
+      created_at: '2025-08-30T22:36:00.108519Z',
+      updated_at: '2025-09-22T22:36:00.108519Z',
+      tags: ['python'],
+    },
+  ],
+  'study-groups': [
+    {
+      id: 1,
+      title: 'StudyGroup #1',
+      status: 'active',
+      created_at: '2025-07-13T20:36:00.108519Z',
+      updated_at: '2025-08-04T20:36:00.108519Z',
+      lead_id: 65,
+    },
+    {
+      id: 2,
+      title: 'StudyGroup #2',
+      status: 'inactive',
+      created_at: '2025-06-20T16:36:00.108519Z',
+      updated_at: '2025-07-15T16:36:00.108519Z',
+      lead_id: 10,
+    },
+    {
+      id: 3,
+      title: 'StudyGroup #3',
+      status: 'inactive',
+      created_at: '2025-07-11T14:36:00.108519Z',
+      updated_at: '2025-07-12T14:36:00.108519Z',
+      lead_id: 3,
+    },
+    {
+      id: 4,
+      title: 'StudyGroup #4',
+      status: 'inactive',
+      created_at: '2025-07-04T11:36:00.108519Z',
+      updated_at: '2025-07-31T11:36:00.108519Z',
+      lead_id: 74,
+    },
+    {
+      id: 5,
+      title: 'StudyGroup #5',
+      status: 'archived',
+      created_at: '2025-07-07T19:36:00.108519Z',
+      updated_at: '2025-07-19T19:36:00.108519Z',
+      lead_id: 82,
+    },
+    {
+      id: 6,
+      title: 'StudyGroup #6',
+      status: 'inactive',
+      created_at: '2025-07-09T04:36:00.108519Z',
+      updated_at: '2025-07-12T04:36:00.108519Z',
+      lead_id: 3,
+    },
+    {
+      id: 7,
+      title: 'StudyGroup #7',
+      status: 'archived',
+      created_at: '2025-07-21T08:36:00.108519Z',
+      updated_at: '2025-08-15T08:36:00.108519Z',
+      lead_id: 59,
+    },
+    {
+      id: 8,
+      title: 'StudyGroup #8',
+      status: 'inactive',
+      created_at: '2025-05-16T15:36:00.108519Z',
+      updated_at: '2025-06-14T15:36:00.108519Z',
+      lead_id: 12,
+    },
+    {
+      id: 9,
+      title: 'StudyGroup #9',
+      status: 'inactive',
+      created_at: '2025-07-07T10:36:00.108519Z',
+      updated_at: '2025-07-14T10:36:00.108519Z',
+      lead_id: 76,
+    },
+    {
+      id: 10,
+      title: 'StudyGroup #10',
+      status: 'inactive',
+      created_at: '2025-07-10T21:36:00.108519Z',
+      updated_at: '2025-07-12T21:36:00.108519Z',
+      lead_id: 112,
+    },
+    {
+      id: 11,
+      title: 'StudyGroup #11',
+      status: 'active',
+      created_at: '2025-07-22T14:36:00.108519Z',
+      updated_at: '2025-08-01T14:36:00.108519Z',
+      lead_id: 43,
+    },
+    {
+      id: 12,
+      title: 'StudyGroup #12',
+      status: 'archived',
+      created_at: '2025-05-24T08:36:00.108519Z',
+      updated_at: '2025-05-26T08:36:00.108519Z',
+      lead_id: 82,
+    },
+    {
+      id: 13,
+      title: 'StudyGroup #13',
+      status: 'active',
+      created_at: '2025-08-16T21:36:00.108519Z',
+      updated_at: '2025-09-01T21:36:00.108519Z',
+      lead_id: 116,
+    },
+    {
+      id: 14,
+      title: 'StudyGroup #14',
+      status: 'archived',
+      created_at: '2025-05-24T02:36:00.108519Z',
+      updated_at: '2025-06-04T02:36:00.108519Z',
+      lead_id: 105,
+    },
+    {
+      id: 15,
+      title: 'StudyGroup #15',
+      status: 'active',
+      created_at: '2025-06-10T09:36:00.108519Z',
+      updated_at: '2025-06-17T09:36:00.108519Z',
+      lead_id: 19,
+    },
+    {
+      id: 16,
+      title: 'StudyGroup #16',
+      status: 'archived',
+      created_at: '2025-07-30T07:36:00.108519Z',
+      updated_at: '2025-08-04T07:36:00.108519Z',
+      lead_id: 20,
+    },
+    {
+      id: 17,
+      title: 'StudyGroup #17',
+      status: 'active',
+      created_at: '2025-05-25T17:36:00.108519Z',
+      updated_at: '2025-05-27T17:36:00.108519Z',
+      lead_id: 99,
+    },
+    {
+      id: 18,
+      title: 'StudyGroup #18',
+      status: 'archived',
+      created_at: '2025-06-11T22:36:00.108519Z',
+      updated_at: '2025-06-25T22:36:00.108519Z',
+      lead_id: 98,
+    },
+    {
+      id: 19,
+      title: 'StudyGroup #19',
+      status: 'archived',
+      created_at: '2025-06-17T23:36:00.108519Z',
+      updated_at: '2025-07-08T23:36:00.108519Z',
+      lead_id: 83,
+    },
+    {
+      id: 20,
+      title: 'StudyGroup #20',
+      status: 'archived',
+      created_at: '2025-06-10T18:36:00.108519Z',
+      updated_at: '2025-06-20T18:36:00.108519Z',
+      lead_id: 41,
+    },
+    {
+      id: 21,
+      title: 'StudyGroup #21',
+      status: 'inactive',
+      created_at: '2025-08-11T23:36:00.108519Z',
+      updated_at: '2025-08-13T23:36:00.108519Z',
+      lead_id: 57,
+    },
+    {
+      id: 22,
+      title: 'StudyGroup #22',
+      status: 'inactive',
+      created_at: '2025-06-12T04:36:00.108519Z',
+      updated_at: '2025-07-07T04:36:00.108519Z',
+      lead_id: 76,
+    },
+    {
+      id: 23,
+      title: 'StudyGroup #23',
+      status: 'active',
+      created_at: '2025-08-24T02:36:00.108519Z',
+      updated_at: '2025-09-09T02:36:00.108519Z',
+      lead_id: 40,
+    },
+    {
+      id: 24,
+      title: 'StudyGroup #24',
+      status: 'active',
+      created_at: '2025-07-02T23:36:00.108519Z',
+      updated_at: '2025-07-03T23:36:00.108519Z',
+      lead_id: 48,
+    },
+    {
+      id: 25,
+      title: 'StudyGroup #25',
+      status: 'archived',
+      created_at: '2025-05-17T04:36:00.108519Z',
+      updated_at: '2025-05-19T04:36:00.108519Z',
+      lead_id: 111,
+    },
+    {
+      id: 26,
+      title: 'StudyGroup #26',
+      status: 'archived',
+      created_at: '2025-05-14T11:36:00.108519Z',
+      updated_at: '2025-06-02T11:36:00.108519Z',
+      lead_id: 65,
+    },
+    {
+      id: 27,
+      title: 'StudyGroup #27',
+      status: 'archived',
+      created_at: '2025-07-12T23:36:00.108519Z',
+      updated_at: '2025-07-30T23:36:00.108519Z',
+      lead_id: 102,
+    },
+    {
+      id: 28,
+      title: 'StudyGroup #28',
+      status: 'archived',
+      created_at: '2025-05-29T12:36:00.108519Z',
+      updated_at: '2025-06-12T12:36:00.108519Z',
+      lead_id: 84,
+    },
+    {
+      id: 29,
+      title: 'StudyGroup #29',
+      status: 'inactive',
+      created_at: '2025-08-07T03:36:00.108519Z',
+      updated_at: '2025-08-26T03:36:00.108519Z',
+      lead_id: 65,
+    },
+    {
+      id: 30,
+      title: 'StudyGroup #30',
+      status: 'active',
+      created_at: '2025-08-12T12:36:00.108519Z',
+      updated_at: '2025-08-26T12:36:00.108519Z',
+      lead_id: 104,
+    },
+    {
+      id: 31,
+      title: 'StudyGroup #31',
+      status: 'active',
+      created_at: '2025-05-08T03:36:00.108519Z',
+      updated_at: '2025-05-30T03:36:00.108519Z',
+      lead_id: 65,
+    },
+    {
+      id: 32,
+      title: 'StudyGroup #32',
+      status: 'active',
+      created_at: '2025-06-10T08:36:00.108519Z',
+      updated_at: '2025-06-11T08:36:00.108519Z',
+      lead_id: 91,
+    },
+    {
+      id: 33,
+      title: 'StudyGroup #33',
+      status: 'archived',
+      created_at: '2025-07-05T23:36:00.108519Z',
+      updated_at: '2025-07-21T23:36:00.108519Z',
+      lead_id: 79,
+    },
+    {
+      id: 34,
+      title: 'StudyGroup #34',
+      status: 'inactive',
+      created_at: '2025-08-11T02:36:00.108519Z',
+      updated_at: '2025-08-22T02:36:00.108519Z',
+      lead_id: 50,
+    },
+    {
+      id: 35,
+      title: 'StudyGroup #35',
+      status: 'archived',
+      created_at: '2025-07-10T03:36:00.108519Z',
+      updated_at: '2025-07-31T03:36:00.108519Z',
+      lead_id: 7,
+    },
+    {
+      id: 36,
+      title: 'StudyGroup #36',
+      status: 'inactive',
+      created_at: '2025-05-21T17:36:00.108519Z',
+      updated_at: '2025-06-10T17:36:00.108519Z',
+      lead_id: 9,
+    },
+  ],
+  'study-reviews': [
+    {
+      id: 1,
+      title: 'StudyReview #1',
+      status: 'archived',
+      created_at: '2025-07-20T10:36:00.108519Z',
+      updated_at: '2025-08-06T10:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 2,
+      title: 'StudyReview #2',
+      status: 'archived',
+      created_at: '2025-07-26T05:36:00.108519Z',
+      updated_at: '2025-08-18T05:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 3,
+      title: 'StudyReview #3',
+      status: 'active',
+      created_at: '2025-05-12T09:36:00.108519Z',
+      updated_at: '2025-05-22T09:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 4,
+      title: 'StudyReview #4',
+      status: 'inactive',
+      created_at: '2025-06-08T09:36:00.108519Z',
+      updated_at: '2025-07-07T09:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 5,
+      title: 'StudyReview #5',
+      status: 'inactive',
+      created_at: '2025-06-08T15:36:00.108519Z',
+      updated_at: '2025-06-29T15:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 6,
+      title: 'StudyReview #6',
+      status: 'active',
+      created_at: '2025-06-15T15:36:00.108519Z',
+      updated_at: '2025-07-15T15:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 7,
+      title: 'StudyReview #7',
+      status: 'inactive',
+      created_at: '2025-06-21T01:36:00.108519Z',
+      updated_at: '2025-07-11T01:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 8,
+      title: 'StudyReview #8',
+      status: 'archived',
+      created_at: '2025-06-06T15:36:00.108519Z',
+      updated_at: '2025-07-02T15:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 9,
+      title: 'StudyReview #9',
+      status: 'inactive',
+      created_at: '2025-08-19T17:36:00.108519Z',
+      updated_at: '2025-09-09T17:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 10,
+      title: 'StudyReview #10',
+      status: 'inactive',
+      created_at: '2025-07-16T13:36:00.108519Z',
+      updated_at: '2025-07-27T13:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 11,
+      title: 'StudyReview #11',
+      status: 'inactive',
+      created_at: '2025-08-04T03:36:00.108519Z',
+      updated_at: '2025-09-03T03:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 12,
+      title: 'StudyReview #12',
+      status: 'active',
+      created_at: '2025-08-03T09:36:00.108519Z',
+      updated_at: '2025-08-07T09:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 13,
+      title: 'StudyReview #13',
+      status: 'archived',
+      created_at: '2025-05-15T10:36:00.108519Z',
+      updated_at: '2025-05-31T10:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 14,
+      title: 'StudyReview #14',
+      status: 'archived',
+      created_at: '2025-08-26T16:36:00.108519Z',
+      updated_at: '2025-09-05T16:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 15,
+      title: 'StudyReview #15',
+      status: 'active',
+      created_at: '2025-06-16T01:36:00.108519Z',
+      updated_at: '2025-06-20T01:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 16,
+      title: 'StudyReview #16',
+      status: 'archived',
+      created_at: '2025-05-16T15:36:00.108519Z',
+      updated_at: '2025-06-09T15:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 17,
+      title: 'StudyReview #17',
+      status: 'inactive',
+      created_at: '2025-05-30T23:36:00.108519Z',
+      updated_at: '2025-05-31T23:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 18,
+      title: 'StudyReview #18',
+      status: 'inactive',
+      created_at: '2025-06-05T14:36:00.108519Z',
+      updated_at: '2025-06-12T14:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 19,
+      title: 'StudyReview #19',
+      status: 'inactive',
+      created_at: '2025-07-25T14:36:00.108519Z',
+      updated_at: '2025-08-19T14:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 20,
+      title: 'StudyReview #20',
+      status: 'inactive',
+      created_at: '2025-06-24T06:36:00.108519Z',
+      updated_at: '2025-07-03T06:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 21,
+      title: 'StudyReview #21',
+      status: 'archived',
+      created_at: '2025-07-14T16:36:00.108519Z',
+      updated_at: '2025-08-13T16:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 22,
+      title: 'StudyReview #22',
+      status: 'inactive',
+      created_at: '2025-07-03T04:36:00.108519Z',
+      updated_at: '2025-07-27T04:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 23,
+      title: 'StudyReview #23',
+      status: 'active',
+      created_at: '2025-06-25T00:36:00.108519Z',
+      updated_at: '2025-07-25T00:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 24,
+      title: 'StudyReview #24',
+      status: 'inactive',
+      created_at: '2025-05-20T18:36:00.108519Z',
+      updated_at: '2025-05-24T18:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 25,
+      title: 'StudyReview #25',
+      status: 'inactive',
+      created_at: '2025-06-09T22:36:00.108519Z',
+      updated_at: '2025-07-06T22:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 26,
+      title: 'StudyReview #26',
+      status: 'archived',
+      created_at: '2025-05-04T10:36:00.108519Z',
+      updated_at: '2025-05-26T10:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 27,
+      title: 'StudyReview #27',
+      status: 'active',
+      created_at: '2025-07-26T11:36:00.108519Z',
+      updated_at: '2025-08-19T11:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 28,
+      title: 'StudyReview #28',
+      status: 'inactive',
+      created_at: '2025-07-04T21:36:00.108519Z',
+      updated_at: '2025-07-08T21:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 29,
+      title: 'StudyReview #29',
+      status: 'inactive',
+      created_at: '2025-05-07T06:36:00.108519Z',
+      updated_at: '2025-06-02T06:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 30,
+      title: 'StudyReview #30',
+      status: 'active',
+      created_at: '2025-05-04T13:36:00.108519Z',
+      updated_at: '2025-05-17T13:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 31,
+      title: 'StudyReview #31',
+      status: 'inactive',
+      created_at: '2025-06-28T02:36:00.108519Z',
+      updated_at: '2025-07-05T02:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 32,
+      title: 'StudyReview #32',
+      status: 'inactive',
+      created_at: '2025-07-15T06:36:00.108519Z',
+      updated_at: '2025-07-15T06:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 33,
+      title: 'StudyReview #33',
+      status: 'inactive',
+      created_at: '2025-05-15T15:36:00.108519Z',
+      updated_at: '2025-06-04T15:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 34,
+      title: 'StudyReview #34',
+      status: 'inactive',
+      created_at: '2025-08-14T12:36:00.108519Z',
+      updated_at: '2025-08-23T12:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 35,
+      title: 'StudyReview #35',
+      status: 'inactive',
+      created_at: '2025-05-25T15:36:00.108519Z',
+      updated_at: '2025-06-09T15:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 36,
+      title: 'StudyReview #36',
+      status: 'inactive',
+      created_at: '2025-08-31T11:36:00.108519Z',
+      updated_at: '2025-08-31T11:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 37,
+      title: 'StudyReview #37',
+      status: 'archived',
+      created_at: '2025-05-17T09:36:00.108519Z',
+      updated_at: '2025-06-03T09:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 38,
+      title: 'StudyReview #38',
+      status: 'inactive',
+      created_at: '2025-06-25T00:36:00.108519Z',
+      updated_at: '2025-06-28T00:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 39,
+      title: 'StudyReview #39',
+      status: 'active',
+      created_at: '2025-07-24T10:36:00.108519Z',
+      updated_at: '2025-07-25T10:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 40,
+      title: 'StudyReview #40',
+      status: 'active',
+      created_at: '2025-06-10T18:36:00.108519Z',
+      updated_at: '2025-06-24T18:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 41,
+      title: 'StudyReview #41',
+      status: 'archived',
+      created_at: '2025-05-15T22:36:00.108519Z',
+      updated_at: '2025-06-03T22:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 42,
+      title: 'StudyReview #42',
+      status: 'active',
+      created_at: '2025-06-11T21:36:00.108519Z',
+      updated_at: '2025-06-29T21:36:00.108519Z',
+      stars: 2,
+    },
+    {
+      id: 43,
+      title: 'StudyReview #43',
+      status: 'archived',
+      created_at: '2025-07-25T00:36:00.108519Z',
+      updated_at: '2025-07-25T00:36:00.108519Z',
+      stars: 3,
+    },
+    {
+      id: 44,
+      title: 'StudyReview #44',
+      status: 'active',
+      created_at: '2025-07-31T19:36:00.108519Z',
+      updated_at: '2025-08-13T19:36:00.108519Z',
+      stars: 1,
+    },
+    {
+      id: 45,
+      title: 'StudyReview #45',
+      status: 'archived',
+      created_at: '2025-06-25T02:36:00.108519Z',
+      updated_at: '2025-06-27T02:36:00.108519Z',
+      stars: 5,
+    },
+    {
+      id: 46,
+      title: 'StudyReview #46',
+      status: 'active',
+      created_at: '2025-06-27T21:36:00.108519Z',
+      updated_at: '2025-07-14T21:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 47,
+      title: 'StudyReview #47',
+      status: 'archived',
+      created_at: '2025-05-11T22:36:00.108519Z',
+      updated_at: '2025-05-12T22:36:00.108519Z',
+      stars: 4,
+    },
+    {
+      id: 48,
+      title: 'StudyReview #48',
+      status: 'active',
+      created_at: '2025-07-15T05:36:00.108519Z',
+      updated_at: '2025-08-07T05:36:00.108519Z',
+      stars: 3,
+    },
+  ],
+} as any
+
+// ==== Access Control (No JWT) ====
+export const REQUIRE_ADMIN = false // 전역 보호 토글
+const RESOURCE_GUARD: Record<
+  string,
+  { read?: 'open' | 'admin'; write?: 'open' | 'admin' | 'superadmin' }
+> = {
+  users: { read: 'admin', write: 'superadmin' }, // users는 읽기/쓰기 보호 강하게
+  applications: { read: 'admin', write: 'admin' },
+  lectures: { read: 'admin', write: 'admin' },
+  'study-posts': { read: 'admin', write: 'admin' },
+  'study-groups': { read: 'admin', write: 'admin' },
+  'study-reviews': { read: 'admin', write: 'admin' },
+}
+
+function readGuard(resource: string) {
+  return RESOURCE_GUARD[resource]?.read ?? (REQUIRE_ADMIN ? 'admin' : 'open')
+}
+function writeGuard(resource: string) {
+  return RESOURCE_GUARD[resource]?.write ?? (REQUIRE_ADMIN ? 'admin' : 'open')
+}
+
+function requireByLevel(
+  request: Request,
+  level: 'open' | 'admin' | 'superadmin' | undefined
+) {
+  if (!level || level === 'open') return null
+
+  // 쿠키 폴백: 헤더 → document.cookie
+  const headerCookie = request.headers.get('cookie') || ''
+  const docCookie = typeof document !== 'undefined' ? document.cookie || '' : ''
+  const cookie = headerCookie || docCookie
+
+  const headerId = request.headers.get('X-Admin-Id')
+  const headerRole = request.headers.get('X-Admin-Role')
+
+  const mId = cookie.match(/(?:^|;\s*)admin_id=(\d+)/)
+  const mRole = cookie.match(/(?:^|;\s*)role=([a-zA-Z]+)/)
+
+  const adminId = headerId || (mId ? mId[1] : null)
+  const role = (headerRole || (mRole ? mRole[1] : '')).toLowerCase()
+
+  if (!adminId)
+    return HttpResponse.json({ detail: 'admin_id required' }, { status: 401 })
+
+  const exists = (db['users'] ?? []).some(
+    (u) => String(u.id) === String(adminId)
+  )
+  if (!exists)
+    return HttpResponse.json({ detail: 'invalid admin_id' }, { status: 401 })
+
+  if (level === 'superadmin' && role !== 'superadmin') {
+    return HttpResponse.json(
+      { detail: 'forbidden (superadmin only)' },
+      { status: 403 }
+    )
+  }
+  return null
+}
+
+// ==== Helpers ====
+function parseCursor(cursor: string | null): number {
+  if (!cursor) return 0
+  try {
+    const s =
+      typeof atob !== 'undefined'
+        ? atob(cursor)
+        : Buffer.from(cursor, 'base64').toString('utf-8')
+    return parseInt(s, 10) || 0
+  } catch {
+    return 0
+  }
+}
+const btoaSafe = (s: string) =>
+  typeof btoa !== 'undefined'
+    ? btoa(s)
+    : Buffer.from(s, 'utf-8').toString('base64')
+
+function qfilter(rows: Row[], q?: string) {
+  if (!q) return rows
+  const lower = q.toLowerCase()
+  return rows.filter((r) =>
+    Object.values(r).some((v) => String(v).toLowerCase().includes(lower))
+  )
+}
+
+function filters(rows: Row[], url: URL) {
+  const status = url.searchParams.get('status') // equal
+  const createdFrom = url.searchParams.get('created_from') // ISO date
+  const createdTo = url.searchParams.get('created_to')
+  if (status) rows = rows.filter((r) => r.status === status)
+  if (createdFrom)
+    rows = rows.filter((r) => new Date(r.created_at) >= new Date(createdFrom))
+  if (createdTo)
+    rows = rows.filter((r) => new Date(r.created_at) <= new Date(createdTo))
+  return rows
+}
+
+function sortRows(rows: Row[], url: URL) {
+  // ?sort=created_at or ?sort=-created_at (desc)
+  const sort = url.searchParams.get('sort')
+  if (!sort) return rows
+  const desc = sort.startsWith('-')
+  const key = desc ? sort.slice(1) : sort
+  return rows.slice().sort((a, b) => {
+    const va = (a as any)[key]
+    const vb = (b as any)[key]
+    if (va < vb) return desc ? 1 : -1
+    if (va > vb) return desc ? -1 : 1
+    return 0
+  })
+}
+
+function paginate(rows: Row[], cursor: string | null, pageSize: number) {
+  const start = parseCursor(cursor)
+  const end = Math.min(start + pageSize, rows.length)
+  const next = end < rows.length ? btoaSafe(String(end)) : null
+  return { slice: rows.slice(start, end), next }
+}
+
+// Simple rate limiter (per resource)
+const RATE: Record<string, number> = {}
+function rateLimit(resource: string): boolean {
+  const now = Date.now()
+  const last = RATE[resource] ?? 0
+  RATE[resource] = now
+  // If called again within 150ms, throttle -> 429
+  return now - last < 150
+}
+
+// Validation
+function validateRow(payload: Partial<Row>) {
+  const errors: Record<string, string[]> = {}
+  if (!payload.title || String(payload.title).trim().length < 2) {
+    errors['title'] = ['title은 2자 이상이어야 합니다.']
+  }
+  if (
+    payload.status &&
+    !['active', 'inactive', 'archived'].includes(String(payload.status))
+  ) {
+    errors['status'] = ['status는 active/inactive/archived 중 하나여야 합니다.']
+  }
+  return Object.keys(errors).length ? errors : null
+}
+
+// ==== Auth (No JWT) ====
+const authHandlers = [
+  http.post('/api/admin/auth/login', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}) as any)) as any
+    const admin_id = body?.admin_id
+    const role = (body?.role || 'admin').toLowerCase()
+    const ok = (db['users'] ?? []).some(
+      (u) => String(u.id) === String(admin_id)
+    )
+    await delay(180)
+    if (!ok)
+      return HttpResponse.json({ detail: 'invalid admin_id' }, { status: 401 })
+
+    // 쿠키를 각각 append (중요!)
+    const headers = new Headers()
+    headers.append('Set-Cookie', `admin_id=${admin_id}; Path=/; SameSite=Lax`)
+    headers.append('Set-Cookie', `role=${role}; Path=/; SameSite=Lax`)
+
+    return new HttpResponse(JSON.stringify({ ok: true, role }), {
+      status: 200,
+      headers,
+    })
+  }),
+
+  http.post('/api/admin/auth/logout', async () => {
+    await delay(80)
+    return new HttpResponse('', {
+      status: 204,
+      headers: {
+        'Set-Cookie':
+          'admin_id=; Max-Age=0; Path=/; SameSite=Lax, role=; Max-Age=0; Path=/; SameSite=Lax',
+      },
+    })
+  }),
+]
+
+// ==== Uploads (presign simulate) ====
+const uploadHandlers = [
+  http.post('/api/admin/uploads/presign', async ({ request }) => {
+    const err = requireByLevel(request, 'admin')
+    if (err) return err
+    await delay(120)
+    const key = `storage/${Date.now()}-${Math.random().toString(16).slice(2)}.bin`
+    return HttpResponse.json({
+      url: `https://mock.local/${key}`,
+      fields: { key, policy: 'mock-policy' },
+      method: 'PUT',
+    })
+  }),
+  http.put(/https:\/\/mock\.local\/storage\/.*/, async () => {
+    await delay(100)
+    return new HttpResponse('', { status: 204 })
+  }),
+]
+
+// ==== Bulk actions ====
+function bulkDelete(resource: string) {
+  return async ({ request }: any) => {
+    const err = requireByLevel(request, writeGuard(resource))
+    if (err) return err
+    const body = (await request.json().catch(() => ({ ids: [] }))) as {
+      ids: number[]
+    }
+    const rows = db[resource] ?? []
+    let cnt = 0
+    body.ids.forEach((id) => {
+      const idx = rows.findIndex((r) => r.id === id)
+      if (idx >= 0) {
+        rows.splice(idx, 1)
+        cnt++
+      }
+    })
+    await delay(150)
+    return HttpResponse.json({ deleted: cnt })
+  }
+}
+function bulkUpdateStatus(resource: string) {
+  return async ({ request }: any) => {
+    const err = requireByLevel(request, writeGuard(resource))
+    if (err) return err
+    const body = (await request
+      .json()
+      .catch(() => ({ ids: [], status: 'active' }))) as {
+      ids: number[]
+      status: Row['status']
+    }
+    const rows = db[resource] ?? []
+    let cnt = 0
+    rows.forEach((r) => {
+      if (body.ids.includes(r.id)) {
+        r.status = body.status
+        cnt++
+      }
+    })
+    await delay(150)
+    return HttpResponse.json({ updated: cnt, status: body.status })
+  }
+}
+
+// ==== Generic CRUD ====
+function listHandler(resource: string) {
+  return async ({ request }: { request: Request }) => {
+    const rg = readGuard(resource)
+    const err = requireByLevel(request, rg)
+    if (err) return err
+    if (rateLimit(resource))
+      return HttpResponse.json({ detail: 'Too Many Requests' }, { status: 429 })
+    const url = new URL(request.url)
+    const pageSize = parseInt(url.searchParams.get('page_size') ?? '20', 10)
+    const cursor = url.searchParams.get('cursor')
+    const q = url.searchParams.get('q') ?? undefined
+    let rows = db[resource] ?? []
+    rows = qfilter(rows, q)
+    rows = filters(rows, url)
+    rows = sortRows(rows, url)
+    const { slice, next } = paginate(rows, cursor, pageSize)
+    await delay(220 + Math.random() * 380)
+    const body: ListResp = {
+      results: slice,
+      next_cursor: next,
+      total: rows.length,
+    }
+    return HttpResponse.json(body)
+  }
+}
+
+function getHandler(resource: string) {
+  return async ({ request, params }: any) => {
+    const rg = readGuard(resource)
+    const err = requireByLevel(request, rg)
+    if (err) return err
+    const id = Number(params.id)
+    const row = (db[resource] ?? []).find((r) => r.id === id)
+    await delay(120 + Math.random() * 250)
+    if (!row) return HttpResponse.json({ detail: 'Not Found' }, { status: 404 })
+    return HttpResponse.json(row)
+  }
+}
+
+function createHandler(resource: string) {
+  return async ({ request }: any) => {
+    const wg = writeGuard(resource)
+    const err = requireByLevel(request, wg)
+    if (err) return err
+    const payload = (await request.json()) as Partial<Row>
+    const errors = validateRow(payload)
+    if (errors)
+      return HttpResponse.json(
+        { detail: 'Validation Error', errors },
+        { status: 422 }
+      )
+    const rows = db[resource] ?? (db[resource] = [])
+    const nextId = rows.length ? Math.max(...rows.map((r) => r.id)) + 1 : 1
+    const now = new Date().toISOString()
+    const created = {
+      id: nextId,
+      title: String(payload.title),
+      status: (payload.status ?? 'active') as any,
+      created_at: now,
+      updated_at: now,
+      ...payload,
+    }
+    rows.unshift(created as Row)
+    await delay(180)
+    return HttpResponse.json(created, { status: 201 })
+  }
+}
+
+function patchHandler(resource: string) {
+  return async ({ request, params }: any) => {
+    const wg = writeGuard(resource)
+    const err = requireByLevel(request, wg)
+    if (err) return err
+    const id = Number(params.id)
+    const payload = (await request.json()) as Partial<Row>
+    const errors = validateRow({ ...payload, title: payload.title ?? 'ok' })
+    if (errors)
+      return HttpResponse.json(
+        { detail: 'Validation Error', errors },
+        { status: 422 }
+      )
+    const rows = db[resource] ?? []
+    const idx = rows.findIndex((r) => r.id === id)
+    if (idx === -1)
+      return HttpResponse.json({ detail: 'Not Found' }, { status: 404 })
+    rows[idx] = {
+      ...rows[idx],
+      ...payload,
+      updated_at: new Date().toISOString(),
+    } as Row
+    await delay(150)
+    return HttpResponse.json(rows[idx])
+  }
+}
+
+function deleteHandler(resource: string) {
+  return async ({ request, params }: any) => {
+    const wg = writeGuard(resource)
+    const err = requireByLevel(request, wg)
+    if (err) return err
+    const id = Number(params.id)
+    const rows = db[resource] ?? []
+    const idx = rows.findIndex((r) => r.id === id)
+    if (idx === -1)
+      return HttpResponse.json({ detail: 'Not Found' }, { status: 404 })
+    rows.splice(idx, 1)
+    await delay(90)
+    return HttpResponse.text('', { status: 204 })
+  }
+}
+
+export const handlers = [
+  ...authHandlers,
+  ...uploadHandlers,
+  // lectures + bulk
+  http.get('/api/admin/lectures', listHandler('lectures')),
+  http.post('/api/admin/lectures', createHandler('lectures')),
+  http.get('/api/admin/lectures/:id', getHandler('lectures')),
+  http.patch('/api/admin/lectures/:id', patchHandler('lectures')),
+  http.delete('/api/admin/lectures/:id', deleteHandler('lectures')),
+  http.post('/api/admin/lectures/bulk-delete', bulkDelete('lectures')),
+  http.post(
+    '/api/admin/lectures/bulk-update-status',
+    bulkUpdateStatus('lectures')
+  ),
+  // users + bulk (superadmin writes)
+  http.get('/api/admin/users', listHandler('users')),
+  http.post('/api/admin/users', createHandler('users')),
+  http.get('/api/admin/users/:id', getHandler('users')),
+  http.patch('/api/admin/users/:id', patchHandler('users')),
+  http.delete('/api/admin/users/:id', deleteHandler('users')),
+  http.post('/api/admin/users/bulk-delete', bulkDelete('users')),
+  http.post('/api/admin/users/bulk-update-status', bulkUpdateStatus('users')),
+  // applications
+  http.get('/api/admin/applications', listHandler('applications')),
+  http.post('/api/admin/applications', createHandler('applications')),
+  http.get('/api/admin/applications/:id', getHandler('applications')),
+  http.patch('/api/admin/applications/:id', patchHandler('applications')),
+  http.delete('/api/admin/applications/:id', deleteHandler('applications')),
+  // study-posts
+  http.get('/api/admin/study-posts', listHandler('study-posts')),
+  http.post('/api/admin/study-posts', createHandler('study-posts')),
+  http.get('/api/admin/study-posts/:id', getHandler('study-posts')),
+  http.patch('/api/admin/study-posts/:id', patchHandler('study-posts')),
+  http.delete('/api/admin/study-posts/:id', deleteHandler('study-posts')),
+  // study-groups
+  http.get('/api/admin/study-groups', listHandler('study-groups')),
+  http.post('/api/admin/study-groups', createHandler('study-groups')),
+  http.get('/api/admin/study-groups/:id', getHandler('study-groups')),
+  http.patch('/api/admin/study-groups/:id', patchHandler('study-groups')),
+  http.delete('/api/admin/study-groups/:id', deleteHandler('study-groups')),
+  // study-reviews
+  http.get('/api/admin/study-reviews', listHandler('study-reviews')),
+  http.post('/api/admin/study-reviews', createHandler('study-reviews')),
+  http.get('/api/admin/study-reviews/:id', getHandler('study-reviews')),
+  http.patch('/api/admin/study-reviews/:id', patchHandler('study-reviews')),
+  http.delete('/api/admin/study-reviews/:id', deleteHandler('study-reviews')),
+]
