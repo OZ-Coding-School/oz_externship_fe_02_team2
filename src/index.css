@@ -7,5 +7,49 @@
 /* 전역 폰트 적용 */
 html,
 body {
+  /* font-family */
   font-family: var(--font-sans);
+
+  /* 컬러 변수화 */
+  /* Primary (브랜드 컬러 - 노랑 계열) */
+  --color-primary: #eab308;
+  --color-primary-50: #fefce8;
+  --color-primary-100: #fef9c3;
+  --color-primary-200: #fef08a;
+  --color-primary-300: #fde047;
+  --color-primary-400: #facc15;
+  --color-primary-500: #eab308;
+  --color-primary-600: #ca8a04;
+  --color-primary-700: #a16207;
+  --color-primary-800: #854d0e;
+  --color-primary-900: #713f12;
+
+  /* Primary Blue (어드민 기본 컬러 - 파랑 계열) */
+  --color-primary-blue: #2563eb;
+
+  /* Gray (중성 컬러 - 회색 계열) */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db; /* 300이 컴포넌트 border에 많이 쓰임  */
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Success (성공 상태 - 초록 계열) */
+  --color-success: #16a34a;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-800: #166534;
+
+  /* Danger (위험/에러 상태 - 빨강 계열) */
+  --color-danger: #dc2626;
+  --color-danger-100: #fee2e2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-800: #991b1b;
 }
