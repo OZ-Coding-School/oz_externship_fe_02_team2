@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
 import { cls } from '@utils/table'
 
 type MobileKeep =
-  | 'all' // 👈 모바일에서도 전부 보이게(기본)
+  | 'all' // 모바일에서도 전부 보이게(기본)
   | number // 앞에서부터 N개만 보이기(원하면 숫자로)
 
 type Props<T> = {
@@ -29,7 +30,6 @@ export function DataTable<T>({
   meta,
   toolbar,
   footerExtra,
-  mobileKeepCols = 'all', // 👈 모바일에서도 전부 보이게
   stickyHeader = true,
   nowrapCells = true,
   wrapCells = false,
@@ -53,9 +53,6 @@ export function DataTable<T>({
     onStateChange({ sort: next, page: 1 })
   }
 
-  const shouldHide = (idx: number) =>
-    typeof mobileKeepCols === 'number' ? idx >= mobileKeepCols : false // "all"이면 항상 false
-
   return (
     <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
       {/* 헤더 툴바 */}
@@ -67,8 +64,6 @@ export function DataTable<T>({
       {/* 가로 스크롤 */}
       <div className="overflow-x-auto">
         <table className="min-w-max text-xs sm:text-sm">
-          {' '}
-          {/* 👈 min-w-max: 컬럼 폭 유지 */}
           <thead
             className={cls(
               'bg-base-200/60',
@@ -76,7 +71,7 @@ export function DataTable<T>({
             )}
           >
             <tr>
-              {visibleCols.map((col, idx) => {
+              {visibleCols.map((col) => {
                 const isSorted = sort?.id === col.id
                 const arrow = isSorted ? (sort!.desc ? ' ▼' : ' ▲') : ''
                 return (
@@ -85,8 +80,7 @@ export function DataTable<T>({
                     className={cls(
                       'px-3 py-2 text-left font-medium whitespace-nowrap',
                       col.align === 'center' && 'text-center',
-                      col.align === 'right' && 'text-right',
-                      shouldHide(idx) && 'hidden md:table-cell' // 숫자일 때만 숨김
+                      col.align === 'right' && 'text-right'
                     )}
                     style={{ width: col.width }}
                   >
@@ -133,7 +127,7 @@ export function DataTable<T>({
                   key={rowKey(row, i)}
                   className="border-base-200 hover:bg-base-200/30 border-t"
                 >
-                  {visibleCols.map((col, idx) => {
+                  {visibleCols.map((col) => {
                     const raw =
                       typeof col.accessor === 'function'
                         ? col.accessor(row)
@@ -143,7 +137,6 @@ export function DataTable<T>({
                     const content = col.cell
                       ? col.cell({ value: raw, row, rowIndex: i })
                       : String(raw ?? '')
-
                     return (
                       <td
                         key={col.id}
@@ -151,9 +144,8 @@ export function DataTable<T>({
                           'px-3 py-2 align-middle',
                           col.align === 'center' && 'text-center',
                           col.align === 'right' && 'text-right',
-                          shouldHide(idx) && 'hidden md:table-cell',
-                          nowrapCells && 'whitespace-nowrap', // 모바일에서 줄바꿈 안 하고 가로 스크롤
-                          wrapCells && 'break-words whitespace-normal' // 필요 시 줄바꿈 모드
+                          nowrapCells && 'whitespace-nowrap',
+                          wrapCells && 'break-words whitespace-normal'
                         )}
                       >
                         {content}
