@@ -1,0 +1,578 @@
+openapi: 3.0.3
+info:
+  title: Admin Mock API (No JWT, Advanced)
+  version: 1.0.0
+servers:
+- url: https://mock.local/api
+paths:
+  /admin/lectures:
+    get:
+      summary: List lectures
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create lectures
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/lectures/{id}:
+    get:
+      summary: Get lectures
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update lectures
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete lectures
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/lectures/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/lectures/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/users:
+    get:
+      summary: List users
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create users
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/users/{id}:
+    get:
+      summary: Get users
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update users
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete users
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/users/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/users/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/applications:
+    get:
+      summary: List applications
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create applications
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/applications/{id}:
+    get:
+      summary: Get applications
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update applications
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete applications
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/applications/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/applications/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/study-posts:
+    get:
+      summary: List study-posts
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create study-posts
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/study-posts/{id}:
+    get:
+      summary: Get study-posts
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update study-posts
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete study-posts
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/study-posts/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/study-posts/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/study-groups:
+    get:
+      summary: List study-groups
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create study-groups
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/study-groups/{id}:
+    get:
+      summary: Get study-groups
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update study-groups
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete study-groups
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/study-groups/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/study-groups/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/study-reviews:
+    get:
+      summary: List study-reviews
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Query'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/CreatedFrom'
+      - $ref: '#/components/parameters/CreatedTo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResp'
+    post:
+      summary: Create study-reviews
+      responses:
+        '201':
+          description: Created
+        '422':
+          description: Validation Error
+  /admin/study-reviews/{id}:
+    get:
+      summary: Get study-reviews
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    patch:
+      summary: Update study-reviews
+      responses:
+        '200':
+          description: OK
+        '422':
+          description: Validation Error
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete study-reviews
+      responses:
+        '204':
+          description: No Content
+        '404':
+          description: Not Found
+  /admin/study-reviews/bulk-delete:
+    post:
+      summary: Bulk delete
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkIds'
+      responses:
+        '200':
+          description: OK
+  /admin/study-reviews/bulk-update-status:
+    post:
+      summary: Bulk update status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkStatus'
+      responses:
+        '200':
+          description: OK
+  /admin/auth/login:
+    post:
+      summary: "\uAD00\uB9AC\uC790 \uB85C\uADF8\uC778 (No JWT)"
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+  /admin/auth/logout:
+    post:
+      summary: "\uB85C\uADF8\uC544\uC6C3"
+      responses:
+        '204':
+          description: No Content
+  /admin/uploads/presign:
+    post:
+      summary: "\uC5C5\uB85C\uB4DC \uD504\uB9AC\uC0AC\uC778(\uC2DC\uBBAC\uB808\uC774\
+        \uC158)"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignResp'
+components:
+  parameters:
+    PageSize:
+      in: query
+      name: page_size
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+    Cursor:
+      in: query
+      name: cursor
+      schema:
+        type: string
+    Query:
+      in: query
+      name: q
+      schema:
+        type: string
+    Sort:
+      in: query
+      name: sort
+      schema:
+        type: string
+        example: -created_at
+    Status:
+      in: query
+      name: status
+      schema:
+        type: string
+        enum:
+        - active
+        - inactive
+        - archived
+    CreatedFrom:
+      in: query
+      name: created_from
+      schema:
+        type: string
+        format: date-time
+    CreatedTo:
+      in: query
+      name: created_to
+      schema:
+        type: string
+        format: date-time
+  schemas:
+    Row:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - archived
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - title
+      - created_at
+      - updated_at
+    ListResp:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Row'
+        next_cursor:
+          type: string
+          nullable: true
+        total:
+          type: integer
+    BulkIds:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - ids
+    BulkStatus:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - archived
+      required:
+      - ids
+      - status
+    PresignResp:
+      type: object
+      properties:
+        url:
+          type: string
+        fields:
+          type: object
+        method:
+          type: string
+      required:
+      - url
+      - method
