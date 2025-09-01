@@ -1,4 +1,4 @@
-import { getButtonClass } from './Button.styles'
+import getButtonClass from './Button.styles'
 import type { ButtonProps } from './Button.types'
 
 export default function Button(props: ButtonProps) {

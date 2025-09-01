@@ -16,4 +16,5 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   btnIcon?: ReactNode
   btnText?: string
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
+  disabled?: boolean
 }

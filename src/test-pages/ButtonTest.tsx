@@ -72,7 +72,6 @@ export default function ButtonTest() {
         btnStyle="primary"
         btnSize="large"
         btnText={`클릭 횟수: ${count}`}
-        onClick={() => setCount((c) => c + 1)}
         disabled
       />
     </div>
