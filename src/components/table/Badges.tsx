@@ -6,7 +6,7 @@ export const Badge = ({
   tone?: 'gray' | 'blue' | 'green' | 'red' | 'yellow' | 'purple'
 }) => {
   const map = {
-    gray: 'bg-base-200 text-base-content/80',
+    gray: 'bg-gray-100 text-gray-700',
     blue: 'bg-blue-100 text-blue-700',
     green: 'bg-emerald-100 text-emerald-700',
     red: 'bg-rose-100 text-rose-700',
