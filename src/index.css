@@ -4,13 +4,138 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* 컬러 변수화 */
+  /* Primary (브랜드 컬러 - 노랑 계열) */
+  --color-primary: #eab308;
+  --color-primary-50: #fefce8;
+  --color-primary-100: #fef9c3;
+  --color-primary-200: #fef08a;
+  --color-primary-300: #fde047;
+  --color-primary-400: #facc15;
+  --color-primary-500: #eab308;
+  --color-primary-600: #ca8a04;
+  --color-primary-700: #a16207;
+  --color-primary-800: #854d0e;
+  --color-primary-900: #713f12;
+
+  /* Primary Blue (어드민 기본 컬러 - 파랑 계열) */
+  --color-primary-blue: #2563eb;
+
+  /* Gray (중성 컬러 - 회색 계열) */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db; /* 300이 컴포넌트 border에 많이 쓰임  */
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Success (성공 상태 - 초록 계열) */
+  --color-success: #16a34a;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-800: #166534;
+
+  /* Danger (위험/에러 상태 - 빨강 계열) */
+  --color-danger: #dc2626;
+  --color-danger-100: #fee2e2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-800: #991b1b;
+
+  /* 타이포그래피 */
+  /* 텍스트 컬러 지정 */
+  --color-black: #111827;
+  --color-primary-text: #111827;
+  --color-secondary-text: #374151;
+  --color-muted-text: #6b7280;
+  --color-brand-text: #ca8a04;
+  --color-error-text: #dc2626;
+  --color-success-text: #16a34a;
+
+  /* font-sans를 Pretendard로 설정 */
   --font-sans: 'Pretendard', sans-serif;
 }
 
-/* 전역 폰트 적용 */
+/* 전역 폰트 & 스타일 적용 */
 html,
 body {
+  /* font-sans(Pretendard) */
   font-family: var(--font-sans);
+  color: var(--color-primary-text);
+  line-height: var(--leading-normal);
+  font-weight: normal;
+}
+
+/* 타이포그래피 - 전역 클래스(utility aliases) */
+/* 헤딩(Headings) */
+@utility h1 {
+  @apply text-primary-text text-4xl leading-10 font-bold;
+}
+@utility h2 {
+  @apply text-primary-text text-3xl leading-9 font-bold;
+}
+@utility h3 {
+  @apply text-primary-text text-2xl leading-8 font-bold;
+}
+@utility h4 {
+  @apply text-primary-text text-xl leading-7 font-semibold;
+}
+@utility h5 {
+  @apply text-primary-text text-lg leading-7 font-semibold;
+}
+
+/* 본문 텍스트(Body Text) */
+@utility body-lg {
+  @apply text-primary-text text-lg leading-7 font-normal;
+}
+@utility body-base {
+  @apply text-primary-text text-base leading-6 font-normal;
+}
+@utility body-sm {
+  @apply text-secondary-text text-sm leading-5 font-normal;
+}
+@utility body-xs {
+  @apply text-xs leading-4 font-normal text-gray-600;
+}
+
+/* HTML 태그에 기본 스타일 매핑 */
+@layer base {
+  h1 {
+    @apply h1;
+  }
+  h2 {
+    @apply h2;
+  }
+  h3 {
+    @apply h3;
+  }
+  h4 {
+    @apply h4;
+  }
+  h5 {
+    @apply h5;
+  }
+
+  /* p 태그에는 디폴트로 기본 본문 텍스트(body-base) 적용 */
+  p {
+    @apply body-base;
+  }
+  strong {
+    @apply font-semibold;
+  }
+  em {
+    @apply italic;
+  }
+
+  /* 와이어프레임 참고하여 a 태그 디폴트 스타일링 */
+  a {
+    @apply text-brand-text body-sm cursor-pointer no-underline hover:underline;
+  }
 }
 
 @theme inline {
