@@ -26,7 +26,7 @@ const baseBtn =
   'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'
 
 const activeBtn =
-  'inline-flex select-none items-center justify-center rounded-md border border-primary-blue bg-primary-blue px-3 py-1.5 text-sm text-white'
+  'inline-flex select-none items-center justify-center rounded-md border border-primary-blue bg-primary-blue px-3 py-1.5 body-sm text-white'
 
 export default function Pagination({
   totalPages,
@@ -36,18 +36,26 @@ export default function Pagination({
 }: Props) {
   if (totalPages <= 1) return null
 
+  const toInt = (v: unknown, fb = 1) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? Math.floor(n) : fb
+  }
+
+  const safeTotal = Math.max(1, toInt(totalPages, 1))
+  const safePage = clamp(toInt(currentPage, 1), 1, safeTotal)
+
   const page = clamp(currentPage, 1, totalPages)
-  const win = threeWindow(page, totalPages)
+  const threeWin = threeWindow(safePage, safeTotal)
 
   const first = 1
   const last = totalPages
 
-  const showFirst = !win.includes(first)
-  const showLast = !win.includes(last)
+  const showFirst = !threeWin.includes(first)
+  const showLast = !threeWin.includes(last)
 
   const leftGapStart = showFirst ? first + 1 : -1
-  const leftGapEnd = showFirst ? win[0] - 1 : -1
-  const rightGapStart = showLast ? win[win.length - 1] + 1 : -1
+  const leftGapEnd = showFirst ? threeWin[0] - 1 : -1
+  const rightGapStart = showLast ? threeWin[threeWin.length - 1] + 1 : -1
   const rightGapEnd = showLast ? last - 1 : -1
 
   const go = (p: number) => onChange(clamp(p, 1, totalPages))
@@ -82,7 +90,7 @@ export default function Pagination({
           side="left"
         />
       )}
-      {win.map((n) => (
+      {threeWin.map((n) => (
         <button
           key={n}
           type="button"
