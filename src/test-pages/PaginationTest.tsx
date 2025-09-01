@@ -27,7 +27,7 @@ export default function PaginationTest() {
       <Pagination
         totalPages={totalPages}
         currentPage={page}
-        onChange={setPage} // ❗️함수 자체를 넘겨라. setPage() 금지
+        onChange={setPage}
       />
     </div>
   )
