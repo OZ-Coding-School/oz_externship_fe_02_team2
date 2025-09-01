@@ -1,21 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react'
+import type { Column, SortState, TableMeta, TableState } from '@type/table'
 import { cls } from '@utils/table'
-import type {
-  Column,
-  SortState,
-  TableMeta,
-  TableState,
-} from '../../types/table'
+import React from 'react'
 
 type Props<T> = {
-  columns: Column<T>[]
-  data: T[]
+  columns?: Column<T>[] // ← optional로 두고 내부에서 기본값 처리
+  data?: T[] // ← optional로 두고 내부에서 기본값 처리
   state: TableState
-  onStateChange?: (next: Partial<TableState>) => void // page/pageSize/sort/search 변경
+  onStateChange?: (next: Partial<TableState>) => void
   meta: TableMeta<T>
-  toolbar?: React.ReactNode // 상단 우측(검색/필터/액션)
-  footerExtra?: React.ReactNode // 하단 우측(버튼 등)
+  toolbar?: React.ReactNode
+  footerExtra?: React.ReactNode
 }
 
 export function DataTable<T>({
@@ -27,8 +21,36 @@ export function DataTable<T>({
   toolbar,
   footerExtra,
 }: Props<T>) {
-  const visibleCols = columns.filter((c) => !c.hidden)
-  const { page, pageSize, sort } = state
+  // 안전 기본값
+  const safeCols = Array.isArray(columns) ? columns : []
+  const safeData = Array.isArray(data) ? data : []
+  const visibleCols = safeCols.filter((c) => !c.hidden)
+
+  // 기본 rowKey (제공 안되면 index 사용)
+  const rowKey = meta?.rowKey ?? ((_: T, i: number) => i)
+
+  // 방어적 경고 (개발 중 디버깅에 도움)
+  if (!Array.isArray(columns)) {
+    console.warn(
+      '[DataTable] columns가 전달되지 않았습니다. 빈 배열로 처리합니다.'
+    )
+  }
+  if (!Array.isArray(data)) {
+    console.warn(
+      '[DataTable] data가 전달되지 않았습니다. 빈 배열로 처리합니다.'
+    )
+  }
+  if (!meta) {
+    console.warn(
+      '[DataTable] meta가 전달되지 않았습니다. 기본 rowKey만 사용합니다.'
+    )
+  }
+
+  const { page, pageSize, sort } = state ?? {
+    page: 1,
+    pageSize: 10,
+    sort: null,
+  }
 
   const handleSort = (col: Column<T>) => {
     if (!col.sortable || !onStateChange) return
@@ -85,28 +107,28 @@ export function DataTable<T>({
           </thead>
 
           <tbody>
-            {meta.loading ? (
+            {meta?.loading ? (
               <tr>
                 <td
                   className="text-base-content/60 px-3 py-8 text-center"
-                  colSpan={visibleCols.length}
+                  colSpan={Math.max(1, visibleCols.length)}
                 >
                   불러오는 중…
                 </td>
               </tr>
-            ) : data.length === 0 ? (
+            ) : safeData.length === 0 ? (
               <tr>
                 <td
                   className="text-base-content/60 px-3 py-10 text-center"
-                  colSpan={visibleCols.length}
+                  colSpan={Math.max(1, visibleCols.length)}
                 >
-                  {meta.emptyText ?? '데이터가 없습니다.'}
+                  {meta?.emptyText ?? '데이터가 없습니다.'}
                 </td>
               </tr>
             ) : (
-              data.map((row, i) => (
+              safeData.map((row, i) => (
                 <tr
-                  key={meta.rowKey(row, i)}
+                  key={rowKey(row, i)}
                   className="border-base-200 hover:bg-base-200/30 border-t"
                 >
                   {visibleCols.map((col) => {
@@ -143,10 +165,16 @@ export function DataTable<T>({
       <div className="border-base-300 flex items-center justify-between gap-2 border-t p-3">
         <div className="text-base-content/60 text-xs">
           페이지 {page} · 페이지당 {pageSize}
-          {typeof meta.total === 'number' && <> · 총 {meta.total}건</>}
+          {typeof meta?.total === 'number' && <> · 총 {meta.total}건</>}
         </div>
         <div className="flex items-center gap-2">
+          {/* 접근성 라벨 추가 (ID 충돌 피하려면 상위에서 useId로 내려줘도 OK) */}
+          <label htmlFor="page-size" className="sr-only">
+            페이지당 항목 수
+          </label>
           <select
+            id="page-size"
+            name="page-size"
             className="select select-bordered select-xs"
             value={pageSize}
             onChange={(e) =>
@@ -156,12 +184,14 @@ export function DataTable<T>({
           >
             {[5, 10, 20, 50].map((n) => (
               <option key={n} value={n}>
-                {n}/페이지
+                {n} / 페이지
               </option>
             ))}
           </select>
+
           <div className="join">
             <button
+              type="button"
               className="btn btn-xs join-item"
               disabled={page <= 1}
               onClick={() => onStateChange?.({ page: page - 1 })}
@@ -169,6 +199,7 @@ export function DataTable<T>({
               이전
             </button>
             <button
+              type="button"
               className="btn btn-xs join-item"
               onClick={() => onStateChange?.({ page: page + 1 })}
             >
