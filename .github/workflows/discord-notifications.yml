@@ -6,280 +6,213 @@ on:
   pull_request_review:
     types: [submitted]
 
+env:
+  WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
 jobs:
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       # PR 생성 알림
       - name: Notify on PR Opened
-        if: github.event.action == 'opened'
-        run: |
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d "{
-                "embeds": [{
-                  "title": "🆕 새로운 PR이 생성되었습니다!",
-                  "description": "[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})",
-                  "color": 3447003,
-                  "fields": [
-                    {
-                      "name": "👤 작성자",
-                      "value": "${{ github.event.pull_request.user.login }}",
-                      "inline": true
-                    },
-                    {
-                      "name": "🌿 브랜치",
-                      "value": "`${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`",
-                      "inline": true
-                    },
-                    {
-                      "name": "📊 변경사항",
-                      "value": "+${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }}",
-                      "inline": true
-                    }
-                  ],
-                  "timestamp": "${{ github.event.pull_request.created_at }}"
-                }]
-              }" \
-              ${{ secrets.DISCORD_WEBHOOK_URL }}
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
 
-      # 여러 리뷰어 멘션 (중복 방지 버전)
-      - name: Mention Reviewers
-        if: github.event.action == 'review_requested'
-        run: |
-          # 현재 리뷰어가 첫 번째 리뷰어인지 확인 (중복 방지)
-          REVIEWERS_JSON='${{ toJSON(github.event.pull_request.requested_reviewers) }}'
-          FIRST_REVIEWER=$(echo "$REVIEWERS_JSON" | jq -r '.[0].login // empty')
-          CURRENT_REVIEWER="${{ github.event.requested_reviewer.login }}"
+            const payload = {
+              embeds: [{
+                title: "🆕 새로운 PR이 생성되었습니다!",
+                description: `[${pr.title}](${pr.html_url})`,
+                color: 3447003,
+                fields: [
+                  { name: "👤 작성자", value: pr.user?.login ?? "unknown", inline: true },
+                  { name: "🌿 브랜치", value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: true },
+                  { name: "📊 변경사항", value: `+${pr.additions ?? 0} -${pr.deletions ?? 0}`, inline: true },
+                ],
+                timestamp: pr.created_at
+              }]
+            };
 
-          echo "현재 리뷰어: $CURRENT_REVIEWER"
-          echo "첫 번째 리뷰어: $FIRST_REVIEWER"
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
 
-          # 첫 번째 리뷰어이거나 리뷰어가 한 명일 때만 실행
-          if [ "$CURRENT_REVIEWER" = "$FIRST_REVIEWER" ] || [ -z "$FIRST_REVIEWER" ]; then
-            echo "알림 전송 시작..."
-            
-            # 각 리뷰어의 login 값을 추출하여 멘션 문자열 생성
-            MENTIONS=""
-            for login in $(echo "$REVIEWERS_JSON" | jq -r '.[] | .login'); do
-              case "$login" in
-                "chen4023")
-                  MENTIONS="$MENTIONS <@683563560063991848>"
-                  ;;
-                "Kwonyeojiny")
-                  MENTIONS="$MENTIONS <@579296258091646976>"
-                  ;;
-                "wrongstory")
-                  MENTIONS="$MENTIONS <@256645987638968320>"
-                  ;;
-                "minjekim64")
-                  MENTIONS="$MENTIONS <@595553015990059009>"
-                  ;;
-                "rlaalsckd4")
-                  MENTIONS="$MENTIONS <@704883949146472449>"
-                  ;;
-                "makee-ham")
-                  MENTIONS="$MENTIONS <@534334882512633862>"
-                  ;;
-                "shin-minhyuk")
-                  MENTIONS="$MENTIONS <@1121074841102069814>"
-                  ;;
-                *)
-                  MENTIONS="$MENTIONS @$login"
-                  ;;
-              esac
-            done
+      # 여러 리뷰어 멘션 (중복 방지 포함)
+      - name: Mention Reviewers (on review_requested)
+        if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
 
-            # 만약 요청된 리뷰어가 없으면 현재 리뷰어로 대체
-            if [ -z "$MENTIONS" ]; then
-              case "$CURRENT_REVIEWER" in
-                "chen4023") MENTIONS="<@683563560063991848>" ;;
-                "Kwonyeojiny") MENTIONS="<@579296258091646976>" ;;
-                "wrongstory") MENTIONS="<@256645987638968320>" ;;
-                "minjekim64") MENTIONS="<@595553015990059009>" ;;
-                "rlaalsckd4") MENTIONS="<@704883949146472449>" ;;
-                "makee-ham") MENTIONS="<@534334882512633862>" ;;
-                "shin-minhyuk") MENTIONS="<@1121074841102069814>" ;;                
-                *) MENTIONS="@$CURRENT_REVIEWER" ;;
-              esac
-            fi
+            // 요청된 전체 리뷰어 목록과 현재(트리거) 리뷰어
+            const reviewers = (pr.requested_reviewers ?? []).map(u => u.login);
+            const current = context.payload.requested_reviewer?.login ?? null;
+            const first = reviewers[0] ?? null;
 
-            # 안전한 JSON 생성
-            curl -H "Content-Type: application/json" \
-                 -X POST \
-                 -d "{
-                   \"content\": \"🔍 **리뷰 요청이 도착했습니다!** $MENTIONS\",
-                   \"embeds\": [{
-                     \"title\": \"리뷰를 부탁드립니다! 👀\",
-                     \"description\": \"[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\",
-                     \"color\": 16776960,
-                     \"fields\": [
-                       {
-                         \"name\": \"👤 PR 작성자\",
-                         \"value\": \"${{ github.event.pull_request.user.login }}\",
-                         \"inline\": true
-                       },
-                       {
-                         \"name\": \"📁 변경사항\",
-                         \"value\": \"파일 ${{ github.event.pull_request.changed_files }}개 | +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }}\",
-                         \"inline\": false
-                       }
-                     ]
-                   }]
-                 }" \
-                 ${{ secrets.DISCORD_WEBHOOK_URL }}
-          else
-            echo "중복 실행 방지: 이미 첫 번째 리뷰어가 알림을 전송했습니다."
-          fi
+            // 첫 번째 리뷰어만 알림 전송 (중복 방지)
+            if (first && current && current !== first) {
+              core.info(`Skip: ${current} is not the first reviewer (${first}).`);
+              return;
+            }
+
+            // GitHub login -> Discord mention 매핑
+            const mapMention = (login) => ({
+              "chen4023": "<@683563560063991848>",
+              "Kwonyeojiny": "<@579296258091646976>",
+              "wrongstory": "<@256645987638968320>",
+              "minjekim64": "<@595553015990059009>",
+              "rlaalsckd4": "<@704883949146472449>",
+              "makee-ham": "<@534334882512633862>",
+              "shin-minhyuk": "<@1121074841102069814>",
+            }[login] ?? `@${login}`);
+
+            // 멘션 목록 (요청된 리뷰어가 없으면 current 사용)
+            const targetLogins = reviewers.length ? reviewers : (current ? [current] : []);
+            if (!targetLogins.length) {
+              core.info("No reviewers to notify.");
+              return;
+            }
+            const mentions = targetLogins.map(mapMention).join(" ");
+
+            const payload = {
+              content: `🔍 **리뷰 요청이 도착했습니다!** ${mentions}`,
+              embeds: [{
+                title: "리뷰를 부탁드립니다! 👀",
+                description: `[${pr.title}](${pr.html_url})`,
+                color: 16776960,
+                fields: [
+                  { name: "👤 PR 작성자", value: pr.user?.login ?? "unknown", inline: true },
+                  { name: "📁 변경사항", value: `파일 ${pr.changed_files ?? 0}개 | +${pr.additions ?? 0} -${pr.deletions ?? 0}`, inline: false },
+                ],
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
 
       # PR 병합/닫힘 알림
       - name: Notify on PR Closed
-        if: github.event.action == 'closed'
-        run: |
-          if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
-            STATUS="✅ 병합 완료!"
-            COLOR="65280"
-            EMOJI="🎉"
-          else
-            STATUS="❌ PR 닫힘"
-            COLOR="16711680"
-            EMOJI="🚫"
-          fi
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
 
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d "{
-                \"embeds\": [{
-                  \"title\": \"$EMOJI $STATUS\",
-                  \"description\": \"[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\",
-                  \"color\": $COLOR,
-                  \"fields\": [
-                    {
-                      \"name\": \"👤 작성자\",
-                      \"value\": \"${{ github.event.pull_request.user.login }}\",
-                      \"inline\": true
-                    },
-                    {
-                      \"name\": \"🌿 브랜치\",
-                      \"value\": \"\`${{ github.event.pull_request.head.ref }}\` → \`${{ github.event.pull_request.base.ref }}\`\",
-                      \"inline\": true
-                    }
-                  ]
-                }]
-              }" \
-              ${{ secrets.DISCORD_WEBHOOK_URL }}
+            const merged = !!pr.merged;
+            const statusTitle = merged ? "✅ 병합 완료!" : "❌ PR 닫힘";
+            const emoji = merged ? "🎉" : "🚫";
+            const color = merged ? 65280 : 16711680;
 
-      # 리뷰 승인 시 PR 작성자 멘션
+            const payload = {
+              embeds: [{
+                title: `${emoji} ${statusTitle}`,
+                description: `[${pr.title}](${pr.html_url})`,
+                color,
+                fields: [
+                  { name: "👤 작성자", value: pr.user?.login ?? "unknown", inline: true },
+                  { name: "🌿 브랜치", value: `\`${pr.head.ref}\` → \`${pr.base.ref}\``, inline: true },
+                ],
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+      # 리뷰 승인 알림
       - name: Notify on Review Approved
-        if: github.event.review.state == 'approved'
-        run: |
-          # PR 작성자 Discord ID 매핑
-          case "${{ github.event.pull_request.user.login }}" in
-            "chen4023")
-              AUTHOR_MENTION="<@683563560063991848>"
-              ;;
-            "Kwonyeojiny")
-              AUTHOR_MENTION="<@579296258091646976>"
-              ;;
-            "wrongstory")
-              AUTHOR_MENTION="<@256645987638968320>"
-              ;;
-            "minjekim64")
-              AUTHOR_MENTION="<@595553015990059009>"
-              ;;
-            "rlaalsckd4")
-              AUTHOR_MENTION="<@704883949146472449>"
-              ;;
-            "makee-ham")
-              AUTHOR_MENTION="<@534334882512633862>"
-              ;;
-            "shin-minhyuk")
-              AUTHOR_MENTION="<@1121074841102069814>"
-              ;;
-            *)
-              AUTHOR_MENTION="@${{ github.event.pull_request.user.login }}"
-              ;;
-          esac
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
+            const review = context.payload.review;
 
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d "{
-                \"content\": \"👍 **리뷰가 승인되었습니다!** $AUTHOR_MENTION\",
-                \"embeds\": [{
-                  \"title\": \"✅ 리뷰 승인 완료!\",
-                  \"description\": \"[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\",
-                  \"color\": 65280,
-                  \"fields\": [
-                    {
-                      \"name\": \"👀 리뷰어\",
-                      \"value\": \"${{ github.event.review.user.login }}\",
-                      \"inline\": true
-                    },
-                    {
-                      \"name\": \"💬 리뷰 내용\",
-                      \"value\": \"승인되었습니다!\",
-                      \"inline\": false
-                    }
-                  ],
-                  \"footer\": {
-                    \"text\": \"이제 병합할 수 있습니다! 🚀\"
-                  }
-                }]
-              }" \
-              ${{ secrets.DISCORD_WEBHOOK_URL }}
+            const mapMention = (login) => ({
+              "chen4023": "<@683563560063991848>",
+              "Kwonyeojiny": "<@579296258091646976>",
+              "wrongstory": "<@256645987638968320>",
+              "minjekim64": "<@595553015990059009>",
+              "rlaalsckd4": "<@704883949146472449>",
+              "makee-ham": "<@534334882512633862>",
+              "shin-minhyuk": "<@1121074841102069814>",
+            }[login] ?? `@${login}`);
 
-      # 변경 사항 요청 알림
+            const authorMention = mapMention(pr.user?.login ?? "unknown");
+
+            const payload = {
+              content: `👍 **리뷰가 승인되었습니다!** ${authorMention}`,
+              embeds: [{
+                title: "✅ 리뷰 승인 완료!",
+                description: `[${pr.title}](${pr.html_url})`,
+                color: 65280,
+                fields: [
+                  { name: "👀 리뷰어", value: review.user?.login ?? "unknown", inline: true },
+                  { name: "💬 리뷰 내용", value: "승인되었습니다!", inline: false },
+                ],
+                footer: { text: "이제 병합할 수 있습니다! 🚀" }
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+      # 변경 요청 알림
       - name: Notify on Changes Requested
-        if: github.event.review.state == 'changes_requested'
-        run: |
-          # PR 작성자 Discord ID 매핑
-          case "${{ github.event.pull_request.user.login }}" in
-            "chen4023")
-              AUTHOR_MENTION="<@683563560063991848>"
-              ;;
-            "Kwonyeojiny")
-              AUTHOR_MENTION="<@579296258091646976>"
-              ;;
-            "wrongstory")
-              AUTHOR_MENTION="<@256645987638968320>"
-              ;;
-            "minjekim64")
-              AUTHOR_MENTION="<@595553015990059009>"
-              ;;
-            "rlaalsckd4")
-              AUTHOR_MENTION="<@704883949146472449>"
-              ;;
-            "makee-ham")
-              AUTHOR_MENTION="<@534334882512633862>"
-              ;;
-            "shin-minhyuk")
-              AUTHOR_MENTION="<@1121074841102069814>"
-              ;;
-            *)
-              AUTHOR_MENTION="@${{ github.event.pull_request.user.login }}"
-              ;;
-          esac
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
+            const review = context.payload.review;
 
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d "{
-                \"content\": \"🔄 **변경사항이 요청되었습니다!** $AUTHOR_MENTION\",
-                \"embeds\": [{
-                  \"title\": \"❗ 수정이 필요합니다\",
-                  \"description\": \"[${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})\",
-                  \"color\": 16776960,
-                  \"fields\": [
-                    {
-                      \"name\": \"👀 리뷰어\",
-                      \"value\": \"${{ github.event.review.user.login }}\",
-                      \"inline\": true
-                    },
-                    {
-                      \"name\": \"📝 요청사항\",
-                      \"value\": \"변경사항이 요청되었습니다. 자세한 내용은 PR을 확인해주세요.\",
-                      \"inline\": false
-                    }
-                  ]
-                }]
-              }" \
-              ${{ secrets.DISCORD_WEBHOOK_URL }}
+            const mapMention = (login) => ({
+              "chen4023": "<@683563560063991848>",
+              "Kwonyeojiny": "<@579296258091646976>",
+              "wrongstory": "<@256645987638968320>",
+              "minjekim64": "<@595553015990059009>",
+              "rlaalsckd4": "<@704883949146472449>",
+              "makee-ham": "<@534334882512633862>",
+              "shin-minhyuk": "<@1121074841102069814>",
+            }[login] ?? `@${login}`);
+
+            const authorMention = mapMention(pr.user?.login ?? "unknown");
+
+            const payload = {
+              content: `🔄 **변경사항이 요청되었습니다!** ${authorMention}`,
+              embeds: [{
+                title: "❗ 수정이 필요합니다",
+                description: `[${pr.title}](${pr.html_url})`,
+                color: 16776960,
+                fields: [
+                  { name: "👀 리뷰어", value: review.user?.login ?? "unknown", inline: true },
+                  { name: "📝 요청사항", value: "변경사항이 요청되었습니다. 자세한 내용은 PR을 확인해주세요.", inline: false },
+                ],
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });

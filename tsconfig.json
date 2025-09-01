@@ -1,24 +1,7 @@
 {
   "compilerOptions": {
     "strict": true, // 루트 설정에도 strict 권장
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@api/*": ["src/api/*"],
-      "@assets/*": ["src/assets/*"],
-      "@components/*": ["src/components/*"],
-      "@constants/*": ["src/constants/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@lib/*": ["src/lib/*"],
-      "@mocks/*": ["src/mocks/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@pages/*": ["src/pages/*"],
-      "@router/*": ["src/router/*"],
-      "@store/*": ["src/store/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"]
-    },
-    "types": ["node"]
+    "forceConsistentCasingInFileNames": true
   },
   "files": [],
   "references": [
