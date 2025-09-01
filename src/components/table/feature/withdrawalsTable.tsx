@@ -4,6 +4,7 @@ import { DataTable } from '@components/table/DataTable'
 import { Badge } from '@components/table/Badges'
 import { fmtDate } from '@utils/table'
 import type { Column, TableState } from '@type/table'
+import { roleToTone } from '@utils/mappers'
 
 export type WithdrawalRow = {
   wid: string
@@ -30,7 +31,7 @@ const columns: Column<WithdrawalRow>[] = [
     header: '권한',
     accessor: 'role',
     width: '100px',
-    cell: ({ value }) => <Badge>{value}</Badge>,
+    cell: ({ value }) => <Badge tone={roleToTone(value)}>{value}</Badge>,
   },
   {
     id: 'birth',

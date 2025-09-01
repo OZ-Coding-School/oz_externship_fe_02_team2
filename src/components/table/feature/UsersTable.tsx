@@ -4,6 +4,7 @@ import { DataTable } from '@components/table/DataTable'
 import { Badge } from '@components/table/Badges'
 import { fmtDate } from '@utils/table'
 import type { Column, TableState } from '@type/table'
+import { roleToTone } from '@utils/mappers'
 
 export type UserRow = {
   memberId: string
@@ -34,21 +35,13 @@ const columns: Column<UserRow>[] = [
     header: '권한',
     accessor: 'role',
     width: '100px',
-    cell: ({ value }) => (
-      <Badge
-        tone={
-          value === '관리자' ? 'purple' : value === '스태프' ? 'blue' : 'gray'
-        }
-      >
-        {value}
-      </Badge>
-    ),
+    cell: ({ value }) => <Badge tone={roleToTone(value)}>{value}</Badge>,
   },
   {
     id: 'status',
     header: '상태',
     accessor: 'status',
-    width: '90px',
+    width: '100px',
     cell: ({ value }) => (
       <Badge
         tone={value === '활성' ? 'green' : value === '정지' ? 'red' : 'yellow'}
@@ -60,13 +53,14 @@ const columns: Column<UserRow>[] = [
   {
     id: 'joinedAt',
     header: '가입일',
-    accessor: (r) => fmtDate(r.joinedAt),
+    accessor: (r) => fmtDate(r.joinedAt, { withTime: false }),
     width: '150px',
   },
   {
     id: 'withdrawnAt',
     header: '탈퇴요청일',
-    accessor: (r) => (r.withdrawnAt ? fmtDate(r.withdrawnAt) : '-'),
+    accessor: (r) =>
+      r.withdrawnAt ? fmtDate(r.withdrawnAt, { withTime: false }) : '-',
     width: '160px',
   },
 ]
