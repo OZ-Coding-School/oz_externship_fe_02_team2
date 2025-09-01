@@ -1,3 +1,4 @@
+import { getButtonClass } from './Button.styles'
 import type { ButtonProps } from './Button.types'
 
 export default function Button(props: ButtonProps) {
@@ -7,10 +8,16 @@ export default function Button(props: ButtonProps) {
     btnIcon,
     btnText,
     onClick,
+    disabled,
   } = props
 
   return (
-    <button type="button" onClick={onClick} className="">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={getButtonClass(btnStyle, btnSize)}
+    >
       {btnIcon && <span>{btnIcon}</span>}
       {btnText && btnText}
     </button>
