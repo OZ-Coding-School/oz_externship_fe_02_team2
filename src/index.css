@@ -58,41 +58,79 @@
   --font-sans: 'Pretendard', sans-serif;
 }
 
-/* 전역 폰트 적용 */
+/* 전역 폰트 & 스타일 적용 */
 html,
 body {
   /* font-sans(Pretendard) */
   font-family: var(--font-sans);
+  color: var(--color-primary-text);
+  line-height: var(--leading-normal);
+  font-weight: normal;
 }
 
 /* 타이포그래피 - 전역 클래스(utility aliases) */
 /* 헤딩(Headings) */
 @utility h1 {
-  @apply text-4xl leading-10 font-bold;
+  @apply text-primary-text text-4xl leading-10 font-bold;
 }
 @utility h2 {
-  @apply text-3xl leading-9 font-bold;
+  @apply text-primary-text text-3xl leading-9 font-bold;
 }
 @utility h3 {
-  @apply text-2xl leading-8 font-bold;
+  @apply text-primary-text text-2xl leading-8 font-bold;
 }
 @utility h4 {
-  @apply text-xl leading-7 font-semibold;
+  @apply text-primary-text text-xl leading-7 font-semibold;
 }
 @utility h5 {
-  @apply text-lg leading-7 font-semibold;
+  @apply text-primary-text text-lg leading-7 font-semibold;
 }
 
 /* 본문 텍스트(Body Text) */
 @utility body-lg {
-  @apply text-lg leading-7;
+  @apply text-primary-text text-lg leading-7 font-normal;
 }
 @utility body-base {
-  @apply text-base leading-6;
+  @apply text-primary-text text-base leading-6 font-normal;
 }
 @utility body-sm {
-  @apply text-sm leading-5;
+  @apply text-secondary-text text-sm leading-5 font-normal;
 }
 @utility body-xs {
-  @apply text-xs leading-4;
+  @apply text-xs leading-4 font-normal text-gray-600;
+}
+
+/* HTML 태그에 기본 스타일 매핑 */
+@layer base {
+  h1 {
+    @apply h1;
+  }
+  h2 {
+    @apply h2;
+  }
+  h3 {
+    @apply h3;
+  }
+  h4 {
+    @apply h4;
+  }
+  h5 {
+    @apply h5;
+  }
+
+  /* p 태그에는 디폴트로 기본 본문 텍스트(body-base) 적용 */
+  p {
+    @apply body-base;
+  }
+  strong {
+    @apply font-semibold;
+  }
+  em {
+    @apply italic;
+  }
+
+  /* 와이어프레임 참고하여 a 태그 디폴트 스타일링 */
+  a {
+    @apply text-brand-text body-sm cursor-pointer no-underline hover:underline;
+  }
 }
