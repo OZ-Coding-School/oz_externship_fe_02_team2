@@ -130,29 +130,47 @@ export default function Pagination({
     side: 'left' | 'right'
   }) {
     return (
-      <div className="group relative">
-        <div className={baseBtn + ' cursor-default'} aria-hidden="true">
+      <div className="group relative inline-block">
+        <button
+          type="button"
+          className={baseBtn + ' cursor-default'}
+          aria-haspopup="menu"
+          aria-expanded="false"
+          tabIndex={0}
+        >
           …
-        </div>
+        </button>
         {/* Popover */}
         <div
-          className={
-            'invisible absolute z-20 mt-2 max-h-56 w-40 overflow-auto rounded-lg border border-gray-200 bg-white p-2 shadow-md group-hover:visible' +
-            ' ' +
-            (side === 'left' ? 'right-0' : 'left-0')
-          }
+          className={[
+            // 위치
+            'absolute z-30',
+            side === 'left' ? 'right-0' : 'left-0',
+            // 박스 스타일
+            'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
+            'px-2 py-1',
+            // 표시/전환
+            'invisible translate-y-1 opacity-0 transition-all duration-150',
+            'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
+            'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
+            // 스크롤
+            'w-auto max-w-[90vw] overflow-x-auto overscroll-contain',
+            'whitespace-nowrap',
+          ].join(' ')}
+          role="menu"
+          aria-orientation="horizontal"
         >
-          <ul className="grid grid-cols-4 gap-1">
+          <ul className="inline-flex flex-nowrap items-center gap-1">
             {pages.map((p) => (
-              <li key={p}>
-                <button
-                  type="button"
-                  className="w-full rounded-md px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => onSelect(p)}
-                >
-                  {p}
-                </button>
-              </li>
+              <button
+                key={p}
+                type="button"
+                className="rounded-md px-2 py-1 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                onClick={() => onSelect(p)}
+                role="menuitem"
+              >
+                {p}
+              </button>
             ))}
           </ul>
         </div>
