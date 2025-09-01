@@ -1,9 +1,6 @@
 @import 'tailwindcss';
 
 @theme {
-  /* font-sans를 Pretendard로 설정 */
-  --font-sans: 'Pretendard', sans-serif;
-
   /* 컬러 변수화 */
   /* Primary (브랜드 컬러 - 노랑 계열) */
   --color-primary: #eab308;
@@ -46,6 +43,19 @@
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-800: #991b1b;
+
+  /* 타이포그래피 */
+  /* 텍스트 컬러 지정 */
+  --color-black: #111827;
+  --color-primary-text: #111827;
+  --color-secondary-text: #374151;
+  --color-muted-text: #6b7280;
+  --color-brand-text: #ca8a04;
+  --color-error-text: #dc2626;
+  --color-success-text: #16a34a;
+
+  /* font-sans를 Pretendard로 설정 */
+  --font-sans: 'Pretendard', sans-serif;
 }
 
 /* 전역 폰트 적용 */
@@ -53,4 +63,36 @@ html,
 body {
   /* font-sans(Pretendard) */
   font-family: var(--font-sans);
+}
+
+/* 타이포그래피 - 전역 클래스(utility aliases) */
+/* 헤딩(Headings) */
+@utility h1 {
+  @apply text-4xl leading-10 font-bold;
+}
+@utility h2 {
+  @apply text-3xl leading-9 font-bold;
+}
+@utility h3 {
+  @apply text-2xl leading-8 font-bold;
+}
+@utility h4 {
+  @apply text-xl leading-7 font-semibold;
+}
+@utility h5 {
+  @apply text-lg leading-7 font-semibold;
+}
+
+/* 본문 텍스트(Body Text) */
+@utility body-lg {
+  @apply text-lg leading-7;
+}
+@utility body-base {
+  @apply text-base leading-6;
+}
+@utility body-sm {
+  @apply text-sm leading-5;
+}
+@utility body-xs {
+  @apply text-xs leading-4;
 }
