@@ -1,7 +1,6 @@
-import './App.css'
+import TestApp from './routes/test'
+// import MainApp from "./routes/main"; // 메인이 필요해지면 교체
 
-function App() {
-  return <div>template</div>
+export default function App() {
+  return <TestApp />
 }
-
-export default App
