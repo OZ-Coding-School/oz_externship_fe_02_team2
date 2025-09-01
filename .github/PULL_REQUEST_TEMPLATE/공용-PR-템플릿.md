@@ -27,3 +27,4 @@ assignees: ''
 ---
 
 closes #{종료되는 이슈 번호}
+<!-- (예: closes #12) -->
