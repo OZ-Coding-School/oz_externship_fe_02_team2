@@ -1,15 +1,24 @@
-import type { Column, SortState, TableMeta, TableState } from '@type/table'
-import { cls } from '@utils/table'
 import React from 'react'
+import type { Column, TableMeta, TableState, SortState } from '@type/table'
+import { cls } from '@utils/table'
+
+type MobileKeep =
+  | 'all' // 👈 모바일에서도 전부 보이게(기본)
+  | number // 앞에서부터 N개만 보이기(원하면 숫자로)
 
 type Props<T> = {
-  columns?: Column<T>[] // ← optional로 두고 내부에서 기본값 처리
-  data?: T[] // ← optional로 두고 내부에서 기본값 처리
+  columns?: Column<T>[]
+  data?: T[]
   state: TableState
   onStateChange?: (next: Partial<TableState>) => void
   meta: TableMeta<T>
   toolbar?: React.ReactNode
   footerExtra?: React.ReactNode
+
+  mobileKeepCols?: MobileKeep // ← 기본 "all"
+  stickyHeader?: boolean // ← 기본 true
+  nowrapCells?: boolean // ← 기본 true (말줄임)
+  wrapCells?: boolean // ← true면 셀 줄바꿈(break-words)
 }
 
 export function DataTable<T>({
@@ -20,32 +29,15 @@ export function DataTable<T>({
   meta,
   toolbar,
   footerExtra,
+  mobileKeepCols = 'all', // 👈 모바일에서도 전부 보이게
+  stickyHeader = true,
+  nowrapCells = true,
+  wrapCells = false,
 }: Props<T>) {
-  // 안전 기본값
   const safeCols = Array.isArray(columns) ? columns : []
   const safeData = Array.isArray(data) ? data : []
   const visibleCols = safeCols.filter((c) => !c.hidden)
-
-  // 기본 rowKey (제공 안되면 index 사용)
   const rowKey = meta?.rowKey ?? ((_: T, i: number) => i)
-
-  // 방어적 경고 (개발 중 디버깅에 도움)
-  if (!Array.isArray(columns)) {
-    console.warn(
-      '[DataTable] columns가 전달되지 않았습니다. 빈 배열로 처리합니다.'
-    )
-  }
-  if (!Array.isArray(data)) {
-    console.warn(
-      '[DataTable] data가 전달되지 않았습니다. 빈 배열로 처리합니다.'
-    )
-  }
-  if (!meta) {
-    console.warn(
-      '[DataTable] meta가 전달되지 않았습니다. 기본 rowKey만 사용합니다.'
-    )
-  }
-
   const { page, pageSize, sort } = state ?? {
     page: 1,
     pageSize: 10,
@@ -61,6 +53,9 @@ export function DataTable<T>({
     onStateChange({ sort: next, page: 1 })
   }
 
+  const shouldHide = (idx: number) =>
+    typeof mobileKeepCols === 'number' ? idx >= mobileKeepCols : false // "all"이면 항상 false
+
   return (
     <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
       {/* 헤더 툴바 */}
@@ -69,12 +64,19 @@ export function DataTable<T>({
         <div className="flex items-center gap-2">{toolbar}</div>
       </div>
 
-      {/* 테이블 */}
-      <div className="overflow-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-base-200/60">
+      {/* 가로 스크롤 */}
+      <div className="overflow-x-auto">
+        <table className="min-w-max text-xs sm:text-sm">
+          {' '}
+          {/* 👈 min-w-max: 컬럼 폭 유지 */}
+          <thead
+            className={cls(
+              'bg-base-200/60',
+              stickyHeader && 'sticky top-0 z-10'
+            )}
+          >
             <tr>
-              {visibleCols.map((col) => {
+              {visibleCols.map((col, idx) => {
                 const isSorted = sort?.id === col.id
                 const arrow = isSorted ? (sort!.desc ? ' ▼' : ' ▲') : ''
                 return (
@@ -83,7 +85,8 @@ export function DataTable<T>({
                     className={cls(
                       'px-3 py-2 text-left font-medium whitespace-nowrap',
                       col.align === 'center' && 'text-center',
-                      col.align === 'right' && 'text-right'
+                      col.align === 'right' && 'text-right',
+                      shouldHide(idx) && 'hidden md:table-cell' // 숫자일 때만 숨김
                     )}
                     style={{ width: col.width }}
                   >
@@ -105,7 +108,6 @@ export function DataTable<T>({
               })}
             </tr>
           </thead>
-
           <tbody>
             {meta?.loading ? (
               <tr>
@@ -131,7 +133,7 @@ export function DataTable<T>({
                   key={rowKey(row, i)}
                   className="border-base-200 hover:bg-base-200/30 border-t"
                 >
-                  {visibleCols.map((col) => {
+                  {visibleCols.map((col, idx) => {
                     const raw =
                       typeof col.accessor === 'function'
                         ? col.accessor(row)
@@ -141,13 +143,17 @@ export function DataTable<T>({
                     const content = col.cell
                       ? col.cell({ value: raw, row, rowIndex: i })
                       : String(raw ?? '')
+
                     return (
                       <td
                         key={col.id}
                         className={cls(
                           'px-3 py-2 align-middle',
                           col.align === 'center' && 'text-center',
-                          col.align === 'right' && 'text-right'
+                          col.align === 'right' && 'text-right',
+                          shouldHide(idx) && 'hidden md:table-cell',
+                          nowrapCells && 'whitespace-nowrap', // 모바일에서 줄바꿈 안 하고 가로 스크롤
+                          wrapCells && 'break-words whitespace-normal' // 필요 시 줄바꿈 모드
                         )}
                       >
                         {content}
@@ -161,14 +167,13 @@ export function DataTable<T>({
         </table>
       </div>
 
-      {/* 푸터(페이지네이션) */}
+      {/* 푸터 */}
       <div className="border-base-300 flex items-center justify-between gap-2 border-t p-3">
         <div className="text-base-content/60 text-xs">
           페이지 {page} · 페이지당 {pageSize}
           {typeof meta?.total === 'number' && <> · 총 {meta.total}건</>}
         </div>
         <div className="flex items-center gap-2">
-          {/* 접근성 라벨 추가 (ID 충돌 피하려면 상위에서 useId로 내려줘도 OK) */}
           <label htmlFor="page-size" className="sr-only">
             페이지당 항목 수
           </label>
