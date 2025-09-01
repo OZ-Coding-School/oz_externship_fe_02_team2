@@ -1,14 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
+  /* font-sans를 Pretendard로 설정 */
   --font-sans: 'Pretendard', sans-serif;
-}
-
-/* 전역 폰트 적용 */
-html,
-body {
-  /* font-family */
-  font-family: var(--font-sans);
 
   /* 컬러 변수화 */
   /* Primary (브랜드 컬러 - 노랑 계열) */
@@ -52,4 +46,11 @@ body {
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-800: #991b1b;
+}
+
+/* 전역 폰트 적용 */
+html,
+body {
+  /* font-sans(Pretendard) */
+  font-family: var(--font-sans);
 }
