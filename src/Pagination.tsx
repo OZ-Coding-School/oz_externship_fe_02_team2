@@ -44,21 +44,21 @@ export default function Pagination({
   const safeTotal = Math.max(1, toInt(totalPages, 1))
   const safePage = clamp(toInt(currentPage, 1), 1, safeTotal)
 
-  const page = clamp(currentPage, 1, totalPages)
+  const page = safePage
   const threeWin = threeWindow(safePage, safeTotal)
 
   const first = 1
-  const last = totalPages
+  const last = safeTotal
 
   const showFirst = !threeWin.includes(first)
   const showLast = !threeWin.includes(last)
 
-  const leftGapStart = showFirst ? first + 1 : -1
+  const leftGapStart = showFirst ? 2 : -1
   const leftGapEnd = showFirst ? threeWin[0] - 1 : -1
   const rightGapStart = showLast ? threeWin[threeWin.length - 1] + 1 : -1
   const rightGapEnd = showLast ? last - 1 : -1
 
-  const go = (p: number) => onChange(clamp(p, 1, totalPages))
+  const go = (p: number) => onChange(clamp(p, 1, safeTotal))
 
   return (
     <nav
@@ -87,7 +87,6 @@ export default function Pagination({
         <EllipsisPopover
           pages={range(leftGapStart, leftGapEnd)}
           onSelect={go}
-          side="left"
         />
       )}
       {threeWin.map((n) => (
@@ -105,7 +104,6 @@ export default function Pagination({
         <EllipsisPopover
           pages={range(rightGapStart, rightGapEnd)}
           onSelect={go}
-          side="right"
         />
       )}
       {showLast && (
@@ -120,7 +118,7 @@ export default function Pagination({
       <button
         type="button"
         className={baseBtn}
-        disabled={page === totalPages}
+        disabled={page === safeTotal}
         onClick={() => go(page + 1)}
         aria-label="Next page"
       >
@@ -131,11 +129,9 @@ export default function Pagination({
   function EllipsisPopover({
     pages,
     onSelect,
-    side,
   }: {
     pages: number[]
     onSelect: (p: number) => void
-    side: 'left' | 'right'
   }) {
     return (
       <div className="group relative inline-block">
@@ -152,8 +148,7 @@ export default function Pagination({
         <div
           className={[
             // 위치
-            'absolute z-30',
-            side === 'left' ? 'right-0' : 'left-0',
+            'absolute left-1/2 z-30 -translate-x-1/2',
             // 박스 스타일
             'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
             'px-2 py-1',
@@ -162,23 +157,23 @@ export default function Pagination({
             'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
             'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
             // 스크롤
-            'w-auto max-w-[90vw] overflow-x-auto overscroll-contain',
-            'whitespace-nowrap',
+            'max-h-60 w-fit max-w-[90vw] overflow-y-auto',
           ].join(' ')}
           role="menu"
           aria-orientation="horizontal"
         >
-          <ul className="inline-flex flex-nowrap items-center gap-1">
+          <ul className="grid [grid-template-columns:repeat(5,auto)] gap-1">
             {pages.map((p) => (
-              <button
-                key={p}
-                type="button"
-                className="rounded-md px-2 py-1 text-sm whitespace-nowrap text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                onClick={() => onSelect(p)}
-                role="menuitem"
-              >
-                {p}
-              </button>
+              <li key={p} role="none">
+                <button
+                  type="button"
+                  className="min-w-8 rounded-md px-2 py-1 text-center text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  onClick={() => onSelect(p)}
+                  role="menuitem"
+                >
+                  {p}
+                </button>
+              </li>
             ))}
           </ul>
         </div>
