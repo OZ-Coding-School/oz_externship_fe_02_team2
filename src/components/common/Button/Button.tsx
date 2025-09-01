@@ -6,7 +6,7 @@ export default function Button() {
       className=""
     >
       {btnIcon && <span>{btnIcon}</span>}
-      {btnText}
+      {btnText && btnText}
     </button>
   )
 }
