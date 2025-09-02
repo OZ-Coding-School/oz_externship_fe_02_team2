@@ -1,4 +1,4 @@
-import getButtonClass from './Button.styles'
+import { getButtonClass, getIconOnlyButtonClass } from './Button.styles'
 import type { ButtonProps } from './Button.types'
 
 export default function Button(props: ButtonProps) {
@@ -7,6 +7,7 @@ export default function Button(props: ButtonProps) {
     btnSize = 'medium',
     btnIcon,
     btnText,
+    isIconOnly = 'false',
     onClick,
     disabled,
   } = props
@@ -16,7 +17,11 @@ export default function Button(props: ButtonProps) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={getButtonClass(btnStyle, btnSize)}
+      className={
+        isIconOnly
+          ? getIconOnlyButtonClass(btnStyle, btnSize)
+          : getButtonClass(btnStyle, btnSize)
+      }
     >
       {btnIcon && <span>{btnIcon}</span>}
       {btnText && btnText}

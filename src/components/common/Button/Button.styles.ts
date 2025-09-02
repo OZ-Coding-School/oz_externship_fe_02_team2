@@ -18,6 +18,29 @@ const buttonSizes: Record<ButtonSize, string> = {
   large: 'rounded-lg px-6 py-3 body-base font-medium',
 }
 
-export default function getButtonClass(style: ButtonStyle, size: ButtonSize) {
+const iconOnlyButtonStyles: Record<ButtonStyle, string> = {
+  primary: 'text-white bg-primary-blue',
+  secondary: 'text-gray-600 bg-gray-100',
+  success: 'text-success bg-success-100',
+  danger: 'text-danger bg-danger-100',
+  warning: 'text-warning bg-primary-100',
+  cancel: 'text-gray-600 bg-gray-100',
+}
+
+const iconOnlyButtonSizes: Record<ButtonSize, string> = {
+  small: 'rounded-sm p-1',
+  medium: 'rounded-lg p-2',
+  large: 'rounded-lg p-3',
+}
+
+export function getButtonClass(style: ButtonStyle, size: ButtonSize) {
   return [commonStyles, buttonStyles[style], buttonSizes[size]].join(' ')
+}
+
+export function getIconOnlyButtonClass(style: ButtonStyle, size: ButtonSize) {
+  return [
+    commonStyles,
+    iconOnlyButtonStyles[style],
+    iconOnlyButtonSizes[size],
+  ].join(' ')
 }
