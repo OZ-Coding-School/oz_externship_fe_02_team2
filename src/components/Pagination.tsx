@@ -1,5 +1,6 @@
 import { cn } from '@lib/cn'
 import { memo, useCallback, useMemo } from 'react'
+import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
 
 const EllipsisPopover = memo(function EllipsisPopover({
   pages,
@@ -16,7 +17,7 @@ const EllipsisPopover = memo(function EllipsisPopover({
         aria-haspopup="listbox"
         aria-label="More pages"
       >
-        …
+        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
       <div
         className={[
@@ -165,7 +166,7 @@ export default function Pagination({
         onClick={() => go(safePage - 1)}
         aria-label="Previous page"
       >
-        ‹
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
       </button>
       {showFirst && (
         <button
@@ -209,7 +210,7 @@ export default function Pagination({
         onClick={() => go(safePage + 1)}
         aria-label="Next page"
       >
-        ›
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </button>
     </nav>
   )
