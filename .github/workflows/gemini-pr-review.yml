@@ -52,26 +52,29 @@ jobs:
           echo "" >> "$SUMMARY_FILE"
 
           # here-document 시작과 끝 토큰을 반드시 맞추기 (EOF/EOF)
-          PROMPT=$(cat <<'EOF'
-          You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
+          PROMPT=$(cat <<EOF
+          너는 Lecture Admin Platform 프로젝트를 리뷰하는 시니어 타입스크립트/리액트 개발자야.  
+          아래 변경된 코드를 리뷰하고, 반드시 **한국어로** 답변해.  
 
-          # Project Guide
+          # 프로젝트 가이드
           $GUIDE
 
-          # Config
+          # 설정
           $CONFIG
 
-          Review this diff with focus on:
-          - correctness, type safety
-          - React Query/Zustand usage, API boundaries
-          - accessibility (table, aria, hydration)
-          - security/auth/role-based access
-          - UI consistency & performance
+          리뷰 시 중점 사항:
+          - 정확성, 타입 안정성, null 안전성
+          - React Query / Zustand 사용법, API 경계 처리
+          - 접근성 (table 구조, aria, hydration)
+          - 보안/권한(Role 기반 접근 제어)
+          - UI 일관성 (Tailwind/DaisyUI) 및 성능
 
-          Return:
-          1. High risk issues
-          2. Medium/Low issues
-          3. Suggested minimal patch if needed
+          출력 형식:
+          1. ⚠️ 고위험/차단 이슈
+          2. ⚡ 중위험/저위험 이슈
+          3. 💡 필요한 경우 최소 수정 패치(diff 코드블록)
+
+          반드시 한국어로 설명해줘.
           EOF
           )
 
