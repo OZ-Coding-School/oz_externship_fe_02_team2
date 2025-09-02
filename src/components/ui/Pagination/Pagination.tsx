@@ -1,9 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { PaginationProps } from './types'
-import { clamp, normalizeWindow, range, threeWindow, toInt } from './utils'
-import { pageButton } from './styles'
+import type { PaginationProps } from './Pagination.types'
+import {
+  clamp,
+  normalizeWindow,
+  range,
+  threeWindow,
+  toInt,
+} from './Pagination.utils'
+import { pageButton } from './Pagination.styles'
 import EllipsisPopover from './EllipsisPopover'
 
 export default function Pagination({

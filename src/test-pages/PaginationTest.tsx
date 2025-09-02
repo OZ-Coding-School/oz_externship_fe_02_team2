@@ -31,10 +31,10 @@ export default function PaginationTest() {
           currentPage: <strong>{page}</strong>
         </div>
         <div>
-          offset (limit={LIMIT}): <b>{offset}</b>
+          offset (limit={LIMIT}): <strong>{offset}</strong>
         </div>
         <div>
-          totalPages: <b>{totalPages}</b>
+          totalPages: <strong>{totalPages}</strong>
         </div>
       </div>
 
