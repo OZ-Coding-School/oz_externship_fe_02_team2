@@ -1,5 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/lib/cn'
+import { cn } from '@lib/cn'
 
 type Props = {
   totalPages: number
@@ -31,25 +30,18 @@ const toInt = (v: unknown, fb = 1) => {
   return Number.isFinite(n) ? Math.floor(n) : fb
 }
 
-const pageButton = cva(
-  'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-secondary-text hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed',
-  {
-    variants: {
-      active: {
-        false: 'border-gray-300 text-secondary-text hover: bg-gray-200',
-        true: 'border-primary-blue bg-primary-blue text-white',
-      },
-      compact: {
-        false: '',
-        true: 'px-2 py-1 min-2-8 text-sm',
-      },
-    },
-    defaultVariants: {
-      active: false,
-      compact: false,
-    },
-  }
-)
+function pageButton({
+  active = false,
+  compact = false,
+}: { active?: boolean; compact?: boolean } = {}) {
+  return cn(
+    'inline-flex select-none items-center justify-center rounded-md border px-3 py-1.5 body-sm disabled:opacity-40 disabled:cursor-not-allowed',
+    active
+      ? 'border-primary-blue bg-primary-blue text-white'
+      : 'border-gray-300 text-secondary-text hover:bg-gray-200',
+    compact && 'px-2 py-1 min-2-8 text-sm'
+  )
+}
 
 export default function Pagination({
   totalPages,
@@ -62,7 +54,6 @@ export default function Pagination({
 
   const safePage = clamp({ n: toInt(currentPage, 1), min: 1, max: safeTotal })
 
-  const page = safePage
   const threeWin = threeWindow(safePage, safeTotal)
 
   const first = 1
@@ -185,6 +176,7 @@ export default function Pagination({
                     pageButton({ compact: true }),
                     'text-primary-text'
                   )}
+                  onClick={() => onSelect(p)}
                   role="menuitem"
                 >
                   {p}
