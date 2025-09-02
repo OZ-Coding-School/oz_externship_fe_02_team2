@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { pageButton } from './styles'
 import { cn } from '@/lib/utils'
-import { MoveHorizontal } from 'lucide-react'
+import { Ellipsis } from 'lucide-react'
 
 const EllipsisPopover = memo(function EllipsisPopover({
   pages,
@@ -18,7 +18,7 @@ const EllipsisPopover = memo(function EllipsisPopover({
         aria-haspopup="listbox"
         aria-label="More pages"
       >
-        <MoveHorizontal className="h-4 w-4" aria-hidden="true" />
+        <Ellipsis className="h-4 w-4" aria-hidden="true" />
       </button>
       <div
         className={[
