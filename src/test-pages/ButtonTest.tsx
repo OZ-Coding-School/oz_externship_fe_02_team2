@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Button from '@components/common/Button/Button'
+import { Button } from '@components/common/Button'
 import DownloadIcon from '@assets/icons/download_w.svg'
 import ShareIcon from '@assets/icons/share_g.svg'
 import SettingIcon from '@assets/icons/setting_g.svg'
