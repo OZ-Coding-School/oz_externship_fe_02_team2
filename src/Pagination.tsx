@@ -23,7 +23,7 @@ function threeWindow(current: number, total: number) {
 }
 
 const baseBtn =
-  'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'
+  'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-secondary-text hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed'
 
 const activeBtn =
   'inline-flex select-none items-center justify-center rounded-md border border-primary-blue bg-primary-blue px-3 py-1.5 body-sm text-white'
@@ -167,7 +167,7 @@ export default function Pagination({
               <li key={p} role="none">
                 <button
                   type="button"
-                  className="min-w-8 rounded-md px-2 py-1 text-center text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                  className="text-primary-text min-w-8 rounded-md px-2 py-1 text-center text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
                   onClick={() => onSelect(p)}
                   role="menuitem"
                 >
