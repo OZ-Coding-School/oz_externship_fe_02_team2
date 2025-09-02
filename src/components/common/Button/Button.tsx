@@ -7,7 +7,7 @@ export default function Button(props: ButtonProps) {
     btnSize = 'medium',
     btnIcon,
     btnText,
-    isIconOnly = 'false',
+    isIconOnly = false,
     onClick,
     disabled,
   } = props
