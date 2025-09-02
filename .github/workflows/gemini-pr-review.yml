@@ -3,6 +3,7 @@ name: Gemini PR Review (fast)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_call:
 
 permissions:
   contents: read
@@ -10,13 +11,13 @@ permissions:
 
 jobs:
   gemini-review:
-    runs-on: ubuntu-22.04   # ubuntu-latest 대신 고정 버전 → 큐 대기 줄어듦
+    runs-on: ubuntu-22.04 # ubuntu-latest 대신 고정 버전 → 큐 대기 줄어듦
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # 최근 커밋 2개만 받음
+          fetch-depth: 2 # 최근 커밋 2개만 받음
 
       - name: Ensure jq
         run: sudo apt-get update -y && sudo apt-get install -y jq
@@ -52,27 +53,27 @@ jobs:
 
           # here-document 시작과 끝 토큰을 반드시 맞추기 (EOF/EOF)
           PROMPT=$(cat <<'EOF'
-You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
+          You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
 
-# Project Guide
-$GUIDE
+          # Project Guide
+          $GUIDE
 
-# Config
-$CONFIG
+          # Config
+          $CONFIG
 
-Review this diff with focus on:
-- correctness, type safety
-- React Query/Zustand usage, API boundaries
-- accessibility (table, aria, hydration)
-- security/auth/role-based access
-- UI consistency & performance
+          Review this diff with focus on:
+          - correctness, type safety
+          - React Query/Zustand usage, API boundaries
+          - accessibility (table, aria, hydration)
+          - security/auth/role-based access
+          - UI consistency & performance
 
-Return:
-1. High risk issues
-2. Medium/Low issues
-3. Suggested minimal patch if needed
-EOF
-)
+          Return:
+          1. High risk issues
+          2. Medium/Low issues
+          3. Suggested minimal patch if needed
+          EOF
+          )
 
           DIFF=$(cat changes.diff)
           REQ=$(jq -n --arg p "$PROMPT" --arg d "$DIFF" '{
