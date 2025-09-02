@@ -1,6 +1,6 @@
-import { cn } from '@lib/cn'
 import { memo, useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const EllipsisPopover = memo(function EllipsisPopover({
   pages,

@@ -26,9 +26,9 @@ export default function PaginationTest() {
 
   return (
     <div className="space-y-4 p-6">
-      <div className="text-sm">
+      <div className="body-sm">
         <div>
-          currentPage: <b>{page}</b>
+          currentPage: <strong>{page}</strong>
         </div>
         <div>
           offset (limit={LIMIT}): <b>{offset}</b>
