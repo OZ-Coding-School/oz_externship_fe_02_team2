@@ -25,6 +25,21 @@ function threeWindow(current: number, total: number) {
   return [current - 1, current, current + 1]
 }
 
+function normalizeWindow(page: number, total: number, win: number[]) {
+  const cleaned = Array.from(new Set(win))
+    .map((n) => clamp({ n, min: 1, max: total }))
+    .filter((n) => Number.isFinite(n))
+
+  if (cleaned.length) return cleaned
+
+  if (total <= 0) return []
+  const start = clamp({ n: page - 1, min: 1, max: Math.max(1, total - 2) })
+  const end = Math.min(total, start + 2)
+  const out: number[] = []
+  for (let i = start; i <= end; i++) out.push(i)
+  return out
+}
+
 const toInt = (v: unknown, fb = 1) => {
   const n = Number(v)
   return Number.isFinite(n) ? Math.floor(n) : fb
@@ -50,11 +65,12 @@ export default function Pagination({
   className,
 }: Props) {
   const safeTotal = Math.max(1, toInt(totalPages, 1))
-  if (totalPages <= 1) return null
+  if (safeTotal <= 1) return null
 
   const safePage = clamp({ n: toInt(currentPage, 1), min: 1, max: safeTotal })
 
-  const threeWin = threeWindow(safePage, safeTotal)
+  const threeWinRaw = threeWindow(safePage, safeTotal)
+  const threeWin = normalizeWindow(safePage, safeTotal, threeWinRaw)
 
   const first = 1
   const last = safeTotal
