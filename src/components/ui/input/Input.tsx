@@ -153,9 +153,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
           id={msgId}
           className={cn(
             sizeCls.msg,
-            hasError
-              ? 'text-[var(--color-danger-600)]'
-              : 'text-[var(--color-muted-text)] dark:text-[var(--color-gray-400)]'
+            hasError ? 'text-danger-600' : 'text-muted-text dark:text-gray-400'
           )}
         >
           {hasError ? error : helper}

@@ -14,22 +14,22 @@ export const sizeMap: Record<
 }
 
 export const baseInput = [
-  'w-full rounded-xl outline-none transition-colors',
+  'w-full rounded-lg outline-none transition-colors',
   // 배경
-  'bg-white dark:bg-[var(--color-gray-800)]',
+  'bg-white dark:bg-gray-800',
   // 텍스트 & 플레이스홀더
-  'text-[var(--color-primary-text)] dark:text-[var(--color-gray-50)]',
-  'placeholder-[var(--color-muted-text)] dark:placeholder-[var(--color-gray-400)]',
+  'text-primary-text dark:text-gray-50',
+  'placeholder-gray-400 dark:placeholder-gray-400',
   // 보더
-  'border border-[var(--color-gray-300)] dark:border-[var(--color-gray-700)]',
+  'border border-gray-300 dark:border-color-gray-700',
   // 포커스 링
-  'focus-visible:ring-4 focus-visible:ring-[var(--color-primary-200)] dark:focus-visible:ring-[var(--color-primary-600)]',
+  'focus-visible:ring-2 focus-visible:ring-primary-200 dark:focus-visible:ring-primary-600',
   // disabled
-  'disabled:bg-[var(--color-gray-100)] dark:disabled:bg-[color:rgb(31,41,55)] disabled:text-[var(--color-gray-500)]',
+  'disabled:bg-gray-50 dark:disabled:bg-[color:rgb(31,41,55)] disabled:text-gray-500',
 ].join(' ')
 
 export const errorInput =
-  'border-[var(--color-danger-500)] focus-visible:ring-[var(--color-danger-100)] dark:focus-visible:ring-[var(--color-danger-600)]'
+  'border-danger-500 focus-visible:ring-danger-100 dark:focus-visible:ring-danger-600'
 
 export const labelCls =
-  'mb-1.5 font-semibold text-[var(--color-secondary-text)] dark:text-[var(--color-gray-100)]'
+  'mb-1.5 font-semibold text-secondary-text dark:text-gray-100'
