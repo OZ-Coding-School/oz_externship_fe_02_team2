@@ -5,7 +5,8 @@ type Props = {
   className?: string
 }
 
-function clamp(n: number, min: number, max: number) {
+type ClampArgs = { n: number; min: number; max: number }
+function clamp({ n, min, max }: ClampArgs) {
   return Math.max(min, Math.min(max, n))
 }
 
