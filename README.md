@@ -94,4 +94,12 @@
 | `api/`            | 서버와 통신하는 API 호출 관련 함수 모음 (엔드포인트별 분리 권장)                |
 | `store/`   | 전역 상태 관리 (예: Zustand, Redux 등) 관련 로직 및 상태 정의             |
 
+---
+
+## UI 컴포넌트 경로 안내
+- `@components/ui/` 안에 컴포넌트별로 폴더 만들어서 사용해 주세요.
+- 인터페이스 들어가는 건 전부 `@types/` 안으로 부탁드립니다.
+- UI 컴포넌트 폴더 내 파일 구조는 아래 이미지 참고해 주세요.
+<img width="294" height="194" alt="image" src="https://github.com/user-attachments/assets/0ca6c740-819a-4c40-9306-5d4609b1aa55" />
+
 
