@@ -74,7 +74,7 @@ body {
 /* 타이포그래피 - 전역 클래스(utility aliases) */
 /* 헤딩(Headings) */
 @utility h1 {
-  @apply text-primary-text text-4xl leading-10 font-bold;
+  @apply text-primary-text text-3xl leading-10 font-bold;
 }
 @utility h2 {
   @apply text-primary-text text-3xl leading-9 font-bold;
