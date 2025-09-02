@@ -1,0 +1,106 @@
+name: Gemini PR Review (auto)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call: # slash 리뷰 등에서 재사용 가능
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+      - name: Get PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          git diff --unified=0 origin/${{ github.base_ref }}...HEAD > changes.diff
+          split -b 180000 -d -a 3 changes.diff chunk_ || true
+
+      - name: Load context files
+        id: context
+        run: |
+          echo "guide<<EOF" >> $GITHUB_OUTPUT
+          if [ -f GEMINI.md ]; then
+            cat GEMINI.md >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "config<<EOF" >> $GITHUB_OUTPUT
+          if [ -f .gemini/config.yaml ]; then
+            cat .gemini/config.yaml >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Build review with Gemini
+        id: review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GUIDE: ${{ steps.context.outputs.guide }}
+          CONFIG: ${{ steps.context.outputs.config }}
+        run: |
+          SUMMARY_FILE=gemini_review.md
+          echo "## 🤖 Gemini Review (auto)" > "$SUMMARY_FILE"
+          echo "" >> "$SUMMARY_FILE"
+
+          PROMPT_HEADER=$(cat <<EOF
+            You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
+
+            # Project Guide
+            $GUIDE
+
+            # Config
+            $CONFIG
+
+            Review this unified diff with the following focus:
+            - correctness, type safety, null safety
+            - React Query/Zustand usage, API boundaries
+            - accessibility (table, aria, hydration)
+            - security/auth/role-based access
+            - UI (Tailwind/DaisyUI consistency), performance
+
+            Return:
+            1. High risk issues
+            2. Medium/Low issues
+            3. Suggested minimal patch if needed
+            EOF
+            )
+
+                    for f in chunk_*; do
+                        REQ=$(jq -n --arg p "$PROMPT_HEADER" --arg d "$(cat "$f")" '{
+                        contents: [ { parts: [ { text: ($p + "\n\n---\nDIFF:\n" + $d) } ] } ]
+                        }')
+
+                        RESP=$(curl -s -X POST \
+                        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$GEMINI_API_KEY" \
+                        -H "Content-Type: application/json" \
+                        -d "$REQ")
+
+            TEXT=$(echo "$RESP" | jq -r '.candidates[0].content.parts[0].text // ""')
+            echo "<details><summary>Review chunk</summary>" >> "$SUMMARY_FILE"
+            echo "" >> "$SUMMARY_FILE"
+            echo "$TEXT" >> "$SUMMARY_FILE"
+            echo "</details>" >> "$SUMMARY_FILE"
+            echo "" >> "$SUMMARY_FILE"
+          done
+
+          echo "review_path=$SUMMARY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Post or update PR comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: ${{ steps.review.outputs.review_path }}
+          edit-mode: replace
