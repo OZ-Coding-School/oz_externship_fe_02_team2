@@ -1,0 +1,31 @@
+ignore:
+  - 'dist/**'
+  - 'build/**'
+  - 'coverage/**'
+  - 'node_modules/**'
+  - '**/*.map'
+  - '**/*.lock'
+  - '**/*.snap'
+  - '.vscode/**'
+  - '.idea/**'
+  - '**/*.png'
+  - '**/*.jpg'
+  - '**/*.svg'
+
+review:
+  level: high # high | medium | low
+  summarize: true
+  language: ko
+  modules:
+    - lectures
+    - studies
+    - assignments
+    - users
+    - payments
+  focus:
+    - typesafety
+    - react-query
+    - accessibility
+    - security
+    - performance
+    - tailwind-consistency
