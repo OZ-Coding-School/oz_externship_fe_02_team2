@@ -1,3 +1,6 @@
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '@/lib/cn'
+
 type Props = {
   totalPages: number
   currentPage: number
@@ -23,27 +26,41 @@ function threeWindow(current: number, total: number) {
   return [current - 1, current, current + 1]
 }
 
-const baseBtn =
-  'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-secondary-text hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed'
+const toInt = (v: unknown, fb = 1) => {
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.floor(n) : fb
+}
 
-const activeBtn =
-  'inline-flex select-none items-center justify-center rounded-md border border-primary-blue bg-primary-blue px-3 py-1.5 body-sm text-white'
+const pageButton = cva(
+  'inline-flex select-none items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 body-sm text-secondary-text hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed',
+  {
+    variants: {
+      active: {
+        false: 'border-gray-300 text-secondary-text hover: bg-gray-200',
+        true: 'border-primary-blue bg-primary-blue text-white',
+      },
+      compact: {
+        false: '',
+        true: 'px-2 py-1 min-2-8 text-sm',
+      },
+    },
+    defaultVariants: {
+      active: false,
+      compact: false,
+    },
+  }
+)
 
 export default function Pagination({
   totalPages,
   currentPage,
   onChange,
-  className = '',
+  className,
 }: Props) {
+  const safeTotal = Math.max(1, toInt(totalPages, 1))
   if (totalPages <= 1) return null
 
-  const toInt = (v: unknown, fb = 1) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? Math.floor(n) : fb
-  }
-
-  const safeTotal = Math.max(1, toInt(totalPages, 1))
-  const safePage = clamp(toInt(currentPage, 1), 1, safeTotal)
+  const safePage = clamp({ n: toInt(currentPage, 1), min: 1, max: safeTotal })
 
   const page = safePage
   const threeWin = threeWindow(safePage, safeTotal)
@@ -59,7 +76,7 @@ export default function Pagination({
   const rightGapStart = showLast ? threeWin[threeWin.length - 1] + 1 : -1
   const rightGapEnd = showLast ? last - 1 : -1
 
-  const go = (p: number) => onChange(clamp(p, 1, safeTotal))
+  const go = (p: number) => onChange(clamp({ n: p, min: 1, max: safeTotal }))
 
   return (
     <nav
