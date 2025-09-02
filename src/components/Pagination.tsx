@@ -80,14 +80,14 @@ export default function Pagination({
 
   return (
     <nav
-      className={`flex items-center gap-2 ${className}`}
+      className={cn('flex items-center gap-2', className)}
       aria-label="Pagination"
     >
       <button
         type="button"
-        className={baseBtn}
-        disabled={page === 1}
-        onClick={() => go(page - 1)}
+        className={pageButton()}
+        disabled={safePage === 1}
+        onClick={() => go(safePage - 1)}
         aria-label="Previous page"
       >
         ‹
@@ -96,7 +96,7 @@ export default function Pagination({
         <button
           type="button"
           onClick={() => go(first)}
-          className={page === first ? activeBtn : baseBtn}
+          className={pageButton({ active: safePage === first })}
         >
           {first}
         </button>
@@ -112,8 +112,8 @@ export default function Pagination({
           key={n}
           type="button"
           onClick={() => go(n)}
-          className={n === page ? activeBtn : baseBtn}
-          aria-current={n === page ? 'page' : undefined}
+          className={pageButton({ active: n === safePage })}
+          aria-current={n === safePage ? 'page' : undefined}
         >
           {n}
         </button>
@@ -128,16 +128,16 @@ export default function Pagination({
         <button
           type="button"
           onClick={() => go(last)}
-          className={page === last ? activeBtn : baseBtn}
+          className={pageButton({ active: safePage === last })}
         >
           {last}
         </button>
       )}
       <button
         type="button"
-        className={baseBtn}
-        disabled={page === safeTotal}
-        onClick={() => go(page + 1)}
+        className={pageButton()}
+        disabled={safePage === safeTotal}
+        onClick={() => go(safePage + 1)}
         aria-label="Next page"
       >
         ›
@@ -155,7 +155,7 @@ export default function Pagination({
       <div className="group relative inline-block">
         <button
           type="button"
-          className={baseBtn + ' cursor-default'}
+          className={pageButton()}
           aria-haspopup="menu"
           aria-expanded="false"
           tabIndex={0}
@@ -164,19 +164,15 @@ export default function Pagination({
         </button>
         {/* Popover */}
         <div
-          className={[
-            // 위치
+          className={cn(
             'absolute left-1/2 z-30 -translate-x-1/2',
-            // 박스 스타일
             'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
             'px-2 py-1',
-            // 표시/전환
             'invisible translate-y-1 opacity-0 transition-all duration-150',
             'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
             'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
-            // 스크롤
-            'max-h-60 w-fit max-w-[90vw] overflow-y-auto',
-          ].join(' ')}
+            'max-h-60 w-fit max-w-[90vw] overflow-y-auto'
+          )}
           role="menu"
           aria-orientation="horizontal"
         >
@@ -185,8 +181,10 @@ export default function Pagination({
               <li key={p} role="none">
                 <button
                   type="button"
-                  className="text-primary-text min-w-8 rounded-md px-2 py-1 text-center text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                  onClick={() => onSelect(p)}
+                  className={cn(
+                    pageButton({ compact: true }),
+                    'text-primary-text'
+                  )}
                   role="menuitem"
                 >
                   {p}
