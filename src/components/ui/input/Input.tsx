@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { forwardRef, useId, useMemo, useState } from 'react'
 import type { InputProps } from '@/types/input'
-import { sizeMap, baseInput, errorInput, labelCls } from './inputStyles'
+import { sizeMap, baseInput, errorInput, labelCls } from './Input.styles'
 import { EyeIcon, EyeOffIcon, XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/utils'
 
