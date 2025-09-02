@@ -15,7 +15,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   btnSize?: ButtonSize
   btnIcon?: ReactNode
   btnText?: string
-  isIconOnly?: boolean
+  iconOnly?: boolean
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
 }

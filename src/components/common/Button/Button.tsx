@@ -7,7 +7,7 @@ export default function Button(props: ButtonProps) {
     btnSize = 'medium',
     btnIcon,
     btnText,
-    isIconOnly = false,
+    iconOnly,
     onClick,
     disabled,
   } = props
@@ -18,7 +18,7 @@ export default function Button(props: ButtonProps) {
       onClick={onClick}
       disabled={disabled}
       className={
-        isIconOnly
+        iconOnly
           ? getIconOnlyButtonClass(btnStyle, btnSize)
           : getButtonClass(btnStyle, btnSize)
       }
