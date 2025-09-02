@@ -69,9 +69,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
       {label && (
         <label htmlFor={inputId} className={cn(labelCls, sizeCls.label)}>
           {label}
-          {required && (
-            <span className="ml-0.5 text-[var(--color-danger-600)]">*</span>
-          )}
+          {required && <span className="text-danger-600 ml-0.5">*</span>}ㄴ
         </label>
       )}
 
