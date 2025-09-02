@@ -2,10 +2,10 @@ name: CI
 
 on:
   pull_request:
-    branches: ['main', 'develop']
+    branches: ['main', 'dev']
     types: [opened, synchronize, reopened]
   push:
-    branches: ['main', 'develop']
+    branches: ['main', 'dev']
 
 # 같은 브랜치에서 이전 실행을 취소(시간 절약)
 concurrency:
