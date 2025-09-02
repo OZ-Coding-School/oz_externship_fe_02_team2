@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 
-import UsersTable, { type UserRow } from '@/components/table/feature/UsersTable'
+import UsersTable, { type UserRow } from '@components/table/feature/UsersTable'
 import CoursesTable, {
   type CourseRow,
-} from '@/components/table/feature/CoursesTable'
-import type { WithdrawalRow } from '@/components/table/feature/withdrawalsTable'
-import type { StudyGroupRow } from '@/components/table/feature/StudyGrouptsTable'
-import WithdrawalsTable from '@components/table/feature/withdrawalsTable'
-import StudyGroupsTable from '@components/table/feature/StudyGrouptsTable'
+} from '@components/table/feature/CoursesTable'
+import WithdrawalsTable, {
+  type WithdrawalRow,
+} from '@components/table/feature/withdrawalsTable'
+import StudyGroupsTable, {
+  type StudyGroupRow,
+} from '@components/table/feature/StudyGrouptsTable'
 
 type TabKey = 'users' | 'withdrawals' | 'courses' | 'studygroups'
 
