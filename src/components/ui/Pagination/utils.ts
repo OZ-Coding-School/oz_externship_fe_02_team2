@@ -1,5 +1,6 @@
 export type ClampArgs = { n: number; min: number; max: number }
-function clamp({ n, min, max }: ClampArgs) {
+
+export function clamp({ n, min, max }: ClampArgs) {
   return Math.max(min, Math.min(max, n))
 }
 

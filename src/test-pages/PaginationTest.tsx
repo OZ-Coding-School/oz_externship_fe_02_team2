@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import Pagination from '@components/Pagination'
+import Pagination from '@/components/ui/Pagination/Pagination'
 
 const LIMIT = 20
 

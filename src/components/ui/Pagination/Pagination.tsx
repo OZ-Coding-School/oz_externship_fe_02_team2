@@ -1,126 +1,27 @@
-import { memo, useCallback, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const EllipsisPopover = memo(function EllipsisPopover({
-  pages,
-  onSelect,
-}: {
-  pages: number[]
-  onSelect: (p: number) => void
-}) {
-  return (
-    <div className="group relative inline-block">
-      <button
-        type="button"
-        className={cn(pageButton(), 'cursor-default')}
-        aria-haspopup="listbox"
-        aria-label="More pages"
-      >
-        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-      </button>
-      <div
-        className={[
-          'absolute left-1/2 z-30 -translate-x-1/2',
-          'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
-          'px-2 py-1',
-          'invisible translate-y-1 opacity-0 transition-all duration-150',
-          'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
-          'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
-          'max-h-60 w-fit max-w-[90vw] overflow-y-auto',
-        ].join(' ')}
-        role="listbox"
-      >
-        <ul className="grid [grid-template-columns:repeat(5,auto)] gap-1">
-          {pages.map((p) => (
-            <li key={p}>
-              <button
-                type="button"
-                className="text-primary-text min-w-8 rounded-md px-2 py-1 text-center text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                onClick={() => onSelect(p)}
-                role="option"
-              >
-                {p}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
-})
-
-type Props = {
-  totalPages: number
-  currentPage: number
-  onChange: (page: number) => void
-  className?: string
-}
-
-type ClampArgs = { n: number; min: number; max: number }
-function clamp({ n, min, max }: ClampArgs) {
-  return Math.max(min, Math.min(max, n))
-}
-
-function range(start: number, end: number) {
-  const out: number[] = []
-  for (let i = start; i <= end; i++) out.push(i)
-  return out
-}
-
-function threeWindow(current: number, total: number) {
-  if (total <= 3) return range(1, total)
-  if (current <= 2) return [1, 2, 3]
-  if (current >= total - 1) return [total - 2, total - 1, total]
-  return [current - 1, current, current + 1]
-}
-
-function normalizeWindow(page: number, total: number, win: number[]) {
-  const cleaned = Array.from(new Set(win))
-    .map((n) => clamp({ n, min: 1, max: total }))
-    .filter((n) => Number.isFinite(n))
-
-  if (cleaned.length) return cleaned
-
-  if (total <= 0) return []
-  const start = clamp({ n: page - 1, min: 1, max: Math.max(1, total - 2) })
-  const end = Math.min(total, start + 2)
-  const out: number[] = []
-  for (let i = start; i <= end; i++) out.push(i)
-  return out
-}
-
-const toInt = (v: unknown, fb = 1) => {
-  const n = Number(v)
-  return Number.isFinite(n) ? Math.floor(n) : fb
-}
-
-function pageButton({
-  active = false,
-  compact = false,
-}: { active?: boolean; compact?: boolean } = {}) {
-  return cn(
-    'inline-flex select-none items-center justify-center rounded-md border px-3 py-1.5 body-sm disabled:opacity-40 disabled:cursor-not-allowed',
-    active
-      ? 'border-primary-blue bg-primary-blue text-white'
-      : 'border-gray-300 text-secondary-text hover:bg-gray-200',
-    compact && 'px-2 py-1 min-w-8 text-sm'
-  )
-}
+import type { PaginationProps } from './types'
+import { clamp, normalizeWindow, range, threeWindow, toInt } from './utils'
+import { pageButton } from './styles'
+import EllipsisPopover from './EllipsisPopover'
 
 export default function Pagination({
   totalPages,
   currentPage,
   onChange,
   className,
-}: Props) {
+}: PaginationProps) {
   const safeTotal = Math.max(1, toInt(totalPages, 1))
   if (safeTotal <= 1) return null
 
   const safePage = clamp({ n: toInt(currentPage, 1), min: 1, max: safeTotal })
 
-  const threeWinRaw = threeWindow(safePage, safeTotal)
-  const threeWin = normalizeWindow(safePage, safeTotal, threeWinRaw)
+  const threeWin = normalizeWindow(
+    safePage,
+    safeTotal,
+    threeWindow(safePage, safeTotal)
+  )
 
   const first = 1
   const last = safeTotal
