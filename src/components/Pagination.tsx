@@ -1,4 +1,53 @@
 import { cn } from '@lib/cn'
+import { memo, useCallback, useMemo } from 'react'
+
+const EllipsisPopover = memo(function EllipsisPopover({
+  pages,
+  onSelect,
+}: {
+  pages: number[]
+  onSelect: (p: number) => void
+}) {
+  return (
+    <div className="group relative inline-block">
+      <button
+        type="button"
+        className={cn(pageButton(), 'cursor-default')}
+        aria-haspopup="listbox"
+        aria-label="More pages"
+      >
+        …
+      </button>
+      <div
+        className={[
+          'absolute left-1/2 z-30 -translate-x-1/2',
+          'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
+          'px-2 py-1',
+          'invisible translate-y-1 opacity-0 transition-all duration-150',
+          'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
+          'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
+          'max-h-60 w-fit max-w-[90vw] overflow-y-auto',
+        ].join(' ')}
+        role="listbox"
+      >
+        <ul className="grid [grid-template-columns:repeat(5,auto)] gap-1">
+          {pages.map((p) => (
+            <li key={p}>
+              <button
+                type="button"
+                className="text-primary-text min-w-8 rounded-md px-2 py-1 text-center text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                onClick={() => onSelect(p)}
+                role="option"
+              >
+                {p}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+})
 
 type Props = {
   totalPages: number
@@ -54,7 +103,7 @@ function pageButton({
     active
       ? 'border-primary-blue bg-primary-blue text-white'
       : 'border-gray-300 text-secondary-text hover:bg-gray-200',
-    compact && 'px-2 py-1 min-2-8 text-sm'
+    compact && 'px-2 py-1 min-w-8 text-sm'
   )
 }
 
@@ -83,7 +132,26 @@ export default function Pagination({
   const rightGapStart = showLast ? threeWin[threeWin.length - 1] + 1 : -1
   const rightGapEnd = showLast ? last - 1 : -1
 
-  const go = (p: number) => onChange(clamp({ n: p, min: 1, max: safeTotal }))
+  const go = useCallback(
+    (p: number) => onChange(clamp({ n: p, min: 1, max: safeTotal })),
+    [onChange, safeTotal]
+  )
+
+  const leftPages = useMemo(
+    () =>
+      showFirst && leftGapStart <= leftGapEnd
+        ? range(leftGapStart, leftGapEnd)
+        : [],
+    [showFirst, leftGapStart, leftGapEnd]
+  )
+
+  const rightPages = useMemo(
+    () =>
+      showLast && rightGapStart <= rightGapEnd
+        ? range(rightGapStart, rightGapEnd)
+        : [],
+    [showLast, rightGapStart, rightGapEnd]
+  )
 
   return (
     <nav
@@ -108,11 +176,8 @@ export default function Pagination({
           {first}
         </button>
       )}
-      {showFirst && leftGapStart <= leftGapEnd && (
-        <EllipsisPopover
-          pages={range(leftGapStart, leftGapEnd)}
-          onSelect={go}
-        />
+      {showFirst && leftPages.length > 0 && (
+        <EllipsisPopover pages={leftPages} onSelect={go} />
       )}
       {threeWin.map((n) => (
         <button
@@ -125,11 +190,8 @@ export default function Pagination({
           {n}
         </button>
       ))}
-      {showLast && rightGapStart <= rightGapEnd && (
-        <EllipsisPopover
-          pages={range(rightGapStart, rightGapEnd)}
-          onSelect={go}
-        />
+      {showLast && rightPages.length > 0 && (
+        <EllipsisPopover pages={rightPages} onSelect={go} />
       )}
       {showLast && (
         <button
@@ -151,57 +213,4 @@ export default function Pagination({
       </button>
     </nav>
   )
-  function EllipsisPopover({
-    pages,
-    onSelect,
-  }: {
-    pages: number[]
-    onSelect: (p: number) => void
-  }) {
-    return (
-      <div className="group relative inline-block">
-        <button
-          type="button"
-          className={pageButton()}
-          aria-haspopup="menu"
-          aria-expanded="false"
-          tabIndex={0}
-        >
-          …
-        </button>
-        {/* Popover */}
-        <div
-          className={cn(
-            'absolute left-1/2 z-30 -translate-x-1/2',
-            'mt-2 rounded-lg border border-gray-200 bg-white shadow-lg',
-            'px-2 py-1',
-            'invisible translate-y-1 opacity-0 transition-all duration-150',
-            'group-hover:visible group-hover:translate-y-0 group-hover:opacity-100',
-            'group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100',
-            'max-h-60 w-fit max-w-[90vw] overflow-y-auto'
-          )}
-          role="menu"
-          aria-orientation="horizontal"
-        >
-          <ul className="grid [grid-template-columns:repeat(5,auto)] gap-1">
-            {pages.map((p) => (
-              <li key={p} role="none">
-                <button
-                  type="button"
-                  className={cn(
-                    pageButton({ compact: true }),
-                    'text-primary-text'
-                  )}
-                  onClick={() => onSelect(p)}
-                  role="menuitem"
-                >
-                  {p}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    )
-  }
 }
