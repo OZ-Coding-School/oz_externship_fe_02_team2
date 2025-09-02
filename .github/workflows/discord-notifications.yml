@@ -5,7 +5,9 @@ on:
     types: [opened, review_requested, closed]
   pull_request_review:
     types: [submitted]
-
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
 env:
   WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
@@ -35,6 +37,78 @@ jobs:
                   { name: "📊 변경사항", value: `+${pr.additions ?? 0} -${pr.deletions ?? 0}`, inline: true },
                 ],
                 timestamp: pr.created_at
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+      # PR 작업내용(커밋/변경파일) 요약 알림
+      - name: Notify Work Summary (on opened/synchronize/edited)
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'edited')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+
+            // 커밋/파일 목록 조회
+            const commitsRes = await github.rest.pulls.listCommits({
+              owner, repo, pull_number: pr.number, per_page: 100
+            });
+            const filesRes = await github.rest.pulls.listFiles({
+              owner, repo, pull_number: pr.number, per_page: 300
+            });
+
+            // 커밋 요약 (상위 8개)
+            const commits = commitsRes.data || [];
+            const maxCommits = 8;
+            const commitLines = commits
+              .map(c => `- ${c.commit.message.split('\n')[0]} (${c.sha.slice(0,7)})`)
+              .slice(0, maxCommits)
+              .join('\n');
+            const extraCommits = commits.length > maxCommits ? `\n…외 ${commits.length - maxCommits}건` : '';
+
+            // 변경 파일 목록 (상위 10개)
+            const files = filesRes.data || [];
+            const maxFiles = 10;
+            const fileLines = files
+              .slice(0, maxFiles)
+              .map(f => `- ${f.filename}`)
+              .join('\n');
+            const extraFiles = files.length > maxFiles ? `\n…외 ${files.length - maxFiles}개 파일` : '';
+
+            // 1024자 제한 대비 잘라내기
+            const clamp = (s, n=1024) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+            // 상세 링크
+            const compareUrl = `${pr.html_url}/files`; // 파일 변경 탭
+            const commitsUrl = `${pr.html_url}/commits`; // 커밋 탭
+
+            const payload = {
+              embeds: [{
+                title: "🛠 작업 내용 요약",
+                description: `[${pr.title}](${pr.html_url})`,
+                color: 5793266,
+                fields: [
+                  {
+                    name: "🧩 커밋 요약",
+                    value: clamp(commitLines + extraCommits || "커밋 정보가 없습니다.")
+                  },
+                  {
+                    name: "🗂 변경 파일",
+                    value: clamp(fileLines + extraFiles || "변경된 파일이 없습니다.")
+                  },
+                  {
+                    name: "🔗 자세히 보기",
+                    value: `[커밋 목록](${commitsUrl}) | [파일 변경](${compareUrl})`
+                  }
+                ],
+                timestamp: new Date().toISOString()
               }]
             };
 
@@ -208,6 +282,85 @@ jobs:
                   { name: "👀 리뷰어", value: review.user?.login ?? "unknown", inline: true },
                   { name: "📝 요청사항", value: "변경사항이 요청되었습니다. 자세한 내용은 PR을 확인해주세요.", inline: false },
                 ],
+              }]
+            };
+
+            await fetch(webhook, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+  ci_summary:
+    # CI가 끝났을 때만 실행 (이 워크플로우는 workflow_run에서 호출됨)
+    if: github.event_name == 'workflow_run'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # run의 job 목록 조회
+      contents: read
+    steps:
+      - name: Post CI Summary to Discord
+        uses: actions/github-script@v7
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        with:
+          script: |
+            const webhook = process.env.WEBHOOK;
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+
+            // CI 워크플로우 실행의 Jobs 조회
+            const jobsRes = await github.rest.actions.listJobsForWorkflowRun({
+              owner, repo, run_id: run.id, per_page: 100
+            });
+            const jobs = jobsRes.data.jobs || [];
+
+            // 매트릭스 Job만 추려내기 (이름에 build_test 또는 ci job 이름이 포함)
+            const targetJobs = jobs.filter(j => /build_test|build_only|test|build/i.test(j.name));
+
+            // 상태 이모지
+            const toEmoji = (c) => ({
+              success: "✅",
+              failure: "❌",
+              cancelled: "🚫",
+              timed_out: "⏰",
+              neutral: "⚪",
+              skipped: "⏭️",
+              action_required: "⚠️",
+              stale: "🕓"
+            }[String(c || '').toLowerCase()] || "❓");
+
+            // 시간/링크
+            const runUrl = run.html_url;
+            const branch = run.head_branch;
+            const statusEmoji = toEmoji(run.conclusion);
+            const title = `${statusEmoji} CI 완료 — ${owner}/${repo} @ ${branch}`;
+            const when = run.updated_at || run.created_at || new Date().toISOString();
+
+            // 각 Job 요약 (예: build_test / Node 20, build_test / Node 22)
+            const lines = targetJobs.map(j => {
+              const durMs = (new Date(j.completed_at) - new Date(j.started_at)) || 0;
+              const sec = Math.max(1, Math.round(durMs / 1000));
+              return `• ${toEmoji(j.conclusion)} ${j.name} (${sec}s)`;
+            });
+
+            // 관련 PR 링크(있으면)
+            const prs = run.pull_requests || [];
+            const prLink = prs[0]?.html_url ? `[PR #${prs[0].number}](${prs[0].html_url})` : "해당 없음";
+
+            // 디스코드 임베드
+            const payload = {
+              embeds: [{
+                title,
+                description: `[Workflow Run 열기](${runUrl})`,
+                color: String(run.conclusion).toLowerCase() === 'success' ? 65280 : 16711680, // 초록/빨강
+                fields: [
+                  { name: "대상 브랜치", value: `\`${branch}\``, inline: true },
+                  { name: "결과", value: String(run.conclusion || 'unknown'), inline: true },
+                  { name: "관련 PR", value: prLink, inline: false },
+                  { name: "매트릭스 결과", value: lines.length ? lines.join('\n') : "결과를 찾을 수 없습니다.", inline: false },
+                ],
+                timestamp: when
               }]
             };
 
