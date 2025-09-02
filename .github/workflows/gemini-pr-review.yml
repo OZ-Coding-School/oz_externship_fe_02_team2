@@ -1,9 +1,8 @@
-name: Gemini PR Review (auto)
+name: Gemini PR Review (fast)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_call: # slash 리뷰 등에서 재사용 가능
 
 permissions:
   contents: read
@@ -11,40 +10,36 @@ permissions:
 
 jobs:
   gemini-review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04   # ubuntu-latest 대신 고정 버전 → 큐 대기 줄어듦
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Ensure tools
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq
+          fetch-depth: 2   # 최근 커밋 2개만 받음
 
-      - name: Get PR diff
+      - name: Ensure jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Get PR diff (last commit only)
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git diff --unified=0 origin/${{ github.base_ref }}...HEAD > changes.diff
-          split -b 180000 -d -a 3 changes.diff chunk_ || true
+          git diff HEAD^..HEAD --unified=0 | head -c 120000 > changes.diff
+          echo "---- DIFF PREVIEW ----"
+          head -n 50 changes.diff || true
+          echo "----------------------"
 
       - name: Load context files
         id: context
         run: |
           echo "guide<<EOF" >> $GITHUB_OUTPUT
-          if [ -f GEMINI.md ]; then
-            cat GEMINI.md >> $GITHUB_OUTPUT
-          fi
+          [ -f GEMINI.md ] && cat GEMINI.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           echo "config<<EOF" >> $GITHUB_OUTPUT
-          if [ -f .gemini/config.yaml ]; then
-            cat .gemini/config.yaml >> $GITHUB_OUTPUT
-          fi
+          [ -f .gemini/config.yaml ] && cat .gemini/config.yaml >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Build review with Gemini
+      - name: Call Gemini API
         id: review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -52,49 +47,44 @@ jobs:
           CONFIG: ${{ steps.context.outputs.config }}
         run: |
           SUMMARY_FILE=gemini_review.md
-          echo "## 🤖 Gemini Review (auto)" > "$SUMMARY_FILE"
+          echo "## 🤖 Gemini Review (fast)" > "$SUMMARY_FILE"
           echo "" >> "$SUMMARY_FILE"
 
-          PROMPT_HEADER=$(cat <<EOF
-            You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
+          # here-document 시작과 끝 토큰을 반드시 맞추기 (EOF/EOF)
+          PROMPT=$(cat <<'EOF'
+You are a senior TypeScript/React reviewer for a Lecture Admin Platform.
 
-            # Project Guide
-            $GUIDE
+# Project Guide
+$GUIDE
 
-            # Config
-            $CONFIG
+# Config
+$CONFIG
 
-            Review this unified diff with the following focus:
-            - correctness, type safety, null safety
-            - React Query/Zustand usage, API boundaries
-            - accessibility (table, aria, hydration)
-            - security/auth/role-based access
-            - UI (Tailwind/DaisyUI consistency), performance
+Review this diff with focus on:
+- correctness, type safety
+- React Query/Zustand usage, API boundaries
+- accessibility (table, aria, hydration)
+- security/auth/role-based access
+- UI consistency & performance
 
-            Return:
-            1. High risk issues
-            2. Medium/Low issues
-            3. Suggested minimal patch if needed
-            EOF
-            )
+Return:
+1. High risk issues
+2. Medium/Low issues
+3. Suggested minimal patch if needed
+EOF
+)
 
-                    for f in chunk_*; do
-                        REQ=$(jq -n --arg p "$PROMPT_HEADER" --arg d "$(cat "$f")" '{
-                        contents: [ { parts: [ { text: ($p + "\n\n---\nDIFF:\n" + $d) } ] } ]
-                        }')
+          DIFF=$(cat changes.diff)
+          REQ=$(jq -n --arg p "$PROMPT" --arg d "$DIFF" '{
+            contents: [ { parts: [ { text: ($p + "\n\n---\nDIFF:\n" + $d) } ] } ]
+          }')
 
-                        RESP=$(curl -s -X POST \
-                        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$GEMINI_API_KEY" \
-                        -H "Content-Type: application/json" \
-                        -d "$REQ")
+          RESP=$(curl -s -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$REQ")
 
-            TEXT=$(echo "$RESP" | jq -r '.candidates[0].content.parts[0].text // ""')
-            echo "<details><summary>Review chunk</summary>" >> "$SUMMARY_FILE"
-            echo "" >> "$SUMMARY_FILE"
-            echo "$TEXT" >> "$SUMMARY_FILE"
-            echo "</details>" >> "$SUMMARY_FILE"
-            echo "" >> "$SUMMARY_FILE"
-          done
+          echo "$RESP" | jq -r '.candidates[0].content.parts[0].text // "No response."' >> "$SUMMARY_FILE"
 
           echo "review_path=$SUMMARY_FILE" >> $GITHUB_OUTPUT
 
