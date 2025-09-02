@@ -1,4 +1,11 @@
-import { getButtonClass, getIconOnlyButtonClass } from './Button.styles'
+import cn from '@utils/cn'
+import {
+  buttonSizes,
+  buttonStyles,
+  commonStyles,
+  iconOnlyButtonSizes,
+  iconOnlyButtonStyles,
+} from './Button.styles'
 import type { ButtonProps } from './Button.types'
 
 export default function Button(props: ButtonProps) {
@@ -17,13 +24,13 @@ export default function Button(props: ButtonProps) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={
-        iconOnly
-          ? getIconOnlyButtonClass(btnStyle, btnSize)
-          : getButtonClass(btnStyle, btnSize)
-      }
+      className={cn(
+        commonStyles,
+        iconOnly ? iconOnlyButtonStyles[btnStyle] : buttonStyles[btnStyle],
+        iconOnly ? iconOnlyButtonSizes[btnSize] : buttonSizes[btnSize]
+      )}
     >
-      {btnIcon && <span>{btnIcon}</span>}
+      {btnIcon && btnIcon}
       {btnText && btnText}
     </button>
   )
