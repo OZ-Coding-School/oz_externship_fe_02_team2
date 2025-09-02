@@ -1,0 +1,101 @@
+name: Gemini PR Review (fast)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-22.04 # ubuntu-latest 대신 고정 버전 → 큐 대기 줄어듦
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # 최근 커밋 2개만 받음
+
+      - name: Ensure jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+
+      - name: Get PR diff (last commit only)
+        run: |
+          git diff HEAD^..HEAD --unified=0 | head -c 120000 > changes.diff
+          echo "---- DIFF PREVIEW ----"
+          head -n 50 changes.diff || true
+          echo "----------------------"
+
+      - name: Load context files
+        id: context
+        run: |
+          echo "guide<<EOF" >> $GITHUB_OUTPUT
+          [ -f GEMINI.md ] && cat GEMINI.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "config<<EOF" >> $GITHUB_OUTPUT
+          [ -f .gemini/config.yaml ] && cat .gemini/config.yaml >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Call Gemini API
+        id: review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GUIDE: ${{ steps.context.outputs.guide }}
+          CONFIG: ${{ steps.context.outputs.config }}
+        run: |
+          SUMMARY_FILE=gemini_review.md
+          echo "## 🤖 Gemini Review (fast)" > "$SUMMARY_FILE"
+          echo "" >> "$SUMMARY_FILE"
+
+          # here-document 시작과 끝 토큰을 반드시 맞추기 (EOF/EOF)
+          PROMPT=$(cat <<EOF
+          너는 Lecture Admin Platform 프로젝트를 리뷰하는 시니어 타입스크립트/리액트 개발자야.  
+          아래 변경된 코드를 리뷰하고, 반드시 **한국어로** 답변해.  
+
+          # 프로젝트 가이드
+          $GUIDE
+
+          # 설정
+          $CONFIG
+
+          리뷰 시 중점 사항:
+          - 정확성, 타입 안정성, null 안전성
+          - React Query / Zustand 사용법, API 경계 처리
+          - 접근성 (table 구조, aria, hydration)
+          - 보안/권한(Role 기반 접근 제어)
+          - UI 일관성 (Tailwind/DaisyUI) 및 성능
+
+          출력 형식:
+          1. ⚠️ 고위험/차단 이슈
+          2. ⚡ 중위험/저위험 이슈
+          3. 💡 필요한 경우 최소 수정 패치(diff 코드블록)
+
+          반드시 한국어로 설명해줘.
+          EOF
+          )
+
+          DIFF=$(cat changes.diff)
+          REQ=$(jq -n --arg p "$PROMPT" --arg d "$DIFF" '{
+            contents: [ { parts: [ { text: ($p + "\n\n---\nDIFF:\n" + $d) } ] } ]
+          }')
+
+          RESP=$(curl -s -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$GEMINI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$REQ")
+
+          echo "$RESP" | jq -r '.candidates[0].content.parts[0].text // "No response."' >> "$SUMMARY_FILE"
+
+          echo "review_path=$SUMMARY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Post or update PR comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: ${{ steps.review.outputs.review_path }}
+          edit-mode: replace
