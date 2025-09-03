@@ -4,6 +4,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_call:
+    inputs:
+      full_context:
+        description: 'true면 전체 이력 + blobless + sparse(src) + PR 전체 diff(B안), false면 얕은 클론 + 마지막 커밋만(A안)'
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      GEMINI_API_KEY:
+        required: true
 
 permissions:
   contents: read
@@ -14,20 +23,72 @@ jobs:
     runs-on: ubuntu-22.04 # ubuntu-latest 대신 고정 버전 → 큐 대기 줄어듦
 
     steps:
-      - name: Checkout
+      # --- Checkout 분기 ---
+      - name: Checkout (shallow + blobless) # A안
+        if: inputs.full_context == false
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # 최근 커밋 2개만 받음
+          fetch-depth: 2
+          filter: blob:none
+
+      - name: Checkout (full history + blobless) # B안
+        if: inputs.full_context == true
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      # --- 우리가 작성한 코드만 펼치기: src ---
+      - name: Apply sparse-checkout (cone, src only)
+        run: |
+          git sparse-checkout init --cone
+          git sparse-checkout set src
 
       - name: Ensure jq
         run: sudo apt-get update -y && sudo apt-get install -y jq
 
+      # --- DIFF 생성 분기 ---
+      # A안: 마지막 커밋만
       - name: Get PR diff (last commit only)
+        if: inputs.full_context == false
         run: |
           git diff HEAD^..HEAD --unified=0 | head -c 120000 > changes.diff
-          echo "---- DIFF PREVIEW ----"
+          echo "---- DIFF PREVIEW (last commit) ----"
           head -n 50 changes.diff || true
-          echo "----------------------"
+          echo "------------------------------------"
+
+      # B안: PR 전체 맥락 (base SHA ~ HEAD)
+      - name: Get PR base SHA (for full-context)
+        if: inputs.full_context == true
+        id: prbase
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "PR_NUMBER not found in event payload"; exit 1
+          fi
+          RESP=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/$GH_REPO/pulls/$PR_NUMBER)
+          BASE_SHA=$(echo "$RESP" | jq -r '.base.sha')
+          HEAD_SHA=$(echo "$RESP" | jq -r '.head.sha')
+          echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+
+      - name: Get PR diff (full-context base..head)
+        if: inputs.full_context == true
+        env:
+          BASE: ${{ steps.prbase.outputs.base_sha }}
+          HEAD: ${{ steps.prbase.outputs.head_sha }}
+        run: |
+          # 필요한 두 지점만 확실히 가져와서 diff
+          git fetch --no-tags origin $BASE $HEAD
+          git diff $BASE..$HEAD --unified=0 | head -c 120000 > changes.diff
+          echo "---- DIFF PREVIEW (base..head) ----"
+          head -n 50 changes.diff || true
+          echo "-----------------------------------"
 
       - name: Load context files
         id: context
@@ -46,21 +107,25 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GUIDE: ${{ steps.context.outputs.guide }}
           CONFIG: ${{ steps.context.outputs.config }}
+          MODE: ${{ inputs.full_context }}
         run: |
           SUMMARY_FILE=gemini_review.md
-          echo "## 🤖 Gemini Review (fast)" > "$SUMMARY_FILE"
+          if [ "$MODE" = "true" ]; then
+            echo "## 🤖 Gemini Review (full-context)" > "$SUMMARY_FILE"
+          else
+            echo "## 🤖 Gemini Review (fast)" > "$SUMMARY_FILE"
+          fi
           echo "" >> "$SUMMARY_FILE"
 
-          # here-document 시작과 끝 토큰을 반드시 맞추기 (EOF/EOF)
-          PROMPT=$(cat <<EOF
-          너는 Lecture Admin Platform 프로젝트를 리뷰하는 시니어 타입스크립트/리액트 개발자야.  
-          아래 변경된 코드를 리뷰하고, 반드시 **한국어로** 답변해.  
+          PROMPT=$(cat <<'EOF'
+          너는 Lecture Admin Platform 프로젝트를 리뷰하는 시니어 타입스크립트/리액트 개발자야.
+          아래 변경된 코드를 리뷰하고, 반드시 **한국어로** 답변해.
 
           # 프로젝트 가이드
-          $GUIDE
+          {{GUIDE}}
 
           # 설정
-          $CONFIG
+          {{CONFIG}}
 
           리뷰 시 중점 사항:
           - 정확성, 타입 안정성, null 안전성
@@ -77,6 +142,9 @@ jobs:
           반드시 한국어로 설명해줘.
           EOF
           )
+
+          PROMPT="${PROMPT//'{{GUIDE}}'/$GUIDE}"
+          PROMPT="${PROMPT//'{{CONFIG}}'/$CONFIG}"
 
           DIFF=$(cat changes.diff)
           REQ=$(jq -n --arg p "$PROMPT" --arg d "$DIFF" '{
@@ -96,6 +164,6 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.pull_request.number || github.event.issue.number }}
           body-file: ${{ steps.review.outputs.review_path }}
           edit-mode: replace
