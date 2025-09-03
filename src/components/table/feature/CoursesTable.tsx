@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
 import { Badge } from '@components/table/Badges'
 import type { Column, TableState } from '@type/table'
-import { fmtDate } from '@utils/table'
+import { fmtDate } from '@/lib/table'
 
 export type CourseRow = {
   id: number
