@@ -14,4 +14,6 @@ jobs:
       github.event.issue.pull_request != null &&
       contains(github.event.comment.body, '/gemini review')
     uses: ./.github/workflows/gemini-pr-review.yml
+    with:
+      full_context: true
     secrets: inherit
