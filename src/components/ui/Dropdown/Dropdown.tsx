@@ -43,9 +43,32 @@ export default function Dropdown({
   const btnId = useId()
   const listId = useId()
 
-  const toggle = useCallback(() => {
-    if (!disabled) setOpen((o) => !o)
-  }, [disabled])
+  const firstEnabledIndex = () => options.findIndex((o) => !o.disabled)
+  const lastEnabledIndex = () => {
+    for (let i = options.length - 1; i >= 0; i--)
+      if (!options[i].disabled) return i
+    return -1
+  }
+
+  const nextEnabledIndex = (from: number, dir: 1 | -1) => {
+    if (options.length === 0) return -1
+    let i = from
+    for (let step = 0; step < options.length; step++) {
+      i = (i + dir + options.length) % options.length
+      if (!options[i].disabled) return i
+    }
+    return from
+  }
+
+  const openMenu = useCallback(() => {
+    if (disabled) return
+    setOpen(true)
+    const base =
+      selectedIndex >= 0 && !options[selectedIndex]?.disabled
+        ? selectedIndex
+        : firstEnabledIndex()
+    setActiveIndex(base >= 0 ? base : -1)
+  }, [disabled, options, selectedIndex])
 
   const close = useCallback((focusBack = false) => {
     setOpen(false)
@@ -81,6 +104,17 @@ export default function Dropdown({
     onChange?.(opt.value, opt)
     close(true)
   }
+
+  const onButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      openMenu()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      openMenu()
+    }
+  }
   return (
     <div ref={wrapRef} className={cn(WRAPPER_BASE, classes?.wrapper)}>
       <button
@@ -95,7 +129,8 @@ export default function Dropdown({
           disabled && BUTTON_DISABLED,
           classes?.button
         )}
-        onClick={toggle}
+        onClick={() => (open ? close(true) : openMenu())}
+        onKeyDown={onButtonKeyDown}
       >
         <span className={cn(!selectedOption && BUTTON_PLACEHOLDER)}>
           {selectedOption ? selectedOption.label : placeholder}
