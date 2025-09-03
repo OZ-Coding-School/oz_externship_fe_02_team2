@@ -11,7 +11,7 @@ export default function ButtonTest() {
   const handleClick = () => setCount((c) => c + 1)
 
   return (
-    <section className="h-screen space-y-4 bg-white p-6">
+    <section className="h-screen space-y-4 p-6">
       <h3>Button 컴포넌트 테스트</h3>
       <p className="body-sm">버튼을 눌러 카운트를 확인하세요.</p>
 

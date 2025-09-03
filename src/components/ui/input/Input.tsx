@@ -3,7 +3,7 @@ import { forwardRef, useId, useMemo, useState } from 'react'
 import type { InputProps } from '@/types/input'
 import { sizeMap, baseInput, errorInput, labelCls } from './Input.styles'
 import { EyeIcon, EyeOffIcon, XIcon } from '@/components/ui/icons'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 
 export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   const {
