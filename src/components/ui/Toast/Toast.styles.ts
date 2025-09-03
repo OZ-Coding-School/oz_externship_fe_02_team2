@@ -6,7 +6,7 @@ import ErrorIcon from '@assets/icons/toast_error.svg'
 export const TOAST_COMMON_STYLES =
   'flex justify-start items-center gap-x-3 w-5/6 p-[17px] rounded-lg'
 
-export const TOAST_COLORS = {
+export const TOAST_STYLES = {
   info: {
     border: 'shadow-[inset_0_0_0_1px_#BFDBFE]',
     bg: 'bg-[#EFF6FF]',

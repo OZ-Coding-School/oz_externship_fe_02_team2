@@ -8,6 +8,8 @@ export default function ToastTest() {
       <h3>Toast 컴포넌트 테스트</h3>
       <p className="body-sm">버튼을 눌러 종류별 토스트 알림을 확인하세요.</p>
 
+      {/* TODO: map 돌리기 */}
+
       <article className="mb-6 flex flex-col gap-1">
         <h4>토스트 알림 트리거 버튼</h4>
         <div className="flex gap-3">
