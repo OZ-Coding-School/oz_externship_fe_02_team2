@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from 'src/lib/utils';
+import { cn } from 'src/lib/cn';
 
 // Badge 컴포넌트 정의
 const Badge = React.forwardRef<
@@ -8,7 +8,7 @@ const Badge = React.forwardRef<
     variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
     size?: 'sm' | 'md' | 'lg';
   }
->(({ className, variant = 'default', size = 'md', ...props }, ref) => {
+>(({ className, variant = 'default', size = 'lg', ...props }, ref) => {
   return (
     <div
       ref={ref}
@@ -19,33 +19,30 @@ const Badge = React.forwardRef<
         {
           'px-2 py-0.5 body-xs font-medium': size === 'sm',
           'px-2.5 py-1 body-sm font-medium': size === 'md',
-          'px-3 py-1.5 body-md font-medium': size === 'lg',
+          'px-3 py-1.5 body-base font-medium': size === 'lg',
         },
         // 변형별 스타일
         {
           // Default - 회색 계열
-          'bg-gray-100 text-gray-700': variant === 'default',
-          
-          // Primary - 주황색 계열 (StudyHub 메인 컬러)
-          'bg-orange-100 text-orange-700': variant === 'primary',
-          
+          'bg-gray-100 text-gray-600': variant === 'default',
+
+          // Primary - 메인 컬러
+          'bg-primary-100 text-primary-500': variant === 'primary' || variant === 'warning',
+
           // Secondary - 회색 계열
-          'bg-gray-100 text-gray-600': variant === 'secondary',
-          
+          'bg-gray-100 text-gray-500': variant === 'secondary',
+
           // Success - 초록색 계열
-          'bg-green-100 text-green-700': variant === 'success',
-          
-          // Warning - 노란색 계열
-          'bg-yellow-100 text-yellow-700': variant === 'warning',
-          
+          'bg-success-100 text-success-600': variant === 'success',
+
           // Danger - 빨간색 계열
-          'bg-red-100 text-red-700': variant === 'danger',
-          
-          // Info - 파란색 계열
-          'bg-blue-100 text-blue-700': variant === 'info',
-          
+          'bg-danger-100 text-danger-600': variant === 'danger',
+
+          // Info - 파란색 계열 (회색 계열 사용)
+          'bg-gray-200 text-gray-600': variant === 'info',
+
           // Outline - 테두리만
-          'bg-transparent text-gray-700': variant === 'outline',
+          'bg-transparent text-gray-600': variant === 'outline',
         },
         className
       )}
@@ -61,42 +58,42 @@ export default function BadgeTest() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="heading-2xl font-bold text-primary-text mb-2">Badge 컴포넌트 테스트</h1>
-      <p className="body-md text-secondary-text mb-8">배지의 놀라운 가짓수를 확인하세요.</p>
+      <p className="body-base text-secondary-text mb-8">배지의 다양한 가짓수를 확인하세요.</p>
 
       {/* 스타일별 뱃지 */}
       <section className="mb-12">
         <h2 className="heading-xl font-semibold text-primary-text mb-6">스타일별 배지</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="default">클릭 첫 수: 0</Badge>
+            <Badge variant="default">default</Badge>
             <p className="body-sm text-secondary-text mt-2">기본</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="primary">클릭 첫 수: 0</Badge>
+            <Badge variant="primary">primary</Badge>
             <p className="body-sm text-secondary-text mt-2">주요</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="success">클릭 첫 수: 0</Badge>
+            <Badge variant="success">success</Badge>
             <p className="body-sm text-secondary-text mt-2">성공</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="danger">클릭 첫 수: 0</Badge>
+            <Badge variant="danger">danger</Badge>
             <p className="body-sm text-secondary-text mt-2">위험</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="warning">클릭 첫 수: 0</Badge>
+            <Badge variant="warning">warning</Badge>
             <p className="body-sm text-secondary-text mt-2">경고</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="info">클릭 첫 수: 0</Badge>
+            <Badge variant="info">info</Badge>
             <p className="body-sm text-secondary-text mt-2">정보</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="secondary">클릭 첫 수: 0</Badge>
+            <Badge variant="secondary">secondary</Badge>
             <p className="body-sm text-secondary-text mt-2">보조</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">클릭 첫 수: 0</Badge>
+            <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">outline</Badge>
             <p className="body-sm text-secondary-text mt-2">외곽선</p>
           </div>
         </div>
@@ -106,9 +103,9 @@ export default function BadgeTest() {
       <section className="mb-12">
         <h2 className="heading-xl font-semibold text-primary-text mb-6">사이즈별 배지</h2>
         <div className="flex flex-wrap gap-4 items-center">
-          <Badge variant="primary" size="sm">클릭 횟수: 0</Badge>
-          <Badge variant="primary" size="md">클릭 횟수: 0</Badge>
-          <Badge variant="primary" size="lg">클릭 횟수: 0</Badge>
+          <Badge variant="primary" size="sm">small</Badge>
+          <Badge variant="primary" size="md">medium</Badge>
+          <Badge variant="primary" size="lg">large</Badge>
         </div>
       </section>
 
@@ -135,12 +132,12 @@ export default function BadgeTest() {
 
       {/* 실제 사용 예시 */}
       <section className="mb-12">
-        <h2 className="heading-xl font-semibold text-primary-text mb-6">실제 사용 예시</h2>
+        <h2 className="mb-6">실제 사용 예시</h2>
         
         <div className="space-y-8">
           {/* 상태 표시 */}
           <div>
-            <h3 className="body-lg font-medium text-primary-text mb-3">상태 표시</h3>
+            <h3 className="mb-3">상태 표시</h3>
             <div className="flex flex-wrap gap-2">
               <Badge variant="success">활성</Badge>
               <Badge variant="warning">대기중</Badge>
@@ -176,15 +173,15 @@ export default function BadgeTest() {
             <h3 className="body-lg font-medium text-primary-text mb-3">알림 배지</h3>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <span className="body-md text-primary-text">메시지</span>
+                <span className="body-base text-primary-text">메시지</span>
                 <Badge size="sm" variant="danger" className="min-w-[20px] h-5">3</Badge>
               </div>
               <div className="flex items-center gap-2">
-                <span className="body-md text-primary-text">알림</span>
+                <span className="body-base text-primary-text">알림</span>
                 <Badge size="sm" variant="primary" className="min-w-[24px] h-5">12</Badge>
               </div>
               <div className="flex items-center gap-2">
-                <span className="body-md text-primary-text">새 글</span>
+                <span className="body-base text-primary-text">새 글</span>
                 <Badge size="sm" variant="success" className="min-w-[20px] h-5">5</Badge>
               </div>
             </div>
