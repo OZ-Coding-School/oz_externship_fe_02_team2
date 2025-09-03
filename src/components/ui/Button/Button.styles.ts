@@ -8,7 +8,7 @@ export const BUTTON_STYLES: Record<ButtonStyle, string> = {
   secondary: 'text-secondary-text bg-white shadow-[inset_0_0_0_1px_#d1d5db]',
   success: 'text-white bg-success',
   danger: 'text-white bg-danger',
-  warning: 'text-white bg-primary',
+  warning: 'text-white bg-primary-500',
   cancel: 'text-white bg-gray-500',
 }
 
