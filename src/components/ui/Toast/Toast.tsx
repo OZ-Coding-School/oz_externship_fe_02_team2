@@ -21,7 +21,7 @@ export function Toast(props: ToastProps) {
   return (
     <div className={cn(TOAST_COMMON_STYLES, styles.border, styles.bg)}>
       <img src={icon} alt={iconAlt} />
-      <div>
+      <div className="w-full">
         <h6 className={styles.title}>{title}</h6>
         <p className={styles.content}>{content}</p>
       </div>
