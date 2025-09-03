@@ -1,5 +1,5 @@
 import { pageButton } from './Pagination.styles'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 import { Ellipsis } from 'lucide-react'
 
 const pageButtonStyles = pageButton()

@@ -1,4 +1,4 @@
-import { cn } from '@lib/utils'
+import { cn } from '@/lib/cn'
 import {
   BUTTON_COMMON_STYLES,
   BUTTON_SIZES,
