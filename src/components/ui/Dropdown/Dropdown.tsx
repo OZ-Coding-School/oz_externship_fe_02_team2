@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { DropdownProps } from './Dropdown.types'
 import { cn } from '@/lib/utils'
-import { Menu } from 'lucide-react'
 import {
   BUTTON_BASE,
   BUTTON_DISABLED,
   BUTTON_PLACEHOLDER,
   CARET,
+  MENU_BASE,
   menuAlignClass,
   OPTION_BASE,
   OPTION_DISABLED,
@@ -116,7 +116,7 @@ export default function Dropdown({
           id={listId}
           role="listbox"
           aria-labelledby={btnId}
-          className={cn(Menu, menuAlignClass(align), classes?.menu)}
+          className={cn(MENU_BASE, menuAlignClass(align), classes?.menu)}
         >
           {options.map((o) => {
             const selected = o.value === selectedValue
