@@ -6,7 +6,7 @@ import {
   iconOnlyButtonSizes,
   iconOnlyButtonStyles,
 } from './Button.styles'
-import type { ButtonProps } from './Button.types'
+import type { ButtonProps } from '@/types/button'
 
 export default function Button(props: ButtonProps) {
   const {
