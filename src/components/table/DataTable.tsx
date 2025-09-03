@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react'
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
-import { cls } from '@utils/table'
+import { cls } from '@/lib/table'
 
 type MobileKeep =
   | 'all' // 모바일에서도 전부 보이게(기본)
