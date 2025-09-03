@@ -8,8 +8,8 @@ export function useToast() {
 
   const triggerToast = (
     type: ToastProps['type'],
-    title: ToastProps['title'],
-    content: ToastProps['content']
+    title?: ToastProps['title'],
+    content?: ToastProps['content']
   ) => {
     const uniqueId = Date.now() * 10000 + Math.floor(Math.random() * 10000)
     const newToast = { id: uniqueId, type, title, content }

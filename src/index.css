@@ -145,7 +145,7 @@ body {
   @keyframes fade-in-out-toast {
     0% {
       opacity: 0;
-      transform: translateX(10%);
+      transform: translateY(-20%);
     }
     15% {
       opacity: 1;
@@ -153,9 +153,11 @@ body {
     }
     85% {
       opacity: 1;
+      transform: translateY(0);
     }
     100% {
       opacity: 0;
+      transform: translateY(-10%);
     }
   }
 }
