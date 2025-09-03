@@ -1,8 +1,8 @@
 import { cn } from '@lib/utils'
 import {
+  BUTTON_COMMON_STYLES,
   BUTTON_SIZES,
   BUTTON_STYLES,
-  COMMON_STYLES,
   ICON_ONLY_BUTTON_SIZES,
   ICON_ONLY_BUTTON_STYLES,
 } from './Button.styles'
@@ -25,7 +25,7 @@ export default function Button(props: ButtonProps) {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        COMMON_STYLES,
+        BUTTON_COMMON_STYLES,
         iconOnly ? ICON_ONLY_BUTTON_STYLES[btnStyle] : BUTTON_STYLES[btnStyle],
         iconOnly ? ICON_ONLY_BUTTON_SIZES[btnSize] : BUTTON_SIZES[btnSize]
       )}

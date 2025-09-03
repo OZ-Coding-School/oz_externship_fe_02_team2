@@ -1,6 +1,6 @@
 import type { ButtonSize, ButtonStyle } from './Button.types'
 
-export const COMMON_STYLES: string =
+export const BUTTON_COMMON_STYLES: string =
   'flex justify-center items-center gap-x-2 cursor-pointer hover:opacity-90 active:opacity-80 transition disabled:cursor-not-allowed disabled:opacity-50'
 
 export const BUTTON_STYLES: Record<ButtonStyle, string> = {
