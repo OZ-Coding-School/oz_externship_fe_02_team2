@@ -2,9 +2,9 @@
 import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
 import { Badge } from '@components/table/Badges'
-import { fmtDate } from '@utils/table'
+import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
-import { roleToTone } from '@utils/mappers'
+import { roleToTone } from '@/lib/mappers'
 
 export type WithdrawalRow = {
   wid: string

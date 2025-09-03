@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -138,6 +138,31 @@ body {
   }
 }
 
+/* 토스트 알림 애니메이션 */
+@theme {
+  --animate-fade-in-out-toast: fade-in-out-toast 3s ease-out;
+
+  @keyframes fade-in-out-toast {
+    0% {
+      opacity: 0;
+      transform: translateY(-20%);
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    85% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-10%);
+    }
+  }
+}
+
+/* 테스트 페이지 관련 */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
