@@ -14,7 +14,7 @@ export function ToastContainer() {
   }, [debouncedToasts])
 
   return (
-    <div className="fixed inset-x-0 top-8 z-100 flex flex-col items-center gap-y-3">
+    <div className="pointer-events-none fixed inset-x-0 top-8 z-100 flex flex-col items-center gap-y-3">
       {renderedToasts.map(({ id, type, title, content }) => (
         <Toast key={id} id={id} type={type} title={title} content={content} />
       ))}
