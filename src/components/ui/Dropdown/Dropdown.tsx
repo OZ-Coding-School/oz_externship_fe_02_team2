@@ -28,13 +28,18 @@ export default function Dropdown({
   const [internalValue, seInternalValue] = useState<string | null>(defaultValue)
   const selectedValue = (isControlled ? value : internalValue) ?? null
 
-  const selectedOption = useMemo(
-    () => options.find((o) => o.value === selectedValue) ?? null,
+  const selectedIndex = useMemo(
+    () => options.findIndex((o) => o.value === selectedValue),
     [options, selectedValue]
   )
+  const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null
 
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
+
+  const listRef = useRef<HTMLUListElement | null>(null)
+  const [activeIndex, setActiveIndex] = useState<number>(-1)
+
   const btnId = useId()
   const listId = useId()
 
