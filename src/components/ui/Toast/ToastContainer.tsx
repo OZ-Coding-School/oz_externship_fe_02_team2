@@ -7,7 +7,7 @@ import { Toast } from './Toast'
 export function ToastContainer() {
   const [renderedToasts, setRenderedToasts] = useState<ToastProps[]>([])
   const { toasts } = useToastStore()
-  const debouncedToasts = useDebounce(toasts, 200)
+  const debouncedToasts = useDebounce(toasts, 150)
 
   useEffect(() => {
     setRenderedToasts(debouncedToasts)
