@@ -94,6 +94,16 @@ export default function Dropdown({
     }
   }, [open, close])
 
+  useEffect(() => {
+    if (open) setTimeout(() => listRef.current?.focus(), 0)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || activeIndex < 0) return
+    const el = listRef.current?.children[activeIndex] as HTMLElement | undefined
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [open, activeIndex])
+
   const select = (opt: {
     value: string
     label: string
