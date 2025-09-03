@@ -1,6 +1,6 @@
 export type Option = { value: string; label: string; disabled?: boolean }
 
-export type DropdownSelectProps = {
+export type DropdownProps = {
   options: readonly Option[]
   value?: string | null
   defaultValue?: string | null
