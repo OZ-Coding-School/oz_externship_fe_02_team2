@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "strict": true, // 루트 설정에도 strict 권장
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "files": [],

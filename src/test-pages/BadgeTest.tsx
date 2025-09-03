@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from 'src/lib/utils';
 
 // Badge 컴포넌트 정의
 const Badge = React.forwardRef<
