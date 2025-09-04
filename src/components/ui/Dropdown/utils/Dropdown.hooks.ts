@@ -14,7 +14,7 @@ export function useOutsideClickAndEsc(
       if (!rootEl?.contains(e.target as Node)) onOutside()
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onEsc ? onEsc() : onOutside()
+      if (e.key === 'Escape') onOutside()
     }
     document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
