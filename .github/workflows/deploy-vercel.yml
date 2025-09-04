@@ -1,0 +1,80 @@
+name: Deploy to Vercel (CLI)
+
+on:
+  push:
+    branches:
+      - dev # ← 배포 브랜치
+      - 'feature/**' # ← preview 배포 브랜치
+      - 'fix/**' # ← preview 배포 브랜치
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set deploy channel (prod or preview)
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/dev" ]]; then
+            echo "VERCEL_ENV=production" >> $GITHUB_ENV
+            echo "VC_PROD=--prod" >> $GITHUB_ENV
+          else
+            echo "VERCEL_ENV=preview" >> $GITHUB_ENV
+            echo "VC_PROD=" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel
+
+      - name: Pull Vercel env & settings
+        run: vercel pull --yes --environment=$VERCEL_ENV --token $VERCEL_TOKEN
+
+      - name: Build (prebuilt)
+        run: vercel build $VC_PROD --token $VERCEL_TOKEN
+
+      - name: Deploy (prebuilt)
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt $VC_PROD --token $VERCEL_TOKEN)
+          echo "url=$url" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=$url" >> $GITHUB_ENV
+
+      - name: Show Deployment URL
+        run: |
+          echo "✅ Deployed: $DEPLOY_URL"
+
+      - name: Comment Preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const url = process.env.DEPLOY_URL;
+            const pr = context.payload.pull_request;
+            if (pr) {
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `🚀 Vercel Preview 배포 완료!\n\n🔗 [배포 URL](${url})`
+              });
+            }
