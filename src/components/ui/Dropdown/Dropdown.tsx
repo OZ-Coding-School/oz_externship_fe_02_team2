@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { DropdownProps } from './Dropdown.types'
 import { cn } from '@/lib/utils'
 import {
@@ -14,6 +14,15 @@ import {
   OPTION_SELECTED,
   WRAPPER_BASE,
 } from './Dropdown.styles'
+
+import {
+  useAutoFocusWhenOpen,
+  useKeepActiveVisible,
+  useOutsideClickAndEsc,
+  firstEnabledIndex,
+  lastEnabledIndex,
+  nextEnabledIndex,
+} from './utils'
 
 export default function Dropdown({
   options,
@@ -44,30 +53,13 @@ export default function Dropdown({
   const btnId = useId()
   const listId = useId()
 
-  const firstEnabledIndex = () => options.findIndex((o) => !o.disabled)
-  const lastEnabledIndex = () => {
-    for (let i = options.length - 1; i >= 0; i--)
-      if (!options[i].disabled) return i
-    return -1
-  }
-
-  const nextEnabledIndex = (from: number, dir: 1 | -1) => {
-    if (options.length === 0) return -1
-    let i = from
-    for (let step = 0; step < options.length; step++) {
-      i = (i + dir + options.length) % options.length
-      if (!options[i].disabled) return i
-    }
-    return from
-  }
-
   const openMenu = useCallback(() => {
     if (disabled) return
     setOpen(true)
     const base =
       selectedIndex >= 0 && !options[selectedIndex]?.disabled
         ? selectedIndex
-        : firstEnabledIndex()
+        : firstEnabledIndex(options)
     setActiveIndex(base >= 0 ? base : -1)
   }, [disabled, options, selectedIndex])
 
@@ -85,22 +77,22 @@ export default function Dropdown({
       case 'ArrowDown':
         e.preventDefault()
         setActiveIndex((i) =>
-          nextEnabledIndex(i < 0 ? firstEnabledIndex() : i, 1)
+          nextEnabledIndex(options, i < 0 ? firstEnabledIndex(options) : i, 1)
         )
         break
       case 'ArrowUp':
         e.preventDefault()
         setActiveIndex((i) =>
-          nextEnabledIndex(i < 0 ? lastEnabledIndex() : i, -1)
+          nextEnabledIndex(options, i < 0 ? lastEnabledIndex(options) : i, -1)
         )
         break
       case 'Home':
         e.preventDefault()
-        setActiveIndex(firstEnabledIndex())
+        setActiveIndex(firstEnabledIndex(options))
         break
       case 'End':
         e.preventDefault()
-        setActiveIndex(lastEnabledIndex())
+        setActiveIndex(lastEnabledIndex(options))
         break
       case 'Enter':
       case ' ':
@@ -117,33 +109,14 @@ export default function Dropdown({
     }
   }
 
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) close(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close(true)
-    }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open, close])
-
-  // 열릴 때 리스트로 포커스 이동
-  useEffect(() => {
-    if (open) setTimeout(() => listRef.current?.focus(), 0)
-  }, [open])
-
-  // 하이라이트가 바뀌면 최소 스크롤
-  useEffect(() => {
-    if (!open || activeIndex < 0) return
-    const el = listRef.current?.children[activeIndex] as HTMLElement | undefined
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [open, activeIndex])
+  useOutsideClickAndEsc(
+    open,
+    wrapRef.current,
+    () => close(false),
+    () => close(true)
+  )
+  useAutoFocusWhenOpen(open, listRef.current)
+  useKeepActiveVisible(open, listRef.current, activeIndex)
 
   const select = (opt: {
     value: string
@@ -244,5 +217,3 @@ export default function Dropdown({
     </div>
   )
 }
-
-// 모듈화 예정
