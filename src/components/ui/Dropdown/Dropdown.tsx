@@ -65,12 +65,10 @@ export default function Dropdown({
     setActiveIndex(base >= 0 ? base : -1)
   }, [disabled, options, selectedIndex])
 
+  const btnRef = useRef<HTMLButtonElement | null>(null)
   const close = useCallback((focusBack = false) => {
     setOpen(false)
-    if (focusBack)
-      (
-        wrapRef.current?.querySelector('button') as HTMLButtonElement | null
-      )?.focus()
+    if (focusBack) btnRef.current?.focus({ preventScroll: true })
   }, [])
 
   const onListKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
@@ -144,6 +142,7 @@ export default function Dropdown({
   return (
     <div ref={wrapRef} className={cn(WRAPPER_BASE, classes?.wrapper)}>
       <button
+        ref={btnRef}
         id={btnId}
         type="button"
         disabled={disabled}
