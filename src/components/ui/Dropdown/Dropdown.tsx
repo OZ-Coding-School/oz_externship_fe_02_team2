@@ -35,7 +35,9 @@ export default function Dropdown({
   align = 'start',
 }: DropdownProps) {
   const isControlled = value !== undefined
-  const [internalValue, seInternalValue] = useState<string | null>(defaultValue)
+  const [internalValue, setInternalValue] = useState<string | null>(
+    defaultValue
+  )
   const selectedValue = (isControlled ? value : internalValue) ?? null
 
   const selectedIndex = useMemo(
@@ -111,7 +113,7 @@ export default function Dropdown({
 
   useOutsideClickAndEsc(
     open,
-    wrapRef.current,
+    wrapRef,
     () => close(false),
     () => close(true)
   )
@@ -124,7 +126,7 @@ export default function Dropdown({
     disabled?: boolean
   }) => {
     if (opt.disabled) return
-    if (!isControlled) seInternalValue(opt.value)
+    if (!isControlled) setInternalValue(opt.value)
     onChange?.(opt.value, opt)
     close(true)
   }

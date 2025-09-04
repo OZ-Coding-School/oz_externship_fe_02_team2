@@ -1,14 +1,15 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { scrollChildIntoViewNearest } from './Dropdown.dom'
 
 export function useOutsideClickAndEsc(
   open: boolean,
-  rootEl: HTMLElement | null,
+  rootRef: React.RefObject<HTMLElement | null>,
   onOutside: () => void,
   onEsc?: () => void
 ) {
   useEffect(() => {
     if (!open) return
+    const rootEl = rootRef.current
     const onDown = (e: MouseEvent) => {
       if (!rootEl?.contains(e.target as Node)) onOutside()
     }
@@ -21,7 +22,7 @@ export function useOutsideClickAndEsc(
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, rootEl, onOutside, onEsc])
+  }, [open, rootRef, onOutside, onEsc])
 }
 
 export function useAutoFocusWhenOpen<T extends HTMLElement>(
