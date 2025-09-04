@@ -9,6 +9,7 @@ import {
   MENU_BASE,
   menuAlignClass,
   OPTION_BASE,
+  OPTION_ACTIVE,
   OPTION_DISABLED,
   OPTION_SELECTED,
   WRAPPER_BASE,
@@ -78,6 +79,44 @@ export default function Dropdown({
       )?.focus()
   }, [])
 
+  const onListKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
+    if (!open) return
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setActiveIndex((i) =>
+          nextEnabledIndex(i < 0 ? firstEnabledIndex() : i, 1)
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setActiveIndex((i) =>
+          nextEnabledIndex(i < 0 ? lastEnabledIndex() : i, -1)
+        )
+        break
+      case 'Home':
+        e.preventDefault()
+        setActiveIndex(firstEnabledIndex())
+        break
+      case 'End':
+        e.preventDefault()
+        setActiveIndex(lastEnabledIndex())
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (activeIndex >= 0) select(options[activeIndex])
+        break
+      case 'Tab':
+        close(false)
+        break
+      case 'Escape':
+        e.preventDefault()
+        close(true)
+        break
+    }
+  }
+
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
@@ -94,10 +133,12 @@ export default function Dropdown({
     }
   }, [open, close])
 
+  // 열릴 때 리스트로 포커스 이동
   useEffect(() => {
     if (open) setTimeout(() => listRef.current?.focus(), 0)
   }, [open])
 
+  // 하이라이트가 바뀌면 최소 스크롤
   useEffect(() => {
     if (!open || activeIndex < 0) return
     const el = listRef.current?.children[activeIndex] as HTMLElement | undefined
@@ -166,18 +207,26 @@ export default function Dropdown({
           id={listId}
           role="listbox"
           aria-labelledby={btnId}
+          tabIndex={-1}
+          ref={listRef}
+          onKeyDown={onListKeyDown}
+          aria-activedescendant={
+            activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
+          }
           className={cn(MENU_BASE, menuAlignClass(align), classes?.menu)}
         >
-          {options.map((o) => {
+          {options.map((o, i) => {
             const selected = o.value === selectedValue
             return (
               <li
+                id={`${listId}-opt-${i}`}
                 key={o.value}
                 role="option"
-                aria-selected={selected}
+                aria-labelledby={btnId}
                 tabIndex={-1}
-                onMouseDown={(e) => e.preventDefault()} // 버튼 포커스 유지
-                onClick={() => select(o)}
+                aria-activedescendant={
+                  activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
+                }
                 className={cn(
                   OPTION_BASE,
                   selected && OPTION_SELECTED,
@@ -194,3 +243,5 @@ export default function Dropdown({
     </div>
   )
 }
+
+// 모듈화 예정
