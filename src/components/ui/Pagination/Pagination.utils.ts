@@ -10,11 +10,16 @@ export function range(start: number, end: number) {
   return out
 }
 
-export function threeWindow(current: number, total: number) {
-  if (total <= 3) return range(1, total)
-  if (current <= 2) return [1, 2, 3]
-  if (current >= total - 1) return [total - 2, total - 1, total]
-  return [current - 1, current, current + 1]
+export function visiblePageRange(
+  current: number,
+  total: number,
+  blockSize: number
+) {
+  if (total <= blockSize) return range(1, total)
+  const half = Math.floor(blockSize / 2)
+  const start = clamp({ n: current - half, min: 1, max: total - blockSize + 1 })
+  const end = start + blockSize - 1
+  return range(start, end)
 }
 
 export function normalizeWindow(page: number, total: number, win: number[]) {
