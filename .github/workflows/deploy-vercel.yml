@@ -61,3 +61,20 @@ jobs:
       - name: Show Deployment URL
         run: |
           echo "✅ Deployed: $DEPLOY_URL"
+
+      - name: Comment Preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const url = process.env.DEPLOY_URL;
+            const pr = context.payload.pull_request;
+            if (pr) {
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `🚀 Vercel Preview 배포 완료!\n\n🔗 [배포 URL](${url})`
+              });
+            }
