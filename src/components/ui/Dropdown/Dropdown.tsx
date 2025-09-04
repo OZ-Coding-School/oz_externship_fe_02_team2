@@ -217,19 +217,20 @@ export default function Dropdown({
         >
           {options.map((o, i) => {
             const selected = o.value === selectedValue
+            const active = i === activeIndex
             return (
               <li
                 id={`${listId}-opt-${i}`}
                 key={o.value}
                 role="option"
-                aria-labelledby={btnId}
                 tabIndex={-1}
-                aria-activedescendant={
-                  activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined
-                }
+                onMouseDown={(e) => e.preventDefault()}
+                onMouseEnter={() => !o.disabled && setActiveIndex(i)}
+                onClick={() => select(o)}
                 className={cn(
                   OPTION_BASE,
                   selected && OPTION_SELECTED,
+                  active && OPTION_ACTIVE,
                   o.disabled && OPTION_DISABLED,
                   classes?.option
                 )}
