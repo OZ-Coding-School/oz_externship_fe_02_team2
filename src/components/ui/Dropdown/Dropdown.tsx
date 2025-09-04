@@ -1,6 +1,5 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import type { DropdownProps } from './Dropdown.types'
-import { cn } from '@/lib/utils'
 import {
   BUTTON_BASE,
   BUTTON_DISABLED,
@@ -23,6 +22,7 @@ import {
   lastEnabledIndex,
   nextEnabledIndex,
 } from './utils'
+import { cn } from '@/lib'
 
 export default function Dropdown({
   options,
