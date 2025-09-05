@@ -3,7 +3,7 @@ import Burger from '@assets/icons/hamburger.svg'
 
 export default function Sidebar() {
   return (
-    <section>
+    <aside>
       <header>
         <h4 className="font-bold">관리자 패널</h4>
         <Button
@@ -14,6 +14,6 @@ export default function Sidebar() {
         />
       </header>
       <nav>아코디언 메뉴</nav>
-    </section>
+    </aside>
   )
 }
