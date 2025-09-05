@@ -23,6 +23,7 @@ export default function Button(props: ButtonProps) {
   return (
     <button
       type="button"
+      aria-label={`${btnStyle} button`}
       onClick={onClick}
       disabled={disabled}
       className={cn(
