@@ -1,6 +1,6 @@
 import type { ModalPlacement, ModalSize } from '@/types'
 
-export const sizeToClass: Record<ModalSize, string> = {
+export const SIZE_CLASS: Record<ModalSize, string> = {
   xs: 'max-w-xs',
   sm: 'max-w-sm',
   md: 'max-w-md',
@@ -11,7 +11,7 @@ export const sizeToClass: Record<ModalSize, string> = {
   full: 'w-screen h-screen max-w-none',
 }
 
-export const placementToClass: Record<ModalPlacement, string> = {
+export const PLACEMENT_CLASS: Record<ModalPlacement, string> = {
   center: 'items-center',
   top: 'items-start pt-16',
 }
