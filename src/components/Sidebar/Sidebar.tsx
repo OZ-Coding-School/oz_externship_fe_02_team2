@@ -4,6 +4,7 @@ import Burger from '@assets/icons/hamburger.svg'
 export default function Sidebar() {
   return (
     <aside className="h-screen w-64 bg-white shadow-[inset_-1px_0_0_0_#e5e7eb]">
+      {/* TODO: Sidebar 위치 고정 추후 추가 */}
       <header className="flex items-center justify-between p-6">
         <h4 className="font-bold">관리자 패널</h4>
         <Button
