@@ -12,7 +12,7 @@ import Body from './parts/Body'
 import Footer from './parts/Footer'
 import Actions from './parts/Action'
 import { Button } from '../Button'
-
+import CloseIcon from '@assets/icons/close_g.svg'
 function Modal({
   open,
   onClose,
@@ -81,10 +81,10 @@ function Modal({
       >
         {showCloseIcon && (
           <Button
-            aria-label="닫기"
-            btnText="x"
-            onClick={onClose}
-            className="absolute top-3 right-3"
+            btnSize="small"
+            btnIcon={<img src={CloseIcon} alt="닫기 아이콘" />}
+            className="absolute top-3 right-3 rounded-full bg-transparent p-2 hover:bg-gray-100 active:bg-gray-200"
+            iconOnly
           />
         )}
 
