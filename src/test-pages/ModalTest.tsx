@@ -60,9 +60,6 @@ export default function ModalTest() {
             <div className="flex gap-2">
               <Button btnText="버튼 A" />
               <Button btnText="버튼 B" />
-              <a className="link" href="#">
-                링크
-              </a>
             </div>
           </Modal.Body>
           <Modal.Footer>
