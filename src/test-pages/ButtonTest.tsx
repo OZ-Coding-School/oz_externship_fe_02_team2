@@ -4,6 +4,7 @@ import DownloadIcon from '@assets/icons/download_w.svg'
 import ShareIcon from '@assets/icons/share_g.svg'
 import SettingIcon from '@assets/icons/setting_g.svg'
 import BinIcon from '@assets/icons/bin_r.svg'
+import CloseIcon from '@assets/icons/close_g.svg'
 
 export default function ButtonTest() {
   const [count, setCount] = useState(0)
@@ -106,6 +107,18 @@ export default function ButtonTest() {
             btnStyle="danger"
             btnSize="medium"
             btnIcon={<img src={BinIcon} alt="삭제 아이콘" />}
+            iconOnly
+          />
+        </div>
+      </article>
+
+      <article className="mb-6 flex flex-col gap-1">
+        <h4>커스텀 버튼</h4>
+        <div className="flex gap-3">
+          <Button
+            btnSize="small"
+            btnIcon={<img src={CloseIcon} alt="닫기 아이콘" />}
+            className="bg-transparent hover:bg-gray-100 active:bg-gray-200"
             iconOnly
           />
         </div>
