@@ -9,7 +9,7 @@ export default function Sidebar() {
         <Button
           btnSize="small"
           btnIcon={<img src={Burger} alt="메인 메뉴 토글" />}
-          className="bg-transparent p-0 hover:animate-spin hover:bg-transparent"
+          className="hover:animate-spin-once bg-transparent p-0 hover:bg-transparent"
           iconOnly
         />
       </header>
