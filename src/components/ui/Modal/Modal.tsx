@@ -53,8 +53,8 @@ function Modal({
       <div
         className={
           backdropClassName ??
-          // 투명도 있는 어두운 오버레이 (DaisyUI 미사용)
-          'absolute inset-0 bg-[rgba(0,0,0,0.5)]'
+          // 투명도 있는 어두운 오버레이
+          'absolute inset-0 bg-gray-600/50'
         }
       />
 
