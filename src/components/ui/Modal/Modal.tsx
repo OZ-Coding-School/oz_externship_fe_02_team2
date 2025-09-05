@@ -1,7 +1,5 @@
 import React, { useRef } from 'react'
 import { createPortal } from 'react-dom'
-
-import { sizeToClass, placementToClass } from './constants'
 import type { ModalProps } from '@/types'
 import { ensurePortalRoot } from '@/lib/portalRoot'
 import { useBodyScrollLock, useEscClose, useFocusTrap } from '@/hooks'
@@ -13,6 +11,8 @@ import Footer from './parts/Footer'
 import Actions from './parts/Action'
 import { Button } from '../Button'
 import CloseIcon from '@assets/icons/close_g.svg'
+import { cn } from '@/lib'
+import { PLACEMENT_CLASS, SIZE_CLASS } from './constants'
 function Modal({
   open,
   onClose,
@@ -26,7 +26,7 @@ function Modal({
   placement = 'center',
   maxHeightClass = 'max-h-[80vh]',
   className = '',
-  zIndex = 1000,
+  zIndex = 85, // 토스트 컨테이너 z-index 조절
   showCloseIcon = true,
   backdropClassName,
 }: ModalProps) {
@@ -46,7 +46,7 @@ function Modal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 flex ${placementToClass[placement]} justify-center z-[${zIndex}]`}
+      className={`fixed inset-0 flex ${PLACEMENT_CLASS[placement]} justify-center z-[${zIndex}]`}
       onMouseDown={onBackdrop}
     >
       {/* Backdrop */}
@@ -65,18 +65,13 @@ function Modal({
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-describedby={describedById || undefined}
         ref={panelRef}
-        className={[
-          'relative z-[1] w-full',
-          sizeToClass[size],
-          size !== 'full' ? 'mx-4' : '',
-          'rounded-2xl bg-white', // 흰색 배경
-          'text-primary-text)]', // 전역 텍스트 컬러
-          'border-gray-300)] border', // 경계선
-          'shadow-[0_12px_40px_rgba(0,0,0,0.18)]', // 부드러운 그림자
-          size !== 'full' ? maxHeightClass : '',
-          'transition-transform duration-200 ease-out',
-          className,
-        ].join(' ')}
+        className={cn(
+          'text-primary-text relative z-[1] w-full rounded-2xl border border-gray-300 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out',
+          SIZE_CLASS[size],
+          size !== 'full' && 'mx-4',
+          size !== 'full' && maxHeightClass,
+          className
+        )}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {showCloseIcon && (
