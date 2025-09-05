@@ -1,5 +1,9 @@
 import React from 'react';
 import { cn } from 'src/lib/cn';
+import DownloadIcon from '@assets/icons/download_w.svg'
+import ShareIcon from '@assets/icons/share_g.svg'
+import SettingIcon from '@assets/icons/setting_g.svg'
+import BinIcon from '@assets/icons/bin_r.svg'
 
 // Badge 컴포넌트 정의
 const Badge = React.forwardRef<
@@ -69,7 +73,12 @@ export default function BadgeTest() {
             <p className="body-sm text-secondary-text mt-2">기본</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="primary">primary</Badge>
+            <Badge 
+              variant="primary" 
+              style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}
+            >
+              primary
+            </Badge>
             <p className="body-sm text-secondary-text mt-2">주요</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
@@ -85,7 +94,12 @@ export default function BadgeTest() {
             <p className="body-sm text-secondary-text mt-2">경고</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="info">info</Badge>
+            <Badge 
+              variant="info" 
+              style={{ backgroundColor: '#E0E7FF', color: '#7C3AED' }}
+            >
+              info
+            </Badge>
             <p className="body-sm text-secondary-text mt-2">정보</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
@@ -113,19 +127,23 @@ export default function BadgeTest() {
       <section className="mb-12">
         <h2 className="heading-xl font-semibold text-primary-text mb-6">아이콘 배지</h2>
         <div className="flex flex-wrap gap-4">
-          <Badge variant="primary" className="gap-1">
-            <span>📥</span>
+          <Badge 
+            variant="primary" 
+            className="gap-1" 
+            style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}
+          >
+            <img src={DownloadIcon} alt="다운로드 아이콘" className="w-4 h-4" />
             다운로드
           </Badge>
           <Badge variant="outline" className="gap-1 shadow-[inset_0_0_0_1px_#d1d5db]">
-            <span>📤</span>
+            <img src={ShareIcon} alt="공유 아이콘" className="w-4 h-4" />
             공유
           </Badge>
           <Badge variant="default" className="gap-1">
-            <span>⚙️</span>
+            <img src={SettingIcon} alt="설정 아이콘" className="w-4 h-4" />
           </Badge>
           <Badge variant="danger" className="gap-1">
-            <span>🗑️</span>
+            <img src={BinIcon} alt="삭제 아이콘" className="w-4 h-4" />
           </Badge>
         </div>
       </section>
