@@ -6,7 +6,7 @@ export default function Description({
   id?: string
 }) {
   return (
-    <p id={id} className="text-base-content/70 mb-4">
+    <p id={id} className="mb-4">
       {children}
     </p>
   )
