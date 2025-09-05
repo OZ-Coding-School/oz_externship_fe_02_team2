@@ -13,7 +13,7 @@ export default function Sidebar() {
           iconOnly
         />
       </header>
-      <nav>아코디언 메뉴</nav>
+      <nav className="mb-2 px-4">아코디언 메뉴</nav>
     </aside>
   )
 }
