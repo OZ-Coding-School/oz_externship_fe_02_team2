@@ -1,3 +1,3 @@
 export default function Header({ children }: { children: React.ReactNode }) {
-  return <div className="mb-4 text-xl font-semibold">{children}</div>
+  return <div className="body-sm mb-4 font-medium">{children}</div>
 }
