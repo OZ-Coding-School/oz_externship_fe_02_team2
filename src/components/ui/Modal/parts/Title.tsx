@@ -6,8 +6,8 @@ export default function Title({
   id?: string
 }) {
   return (
-    <h2 id={id} className="mb-2 text-xl font-semibold">
+    <h4 id={id} className="mb-2 font-bold">
       {children}
-    </h2>
+    </h4>
   )
 }

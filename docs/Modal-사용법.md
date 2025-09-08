@@ -16,8 +16,8 @@
   - `useEscClose(enabled: boolean, onClose: () => void)` → ESC 키로 닫기
   - `useFocusTrap(active: boolean, ref, initialFocus?)` → 모달 내부 포커스 트랩
 - **레이아웃 컴포넌트**
-  - `ModalOverlay` → 배경 어둡게 (dimmed layer)
-  - `ModalContent` → 실제 모달 UI 컨테이너
+  - 조합형(Headless 스타일) 모달: Modal 본체 + Header/Title/Description/Body/Footer/Actions 파츠 제공
+  - 접근성(A11y) 내장: role="dialog", ESC/백드롭 닫기, 포커스 트랩, body 스크롤 락
   - `Modal` → 위 두 가지를 합쳐서 기본 모달 구조 제공
 
 ---
@@ -26,26 +26,76 @@
 
 ```tsx
 import { useState } from 'react'
-import Modal, { ModalOverlay, ModalContent } from '@/components/common/Modal'
+import Modal from '@components/ui/Modal/Modal'
+import { Button } from '@components/ui/Button'
 
-export default function Example() {
+export default function Demo() {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <button onClick={() => setOpen(true)}>모달 열기</button>
+      <Button onClick={() => setOpen(true)}>모달 열기</Button>
 
-      {open && (
-        <Modal onClose={() => setOpen(false)}>
-          <ModalOverlay onClick={() => setOpen(false)} />
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="프로필 편집"
+        size="lg" // xs~full
+        placement="center" // center | top
+        closeOnBackdrop
+        closeOnEsc
+      >
+        <Modal.Header>프로필</Modal.Header>
+        <Modal.Title>닉네임 변경</Modal.Title>
+        <Modal.Description>
+          공개 프로필에 표시되는 이름을 수정합니다.
+        </Modal.Description>
 
-          <ModalContent>
-            <h2 className="text-lg font-semibold">모달 제목</h2>
-            <p className="mt-2 text-gray-600">모달 본문이 여기에 들어갑니다.</p>
-          </ModalContent>
-        </Modal>
-      )}
+        <Modal.Body scroll>
+          <input className="input input-bordered w-full" placeholder="닉네임" />
+        </Modal.Body>
+
+        <Modal.Footer align="end">
+          <Modal.Actions>
+            <Button onClick={() => setOpen(false)}>취소</Button>
+            <Button btnStyle="primary" onClick={() => setOpen(false)}>
+              저장
+            </Button>
+          </Modal.Actions>
+        </Modal.Footer>
+      </Modal>
     </>
   )
 }
+```
+
+## 3. 기초 예제
+
+```tsx
+<Section title="기본 (center)">
+  <Button btnText="열기" onClick={() => setOpenBasic(true)} />
+  <Modal
+    open={openBasic}
+    onClose={() => setOpenBasic(false)}
+    title="기본 모달"
+    size="lg"
+  >
+    <Modal.Description>
+      포커스 트랩, ESC/백드롭 닫기, 스크롤 락 등 기본 동작을 확인하세요.
+    </Modal.Description>
+    <Modal.Body>
+      <p className="mb-4">
+        키보드 <kbd className="kbd">Tab</kbd> 으로 포커스 이동을 확인할 수
+        있습니다.
+      </p>
+      <div className="flex gap-2">
+        <Button btnText="버튼 A" />
+        <Button btnText="버튼 B" />
+      </div>
+    </Modal.Body>
+    <Modal.Footer>
+      <Button btnText="닫기" onClick={() => setOpenBasic(false)} />
+    </Modal.Footer>
+  </Modal>
+</Section>
 ```
