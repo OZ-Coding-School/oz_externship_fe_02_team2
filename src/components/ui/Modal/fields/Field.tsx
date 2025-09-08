@@ -1,8 +1,7 @@
 import { useId } from 'react'
 import { Input } from '../../input/Input'
-import { formatPhoneKR, validatePhoneKR } from '@/lib/phone'
 
-type FieldKind = 'text' | 'select' | 'phone'
+type FieldKind = 'text' | 'select'
 
 export type SmartFieldProps = {
   /** 라벨 */
@@ -47,7 +46,7 @@ export default function Field({
     <Input
       id={fieldId}
       label={label}
-      defaultValue={val || '-'}
+      value={val || '-'}
       onChange={() => {}}
       readOnly
       disabled
@@ -58,56 +57,62 @@ export default function Field({
   // SELECT
   if (kind === 'select') {
     if (canEdit && options?.length) {
+      const CONTROL_BASE =
+        'w-full h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-base leading-6 text-gray-900 ' +
+        'focus:outline-none focus:ring-2 focus:ring-primary-200 appearance-none pr-8'
+
       return (
         <div className={className}>
           <label htmlFor={fieldId} className="mb-1 block text-sm text-gray-600">
             {label}
           </label>
-          <select
-            id={fieldId}
-            className="ring-primary-200 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2 focus:outline-none"
-            value={val}
-            onChange={(e) => onChange(e.target.value)}
-          >
-            {options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id={fieldId}
+              className={CONTROL_BASE}
+              value={val}
+              onChange={(e) => onChange(e.target.value)}
+            >
+              {options.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {/* 드롭다운 아이콘 */}
+            <svg
+              className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-500"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                d="M5.5 7.5l4.5 4.5 4.5-4.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
         </div>
       )
     }
-    return renderReadonly()
+
+    // 편집 불가일 땐 Input으로
+    return (
+      <Input
+        id={fieldId}
+        label={label}
+        value={val || '-'}
+        onChange={() => {}}
+        readOnly
+        disabled
+        className={className}
+      />
+    )
   }
 
-  // PHONE
-  if (kind === 'phone') {
-    if (canEdit) {
-      const error = val
-        ? validatePhoneKR(val)
-          ? ''
-          : '올바른 전화번호 형식이 아닙니다'
-        : ''
-      return (
-        <Input
-          id={fieldId}
-          label={label}
-          value={val}
-          onChange={(e) => onChange(formatPhoneKR(e.target.value))}
-          type="tel"
-          inputMode="numeric"
-          pattern="[0-9\\-]*"
-          maxLength={13} // 010-1234-5678
-          error={error}
-          className={className}
-        />
-      )
-    }
-    return renderReadonly()
-  }
-
-  // TEXT (기본)
+  // TEXT
   if (canEdit) {
     return (
       <Input
@@ -119,5 +124,6 @@ export default function Field({
       />
     )
   }
+
   return renderReadonly()
 }
