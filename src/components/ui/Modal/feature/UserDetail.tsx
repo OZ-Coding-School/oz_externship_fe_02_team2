@@ -93,8 +93,7 @@ function MemberDetailView({
           label="연락처"
           value={m.phone}
           editing={editing}
-          editable
-          kind="phone"
+          editable={false}
           onChange={(v) => onChange('phone', v)}
         />
         <Field
