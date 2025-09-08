@@ -1,4 +1,5 @@
 export type ModalSize =
+  | 'default'
   | 'xs'
   | 'sm'
   | 'md'
