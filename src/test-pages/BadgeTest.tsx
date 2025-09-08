@@ -1,61 +1,10 @@
-import React from 'react';
-import { cn } from 'src/lib/cn';
 import DownloadIcon from '@assets/icons/download_w.svg'
 import ShareIcon from '@assets/icons/share_g.svg'
 import SettingIcon from '@assets/icons/setting_g.svg'
 import BinIcon from '@assets/icons/bin_r.svg'
+import Badge from '@/components/ui/Badge/Badge';
 
-// Badge 컴포넌트 정의
-const Badge = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
-    size?: 'sm' | 'md' | 'lg';
-  }
->(({ className, variant = 'default', size = 'lg', ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        // 기본 스타일
-        'inline-flex items-center justify-center rounded-full transition-colors',
-        // 크기별 스타일
-        {
-          'px-2 py-0.5 body-xs font-medium': size === 'sm',
-          'px-2.5 py-1 body-sm font-medium': size === 'md',
-          'px-3 py-1.5 body-base font-medium': size === 'lg',
-        },
-        // 변형별 스타일
-        {
-          // Default - 회색 계열
-          'bg-gray-100 text-gray-600': variant === 'default',
 
-          // Primary - 메인 컬러
-          'bg-primary-100 text-primary-500': variant === 'primary' || variant === 'warning',
-
-          // Secondary - 회색 계열
-          'bg-gray-100 text-gray-500': variant === 'secondary',
-
-          // Success - 초록색 계열
-          'bg-success-100 text-success-600': variant === 'success',
-
-          // Danger - 빨간색 계열
-          'bg-danger-100 text-danger-600': variant === 'danger',
-
-          // Info - 파란색 계열 (회색 계열 사용)
-          'bg-gray-200 text-gray-600': variant === 'info',
-
-          // Outline - 테두리만
-          'bg-transparent text-gray-600': variant === 'outline',
-        },
-        className
-      )}
-      {...props}
-    />
-  );
-});
-
-Badge.displayName = 'Badge';
 
 // Badge 테스트 페이지
 export default function BadgeTest() {
@@ -75,7 +24,6 @@ export default function BadgeTest() {
           <div className="text-center p-4 bg-background rounded-lg">
             <Badge 
               variant="primary" 
-              style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}
             >
               primary
             </Badge>
@@ -96,7 +44,6 @@ export default function BadgeTest() {
           <div className="text-center p-4 bg-background rounded-lg">
             <Badge 
               variant="info" 
-              style={{ backgroundColor: '#E0E7FF', color: '#7C3AED' }}
             >
               info
             </Badge>
@@ -107,7 +54,7 @@ export default function BadgeTest() {
             <p className="body-sm text-secondary-text mt-2">보조</p>
           </div>
           <div className="text-center p-4 bg-background rounded-lg">
-            <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">outline</Badge>
+            <Badge variant="outline" >outline</Badge>
             <p className="body-sm text-secondary-text mt-2">외곽선</p>
           </div>
         </div>
@@ -130,12 +77,11 @@ export default function BadgeTest() {
           <Badge 
             variant="primary" 
             className="gap-1" 
-            style={{ backgroundColor: '#DBEAFE', color: '#2563EB' }}
           >
             <img src={DownloadIcon} alt="다운로드 아이콘" className="w-4 h-4" />
             다운로드
           </Badge>
-          <Badge variant="outline" className="gap-1 shadow-[inset_0_0_0_1px_#d1d5db]">
+          <Badge variant="outline" className="gap-1">
             <img src={ShareIcon} alt="공유 아이콘" className="w-4 h-4" />
             공유
           </Badge>
@@ -182,7 +128,7 @@ export default function BadgeTest() {
               <Badge variant="info">디자인</Badge>
               <Badge variant="success">마케팅</Badge>
               <Badge variant="warning">기획</Badge>
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">운영</Badge>
+              <Badge variant="outline">운영</Badge>
             </div>
           </div>
 
@@ -232,11 +178,11 @@ export default function BadgeTest() {
           <div>
             <h3 className="body-lg font-medium text-primary-text mb-3">태그</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">#React</Badge>
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">#TypeScript</Badge>
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">#TailwindCSS</Badge>
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">#디자인시스템</Badge>
-              <Badge variant="outline" className="shadow-[inset_0_0_0_1px_#d1d5db]">#컴포넌트</Badge>
+              <Badge variant="outline">#React</Badge>
+              <Badge variant="outline">#TypeScript</Badge>
+              <Badge variant="outline">#TailwindCSS</Badge>
+              <Badge variant="outline">#디자인시스템</Badge>
+              <Badge variant="outline">#컴포넌트</Badge>
             </div>
           </div>
 

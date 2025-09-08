@@ -9,7 +9,7 @@ const Badge = React.forwardRef<
     variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'outline';
     size?: 'sm' | 'md' | 'lg';
   }
->(({ className, variant = 'default', size = 'lg', ...props }, ref) => {
+>(({ className, variant = 'default', size = 'md', ...props }, ref) => {
   return (
     <div
       ref={ref}
