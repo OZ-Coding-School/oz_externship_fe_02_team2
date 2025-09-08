@@ -6,7 +6,13 @@ on:
       - dev # ← 배포 브랜치
       - 'feature/**' # ← preview 배포 브랜치
       - 'fix/**' # ← preview 배포 브랜치
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   deploy:
@@ -63,18 +69,33 @@ jobs:
           echo "✅ Deployed: $DEPLOY_URL"
 
       - name: Comment Preview URL on PR
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const url = process.env.DEPLOY_URL;
-            const pr = context.payload.pull_request;
-            if (pr) {
-              github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: `🚀 Vercel Preview 배포 완료!\n\n🔗 [배포 URL](${url})`
+            const { owner, repo } = context.repo;
+            const event = context.eventName;
+            const branch = context.ref.replace('refs/heads/', '');
+
+            // PR 이벤트면 바로 코멘트
+            if (event === 'pull_request') {
+              const prNum = context.payload.pull_request.number;
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: prNum,
+                body: `🚀 Vercel 배포 완료\n\n🔗 ${url}`
               });
+            } else {
+              // push 이벤트인 경우: 현재 브랜치로 열린 PR을 찾아 코멘트
+              const { data: prs } = await github.rest.pulls.list({
+                owner, repo, state: 'open', head: `${owner}:${branch}`
+              });
+              if (prs.length > 0) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: prs[0].number,
+                  body: `🚀 Vercel 배포 완료\n\n🔗 ${url}`
+                });
+              } else {
+                core.info(`No open PR for ${branch}; skipping comment.`);
+              }
             }
