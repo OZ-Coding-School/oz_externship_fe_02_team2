@@ -2,6 +2,7 @@ import { Input } from '../../input/Input'
 import Modal from '../Modal'
 import { Button } from '../../Button'
 import { useState } from 'react'
+import { formatPhoneKR, validatePhoneKR } from '@/lib/phone'
 // 너희 공용 컴포넌트 경로로 변경하세요.
 
 /** 도메인 타입 예시 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
@@ -90,7 +91,7 @@ function MemberDetailView({
           editable={false}
           onChange={(v) => onChange('birth', v)}
         />
-        <DetailField
+        <PhoneField
           label="연락처"
           value={m.phone}
           editing={editing}
@@ -186,6 +187,54 @@ function DetailField({
   )
 }
 
+function PhoneField({
+  label = '연락처',
+  value,
+  editing,
+  editable = false,
+  onChange,
+}: {
+  label?: string
+  value?: string | null
+  editing: boolean
+  editable: boolean
+  onChange: (val: string) => void
+}) {
+  const canEdit = editing && editable
+
+  const val = value ?? ''
+  const error =
+    editing && val
+      ? validatePhoneKR(val)
+        ? ''
+        : '올바른 전화번호 형식이 아닙니다'
+      : ''
+  return canEdit ? (
+    <Input
+      label={label}
+      value={val}
+      onChange={(e) => {
+        const next = formatPhoneKR(e.target.value)
+        onChange(next)
+      }}
+      type="tel"
+      inputMode="numeric"
+      pattern="[0-9\-]*"
+      maxLength={13} // 예: 010-1234-5678
+      error={error}
+    />
+  ) : (
+    <Input
+      label={label}
+      defaultValue={val || '-'}
+      onChange={() => {}}
+      readOnly
+      disabled
+      type="tel"
+    />
+  )
+}
+
 /** 실제 모달 — 상단 우측 닫기 버튼 포함 */
 export default function MemberDetailModal({
   open,
@@ -214,8 +263,20 @@ export default function MemberDetailModal({
     setEditing(false)
   }
 
+  const handleCancel = () => {
+    setForm(data)
+    setEditing(false)
+  }
+
   return (
-    <Modal open={open} onClose={onClose} size="default">
+    <Modal
+      open={open}
+      onClose={() => {
+        handleCancel()
+        onClose()
+      }}
+      size="default"
+    >
       {/* Header */}
       <Modal.Header>
         <Modal.Title>회원 상세 정보</Modal.Title>
@@ -245,7 +306,7 @@ export default function MemberDetailModal({
                 <Button
                   btnStyle="secondary"
                   btnText="취소"
-                  onClick={() => setEditing(false)}
+                  onClick={handleCancel}
                 />
               </>
             ) : (
