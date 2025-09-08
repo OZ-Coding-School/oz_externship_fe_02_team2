@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import type { DropdownProps } from './Dropdown.types'
 import {
   BUTTON_BASE,
@@ -40,10 +40,7 @@ export default function Dropdown({
   )
   const selectedValue = (isControlled ? value : internalValue) ?? null
 
-  const selectedIndex = useMemo(
-    () => options.findIndex((o) => o.value === selectedValue),
-    [options, selectedValue]
-  )
+  const selectedIndex = options.findIndex((o) => o.value === selectedValue)
   const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null
 
   const [open, setOpen] = useState(false)
