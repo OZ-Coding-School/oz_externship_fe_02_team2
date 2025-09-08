@@ -38,7 +38,7 @@ function MemberDetailView({
           className="size-20 rounded-full object-cover"
         />
         <div>
-          <div className="text-xl font-semibold">{m.name}</div>
+          <h4>{m.name}</h4>
           <div className="text-gray-500">{m.email}</div>
         </div>
       </div>
