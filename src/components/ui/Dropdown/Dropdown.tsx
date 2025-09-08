@@ -128,14 +128,13 @@ export default function Dropdown({
 
   const onButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (disabled) return
-    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      openMenu()
-    } else if (e.key === 'ArrowUp') {
+    const keys = ['ArrowDown', 'ArrowUp', 'Enter', ' ', 'Space']
+    if (keys.includes(e.key)) {
       e.preventDefault()
       openMenu()
     }
   }
+
   return (
     <div ref={wrapRef} className={cn(WRAPPER_BASE, classes?.wrapper)}>
       <button
