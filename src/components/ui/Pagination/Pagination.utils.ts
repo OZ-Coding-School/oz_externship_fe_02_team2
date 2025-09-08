@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 export type ClampArgs = { n: number; min: number; max: number }
 
 export function clamp({ n, min, max }: ClampArgs) {
@@ -40,4 +42,21 @@ export function normalizeWindow(page: number, total: number, win: number[]) {
 export const toInt = (v: unknown, fb = 1) => {
   const n = Number(v)
   return Number.isFinite(n) ? Math.floor(n) : fb
+}
+
+export default function useResponsivePageSize() {
+  const get = () => {
+    if (typeof window === 'undefined') return 5
+    return window.matchMedia('(min-width: 1024px)').matches ? 10 : 5
+  }
+  const [size, setSize] = useState<number>(get)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const listener = (e: MediaQueryListEvent) => setSize(e.matches ? 10 : 5)
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [])
+  return size
 }

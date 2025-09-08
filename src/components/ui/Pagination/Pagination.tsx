@@ -2,14 +2,13 @@ import { useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { PaginationProps } from './Pagination.types'
-import {
+import useResponsivePageSize, {
   clamp,
   normalizeWindow,
   toInt,
   visiblePageRange,
 } from './Pagination.utils'
 import { pageButton } from './Pagination.styles'
-import useResponsivePageSize from './Pagination.pageSize'
 
 const ICON_SIZE = 'h-4 w-4'
 
