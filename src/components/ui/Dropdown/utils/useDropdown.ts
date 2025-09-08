@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, type RefObject } from 'react'
 import { scrollChildIntoViewNearest } from './Dropdown.dom'
 
 export function useOutsideClickAndEsc(
@@ -25,22 +25,31 @@ export function useOutsideClickAndEsc(
   }, [open, rootRef, onOutside, onEsc])
 }
 
-export function useAutoFocusWhenOpen<T extends HTMLElement>(
+export function useAutoFocusWhenOpen(
   open: boolean,
-  el: T | null
+  ref: RefObject<HTMLElement | null>
 ) {
   useEffect(() => {
-    if (open) setTimeout(() => el?.focus(), 0)
-  }, [open, el])
+    if (!open) return
+    const el = ref.current
+    if (!el) return
+    queueMicrotask(() => el.focus({ preventScroll: true }))
+  }, [open, ref])
 }
 
 export function useKeepActiveVisible(
   open: boolean,
-  listEl: HTMLElement | null,
-  activeIndex: number
+  containerRef: RefObject<HTMLElement | null>,
+  activeIndex?: number
 ) {
   useEffect(() => {
-    if (!open || activeIndex < 0) return
-    scrollChildIntoViewNearest(listEl, activeIndex)
-  }, [open, activeIndex, listEl])
+    if (!open || activeIndex == null || activeIndex < 0) return
+    const container = containerRef.current
+    if (!container) return
+    const el = container.children[activeIndex] as HTMLElement | undefined
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'nearest' })
+    })
+  }, [open, activeIndex, containerRef])
 }

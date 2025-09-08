@@ -112,8 +112,8 @@ export default function Dropdown({
     () => close(false),
     () => close(true)
   )
-  useAutoFocusWhenOpen(open, listRef.current)
-  useKeepActiveVisible(open, listRef.current, activeIndex)
+  useAutoFocusWhenOpen(open, listRef)
+  useKeepActiveVisible(open, listRef, activeIndex)
 
   const select = (opt: {
     value: string
