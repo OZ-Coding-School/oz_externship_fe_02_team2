@@ -1,11 +1,9 @@
-import { Input } from '../../input/Input'
 import Modal from '../Modal'
 import { Button } from '../../Button'
 import { useState } from 'react'
-import { formatPhoneKR, validatePhoneKR } from '@/lib/phone'
-// 너희 공용 컴포넌트 경로로 변경하세요.
+import Field from '../fields/Field'
 
-/** 도메인 타입 예시 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
+/** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
 export type MemberDetail = {
   id: string
   name: string
@@ -47,74 +45,74 @@ function MemberDetailView({
 
       {/* 그리드 정보 폼 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <DetailField
+        <Field
           label="회원 ID"
           value={m.id}
           editing={editing}
           editable={false}
           onChange={(v) => onChange('id', v)}
         />
-        <DetailField
+        <Field
           label="이메일"
           value={m.email}
           editing={editing}
           editable={false}
           onChange={(v) => onChange('email', v)}
         />
-        <DetailField
+        <Field
           label="이름"
           value={m.name}
           editing={editing}
           editable
           onChange={(v) => onChange('name', v)}
         />
-        <DetailField
+        <Field
           label="성별"
           value={m.gender}
           editing={editing}
           editable
-          type="select"
+          kind="select"
           options={['남성', '여성']}
           onChange={(v) => onChange('gender', v)}
         />
-        <DetailField
+        <Field
           label="닉네임"
           value={m.nickname}
           editing={editing}
           editable
           onChange={(v) => onChange('nickname', v)}
         />
-        <DetailField
+        <Field
           label="생년월일"
           value={m.birth}
           editing={editing}
           editable={false}
           onChange={(v) => onChange('birth', v)}
         />
-        <PhoneField
+        <Field
           label="연락처"
           value={m.phone}
           editing={editing}
           editable
           onChange={(v) => onChange('phone', v)}
         />
-        <DetailField
+        <Field
           label="권한"
           value={m.role}
           editing={editing}
           editable={false}
           onChange={(v) => onChange('role', v)}
         />
-        <DetailField
+        <Field
           label="상태"
           value={m.status}
           editing={editing}
           editable
-          type="select"
+          kind="select"
           options={['활성', '비활성', '정지', '탈퇴요청']}
           onChange={(v) => onChange('status', v)}
         />
-        <DetailField
+        <Field
           label="회원가입 일시"
           value={m.joinedAt}
           editing={editing}
@@ -123,115 +121,6 @@ function MemberDetailView({
         />
       </div>
     </div>
-  )
-}
-
-/** 라벨/값 쌍 공용 셀 */
-function DetailField({
-  label,
-  value,
-  editing,
-  editable = false,
-  type = 'text',
-  options,
-  onChange,
-}: {
-  label: string
-  value?: string | null
-  editing: boolean
-  editable?: boolean
-  type?: 'text' | 'select'
-  options?: string[]
-  onChange: (val: string) => void
-}) {
-  const canEdit = editing && editable
-
-  if (canEdit && type === 'select' && options) {
-    const selectId = `${label.replace(/\s+/g, '-')}-select`
-
-    return (
-      <div className="flex flex-col gap-1">
-        <label htmlFor={selectId} className="text-sm text-gray-600">
-          {label}
-        </label>
-        <select
-          id={selectId}
-          className="ring-primary-200 rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2"
-          value={value ?? ''}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-    )
-  }
-
-  return canEdit ? (
-    <Input
-      label={label}
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ) : (
-    <Input
-      label={label}
-      defaultValue={value ?? '-'}
-      onChange={() => {}}
-      readOnly
-      disabled
-    />
-  )
-}
-
-function PhoneField({
-  label = '연락처',
-  value,
-  editing,
-  editable = false,
-  onChange,
-}: {
-  label?: string
-  value?: string | null
-  editing: boolean
-  editable: boolean
-  onChange: (val: string) => void
-}) {
-  const canEdit = editing && editable
-
-  const val = value ?? ''
-  const error =
-    editing && val
-      ? validatePhoneKR(val)
-        ? ''
-        : '올바른 전화번호 형식이 아닙니다'
-      : ''
-  return canEdit ? (
-    <Input
-      label={label}
-      value={val}
-      onChange={(e) => {
-        const next = formatPhoneKR(e.target.value)
-        onChange(next)
-      }}
-      type="tel"
-      inputMode="numeric"
-      pattern="[0-9\-]*"
-      maxLength={13} // 예: 010-1234-5678
-      error={error}
-    />
-  ) : (
-    <Input
-      label={label}
-      defaultValue={val || '-'}
-      onChange={() => {}}
-      readOnly
-      disabled
-      type="tel"
-    />
   )
 }
 
