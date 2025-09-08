@@ -3,39 +3,43 @@ import Burger from '@assets/icons/hamburger.svg'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib'
 
-export default function Sidebar() {
-  // 데스크톱: Expanded(256px) ↔ Rail(72px)
-  const [expanded, setExpanded] = useState(true)
+type SidebarProps = {
+  mobileDrawerOpen?: boolean
+  onMobileDrawerOpenChange?: (open: boolean) => void
+  scope?: 'viewport' | 'container' // viewport가 전체 화면, container는 테스트 페이지 위해 컨테이너 안에서만
+}
+
+export default function Sidebar({
+  mobileDrawerOpen,
+  onMobileDrawerOpenChange,
+  scope = 'container',
+}: SidebarProps) {
+  const [expanded, setExpanded] = useState(true) // ≥md: Expanded↔Rail
+  const [internalOpen, setInternalOpen] = useState(false) // <md: Drawer
+  const drawerOpen = mobileDrawerOpen ?? internalOpen
+  const setDrawerOpen = onMobileDrawerOpenChange ?? setInternalOpen
+
   const toggle = () => setExpanded((prev) => !prev)
 
-  // md: Drawer open/close
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const posOverlay =
+    scope === 'container' ? 'absolute inset-0' : 'fixed inset-0'
+  const posPanel =
+    scope === 'container'
+      ? 'absolute inset-y-0 left-0'
+      : 'fixed inset-y-0 left-0'
 
-  // 드로어 오버레이 열린 경우 바디 스크롤 잠금
+  // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
   useEffect(() => {
-    if (!drawerOpen) return
+    if (!(drawerOpen && scope === 'viewport')) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prev
     }
-  }, [drawerOpen])
+  }, [drawerOpen, scope])
 
   return (
     <>
-      {/* TODO: 반응형(모바일) 헤더(z-40)로 분리 */}
-      <header className="w-full">
-        {/* 모바일 트리거 버튼 (좌상단) */}
-        <Button
-          btnSize="small"
-          btnIcon={<img src={Burger} alt="메뉴 열기" />}
-          className="hover:animate-spin-once z-40 bg-transparent p-0 hover:bg-transparent md:hidden"
-          onClick={() => setDrawerOpen(true)}
-          iconOnly
-          aria-label="메뉴 열기"
-        />
-      </header>
-
       {/* 데스크톱 사이드바 (≥ md) */}
       <aside
         className={cn(
@@ -72,6 +76,7 @@ export default function Sidebar() {
         }}
         className={cn(
           'fixed inset-0 z-50 bg-gray-600/50 transition-opacity duration-200 md:hidden',
+          posOverlay,
           drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         aria-hidden={!drawerOpen}
@@ -80,8 +85,9 @@ export default function Sidebar() {
       <aside
         className={cn(
           'z-60 h-screen w-[80vw] max-w-64 overflow-hidden bg-white md:hidden',
-          'shadow-[inset_-1px_0_0_0_#e5e7eb] transition-[width] duration-200',
-          drawerOpen ? 'translate-x-0' : '-translate-x-[110%]'
+          'shadow-[inset_-1px_0_0_0_#e5e7eb] transition-transform duration-200',
+          posPanel,
+          drawerOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <header className="flex items-center justify-between p-6">
