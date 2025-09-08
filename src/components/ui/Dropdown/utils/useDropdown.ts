@@ -10,16 +10,23 @@ export function useOutsideClickAndEsc(
     if (!open) return
     const rootEl = rootRef.current
     const onDown = (e: PointerEvent) => {
+      const path = (e.composedPath?.() ?? []) as EventTarget[]
+      const isInside =
+        (rootEl &&
+          (path.includes(rootEl) || rootEl.contains(e.target as Node))) ??
+        false
+      if (!isInside) onOutside()
       if (!rootEl?.contains(e.target as Node)) (onEsc ?? onOutside)()
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') (onEsc ?? onOutside)()
     }
-    document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey)
+    const opts: AddEventListenerOptions = { capture: true }
+    document.addEventListener('pointerdown', onDown, opts)
+    document.addEventListener('keydown', onKey, opts)
     return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('pointerdown', onDown, opts)
+      document.removeEventListener('keydown', onKey, opts)
     }
   }, [open, onOutside, onEsc])
 }
