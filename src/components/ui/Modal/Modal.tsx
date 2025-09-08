@@ -66,9 +66,8 @@ function Modal({
         aria-describedby={describedById || undefined}
         ref={panelRef}
         className={cn(
-          'text-primary-text relative z-[1] w-full rounded-2xl border border-gray-300 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out',
+          'text-primary-text relative z-[1] flex w-full flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out',
           SIZE_CLASS[size],
-          size !== 'full' && 'mx-4',
           size !== 'full' && maxHeightClass,
           className
         )}
@@ -80,19 +79,10 @@ function Modal({
             btnIcon={<img src={CloseIcon} alt="닫기 아이콘" />}
             className="absolute top-3 right-3 rounded-full bg-transparent p-2 hover:bg-gray-100 active:bg-gray-200"
             iconOnly
+            onClick={onClose}
           />
         )}
-
-        <div className="overflow-hidden p-6">
-          {title && (
-            // 전역 h2 유틸(@utility h2) 있으니 그대로 사용,
-            // 여기선 여백만 추가
-            <h2 id="modal-title" className="h2 mb-4">
-              {title}
-            </h2>
-          )}
-          {children}
-        </div>
+        <div className="flex h-full flex-col overflow-hidden">{children}</div>
       </div>
     </div>,
     root
