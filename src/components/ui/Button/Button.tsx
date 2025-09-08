@@ -15,6 +15,7 @@ export default function Button(props: ButtonProps) {
     btnIcon,
     btnText,
     iconOnly,
+    className,
     onClick,
     disabled,
   } = props
@@ -22,12 +23,14 @@ export default function Button(props: ButtonProps) {
   return (
     <button
       type="button"
+      aria-label={`${btnStyle} button`}
       onClick={onClick}
       disabled={disabled}
       className={cn(
         BUTTON_COMMON_STYLES,
         iconOnly ? ICON_ONLY_BUTTON_STYLES[btnStyle] : BUTTON_STYLES[btnStyle],
-        iconOnly ? ICON_ONLY_BUTTON_SIZES[btnSize] : BUTTON_SIZES[btnSize]
+        iconOnly ? ICON_ONLY_BUTTON_SIZES[btnSize] : BUTTON_SIZES[btnSize],
+        className
       )}
     >
       {btnIcon && btnIcon}
