@@ -50,60 +50,74 @@ function MemberDetailView({
           label="회원 ID"
           value={m.id}
           editing={editing}
+          editable={false}
           onChange={(v) => onChange('id', v)}
         />
         <DetailField
           label="이메일"
           value={m.email}
           editing={editing}
+          editable={false}
           onChange={(v) => onChange('email', v)}
         />
         <DetailField
           label="이름"
           value={m.name}
           editing={editing}
+          editable
           onChange={(v) => onChange('name', v)}
         />
         <DetailField
           label="성별"
           value={m.gender}
           editing={editing}
+          editable
+          type="select"
+          options={['남성', '여성']}
           onChange={(v) => onChange('gender', v)}
         />
         <DetailField
           label="닉네임"
           value={m.nickname}
           editing={editing}
+          editable
           onChange={(v) => onChange('nickname', v)}
         />
         <DetailField
           label="생년월일"
           value={m.birth}
           editing={editing}
+          editable={false}
           onChange={(v) => onChange('birth', v)}
         />
         <DetailField
           label="연락처"
           value={m.phone}
           editing={editing}
+          editable
           onChange={(v) => onChange('phone', v)}
         />
         <DetailField
           label="권한"
           value={m.role}
           editing={editing}
+          editable={false}
           onChange={(v) => onChange('role', v)}
         />
         <DetailField
           label="상태"
           value={m.status}
           editing={editing}
+          editable
+          type="select"
+          options={['활성', '비활성', '정지', '탈퇴요청']}
           onChange={(v) => onChange('status', v)}
         />
         <DetailField
           label="회원가입 일시"
           value={m.joinedAt}
           editing={editing}
+          editable={false}
           onChange={(v) => onChange('joinedAt', v)}
         />
       </div>
@@ -116,14 +130,46 @@ function DetailField({
   label,
   value,
   editing,
+  editable = false,
+  type = 'text',
+  options,
   onChange,
 }: {
   label: string
   value?: string | null
   editing: boolean
+  editable?: boolean
+  type?: 'text' | 'select'
+  options?: string[]
   onChange: (val: string) => void
 }) {
-  return editing ? (
+  const canEdit = editing && editable
+
+  if (canEdit && type === 'select' && options) {
+    const selectId = `${label.replace(/\s+/g, '-')}-select`
+
+    return (
+      <div className="flex flex-col gap-1">
+        <label htmlFor={selectId} className="text-sm text-gray-600">
+          {label}
+        </label>
+        <select
+          id={selectId}
+          className="ring-primary-200 rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-2"
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
+  return canEdit ? (
     <Input
       label={label}
       value={value ?? ''}
