@@ -8,7 +8,7 @@ const clamp = ({ n, min, max }: { n: number; min: number; max: number }) =>
 
 export default function PaginationTest() {
   const [page, setPage] = useState<number>(1) // 반드시 number
-  const [totalItems, setTotalItems] = useState(187) // 가짜 총개수
+  const [totalItems, setTotalItems] = useState(1000) // 가짜 총개수
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(totalItems / LIMIT)),
@@ -40,16 +40,22 @@ export default function PaginationTest() {
 
       <div className="flex gap-2">
         <button
-          onClick={() => setTotalItems(79)}
+          onClick={() => setTotalItems(19)}
           className="rounded border px-2 py-1"
         >
-          총 79개로
+          게시글 19개
         </button>
         <button
-          onClick={() => setTotalItems(187)}
+          onClick={() => setTotalItems(500)}
           className="rounded border px-2 py-1"
         >
-          총 187개로
+          게시글 500개
+        </button>
+        <button
+          onClick={() => setTotalItems(1000)}
+          className="rounded border px-2 py-1"
+        >
+          게시글 1000개
         </button>
       </div>
 
