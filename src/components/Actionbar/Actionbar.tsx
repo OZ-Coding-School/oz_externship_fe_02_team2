@@ -1,12 +1,6 @@
-import type { ReactNode } from 'react'
 import { Button } from '../ui/Button'
 import Burger from '@assets/icons/hamburger.svg'
-
-type ActionbarProps = {
-  title?: string
-  onMenuClick: () => void
-  rightSlot?: ReactNode
-}
+import type { ActionbarProps } from './Actionbar.types'
 
 export default function Actionbar({
   title = '관리자 페이지',
@@ -26,7 +20,7 @@ export default function Actionbar({
           aria-label="메뉴 열기"
         />
         <h3>{title}</h3>
-        <div>{rightSlot}</div>
+        <div className="ml-auto">{rightSlot}</div>
       </div>
     </div>
   )
