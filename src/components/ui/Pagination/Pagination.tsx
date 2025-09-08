@@ -11,6 +11,8 @@ import {
 import { pageButton } from './Pagination.styles'
 import useResponsivePageSize from './Pagination.pageSize'
 
+const ICON_SIZE = 'h-4 w-4'
+
 export default function Pagination({
   totalPages,
   currentPage,
@@ -46,7 +48,7 @@ export default function Pagination({
         onClick={() => go(safePage - 1)}
         aria-label="Previous page"
       >
-        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        <ChevronLeft className={ICON_SIZE} aria-hidden="true" />
       </button>
       {window.map((n) => (
         <button
@@ -70,7 +72,7 @@ export default function Pagination({
         onClick={() => go(safePage + 1)}
         aria-label="Next page"
       >
-        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        <ChevronRight className={ICON_SIZE} aria-hidden="true" />
       </button>
     </nav>
   )
