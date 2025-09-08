@@ -94,6 +94,7 @@ function MemberDetailView({
           value={m.phone}
           editing={editing}
           editable
+          kind="phone"
           onChange={(v) => onChange('phone', v)}
         />
         <Field
