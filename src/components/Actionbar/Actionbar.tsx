@@ -1,4 +1,4 @@
-import { Button } from '../ui/Button'
+import { Button } from '@components/ui/Button'
 import Burger from '@assets/icons/hamburger.svg'
 import type { ActionbarProps } from './Actionbar.types'
 
