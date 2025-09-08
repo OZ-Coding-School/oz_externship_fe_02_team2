@@ -105,6 +105,9 @@ body {
 
 /* HTML 태그에 기본 스타일 매핑 */
 @layer base {
+  * {
+    @apply border-border;
+  }
   h1 {
     @apply h1;
   }
@@ -268,13 +271,4 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
