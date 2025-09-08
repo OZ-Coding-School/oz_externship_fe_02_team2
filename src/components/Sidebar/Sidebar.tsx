@@ -2,12 +2,7 @@ import { Button } from '@components/ui/Button'
 import Burger from '@assets/icons/hamburger.svg'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib'
-
-type SidebarProps = {
-  mobileDrawerOpen?: boolean
-  onMobileDrawerOpenChange?: (open: boolean) => void
-  scope?: 'viewport' | 'container' // viewport가 전체 화면, container는 테스트 페이지 위해 컨테이너 안에서만
-}
+import type { SidebarProps } from './Sidebar.types'
 
 export default function Sidebar({
   mobileDrawerOpen,
