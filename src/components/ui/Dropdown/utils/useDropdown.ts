@@ -1,28 +1,27 @@
-import React, { useEffect, type RefObject } from 'react'
-import { scrollChildIntoViewNearest } from './Dropdown.dom'
+import { useEffect, type RefObject } from 'react'
 
 export function useOutsideClickAndEsc(
   open: boolean,
-  rootRef: React.RefObject<HTMLElement | null>,
+  rootRef: RefObject<HTMLElement | null>,
   onOutside: () => void,
   onEsc?: () => void
 ) {
   useEffect(() => {
     if (!open) return
     const rootEl = rootRef.current
-    const onDown = (e: MouseEvent) => {
-      if (!rootEl?.contains(e.target as Node)) onOutside()
+    const onDown = (e: PointerEvent) => {
+      if (!rootEl?.contains(e.target as Node)) (onEsc ?? onOutside)()
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onOutside()
+      if (e.key === 'Escape') (onEsc ?? onOutside)()
     }
-    document.addEventListener('mousedown', onDown)
+    document.addEventListener('pointerdown', onDown)
     document.addEventListener('keydown', onKey)
     return () => {
-      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('pointerdown', onDown)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, rootRef, onOutside, onEsc])
+  }, [open, onOutside, onEsc])
 }
 
 export function useAutoFocusWhenOpen(
@@ -34,7 +33,7 @@ export function useAutoFocusWhenOpen(
     const el = ref.current
     if (!el) return
     queueMicrotask(() => el.focus({ preventScroll: true }))
-  }, [open, ref])
+  }, [open])
 }
 
 export function useKeepActiveVisible(
@@ -51,5 +50,5 @@ export function useKeepActiveVisible(
     requestAnimationFrame(() => {
       el.scrollIntoView({ block: 'nearest' })
     })
-  }, [open, activeIndex, containerRef])
+  }, [open, activeIndex])
 }
