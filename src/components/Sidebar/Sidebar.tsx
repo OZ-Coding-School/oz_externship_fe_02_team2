@@ -13,7 +13,7 @@ export default function Sidebar() {
     >
       {/* TODO: Sidebar 위치 고정 추후 추가 */}
       <header
-        className={`flex items-center ${expanded ? 'justify-between' : 'justify-center px-0'} p-6`}
+        className={`flex items-center ${expanded ? 'justify-between px-6' : 'justify-center px-0'} py-6`}
       >
         {expanded && (
           <h4 className={`font-bold transition-opacity`}>관리자 패널</h4>
