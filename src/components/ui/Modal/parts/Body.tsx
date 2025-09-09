@@ -1,5 +1,4 @@
-import React from 'react'
-import { cn } from '@/lib' // cn 유틸 경로에 맞춰 조정
+import { cn } from '@/lib'
 
 export default function Body({
   children,

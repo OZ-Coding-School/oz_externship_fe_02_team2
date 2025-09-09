@@ -97,7 +97,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
-            className={cn(`absolute inset-y-0 flex items-center pr-3`)}
+            className={cn(`absolute inset-y-0 right-0 flex items-center pr-3`)}
             aria-label={showPw ? '비밀번호 숨기기' : '비밀번호 표시'}
             tabIndex={-1}
           >
