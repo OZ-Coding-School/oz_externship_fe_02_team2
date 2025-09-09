@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from '../Modal'
 import { Button } from '../../Button'
+import { cn } from '@/lib'
 
 export type UserRole = '관리자' | '스태프' | '일반회원'
 
@@ -17,6 +18,12 @@ type UserRoleProps = {
 }
 
 const ROLE_OPTIONS: UserRole[] = ['관리자', '스태프', '일반회원']
+const ROLE_SELECTED = {
+  base: 'w-full justify-start rounded-2xl px-5 py-4',
+  default:
+    'text-secondary-text bg-white shadow-[inset_0_0_0_1px_#d1d5db] hover:bg-gray-50',
+  selected: 'text-primary-blue bg-blue-50 shadow-[inset_0_0_0_1px_#93c5fd]',
+} as const
 
 export default function UserRoleChange({
   open,
@@ -45,10 +52,13 @@ export default function UserRoleChange({
             return (
               <Button
                 key={role}
-                btnStyle={isSelected ? 'primary' : 'secondary'}
+                btnStyle="secondary"
                 btnSize="large"
                 btnText={role}
-                className="w-full justify-start rounded-2xl px-5 py-4"
+                className={cn(
+                  ROLE_SELECTED.base,
+                  isSelected ? ROLE_SELECTED.selected : ROLE_SELECTED.default
+                )}
                 disabled={confirming}
                 onClick={() => {
                   setSelected(role)
