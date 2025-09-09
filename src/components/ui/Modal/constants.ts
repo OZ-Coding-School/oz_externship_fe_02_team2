@@ -1,7 +1,7 @@
 import type { ModalPlacement, ModalSize } from '@/types'
 
 export const SIZE_CLASS: Record<ModalSize, string> = {
-  default: 'w-[672px] h-[710px]',
+  default: 'w-[672px]',
   xs: 'max-w-xs',
   sm: 'max-w-sm',
   md: 'max-w-md',
