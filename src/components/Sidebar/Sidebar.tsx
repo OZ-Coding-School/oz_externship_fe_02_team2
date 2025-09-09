@@ -15,7 +15,8 @@ export default function Sidebar({
 
   // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
   useEffect(() => {
-    if (!(drawerOpen && scope === 'viewport')) return
+    if (!drawerOpen) return
+    if (scope !== 'viewport') return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
