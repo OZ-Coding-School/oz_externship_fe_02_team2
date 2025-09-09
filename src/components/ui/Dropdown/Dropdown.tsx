@@ -49,7 +49,7 @@ export default function Dropdown({
   const wrapRef = useRef<HTMLDivElement | null>(null)
 
   const listRef = useRef<HTMLUListElement | null>(null)
-  const [activeIndex, setActiveIndex] = useState<number>(-1)
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   const btnId = useId()
   const listId = useId()
