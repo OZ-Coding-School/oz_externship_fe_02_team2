@@ -1,5 +1,5 @@
 export type InputSize = 'sm' | 'md' | 'lg'
-export type InputType = 'text' | 'email' | 'password' | 'number'
+export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel'
 
 type NativeInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,

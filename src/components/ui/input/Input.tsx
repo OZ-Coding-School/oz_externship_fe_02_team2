@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { forwardRef, useId, useMemo, useState } from 'react'
+import { forwardRef, useId, useState } from 'react'
 import type { InputProps } from '@/types/input'
 import { sizeMap, baseInput, errorInput, labelCls } from './Input.styles'
-import { EyeIcon, EyeOffIcon, XIcon } from '@/components/ui/icons'
+import { EyeIcon, EyeOffIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 
 export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
@@ -18,7 +17,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
     leftIcon,
     rightIcon,
     showPasswordToggle = true,
-    clearable = false,
     disabled,
     required,
     // controlled/uncontrolled 분기용
@@ -34,11 +32,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   const hasError = Boolean(error && error.trim().length)
 
   const isControlled = (value as unknown) !== undefined
-
-  const currentValue = useMemo(() => {
-    const v = isControlled ? (value as any) : defaultValue
-    return (v ?? '') as string | number | readonly string[]
-  }, [isControlled, value, defaultValue])
 
   const sizeCls = sizeMap[size]
 
@@ -69,7 +62,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
       {label && (
         <label htmlFor={inputId} className={cn(labelCls, sizeCls.label)}>
           {label}
-          {required && <span className="text-danger-600 ml-0.5">*</span>}ㄴ
+          {required && <span className="text-danger-600 ml-0.5">*</span>}
         </label>
       )}
 
@@ -99,39 +92,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
           {...rest}
         />
 
-        {/* clear 버튼 */}
-        {clearable && !disabled && String(currentValue).length > 0 && (
-          <button
-            type="button"
-            onClick={(e) => {
-              const node =
-                (e.currentTarget.previousSibling as HTMLInputElement) ?? null
-              if (!node) return
-              const setter = Object.getOwnPropertyDescriptor(
-                HTMLInputElement.prototype,
-                'value'
-              )?.set
-              setter?.call(node, '')
-              node.dispatchEvent(new Event('input', { bubbles: true }))
-              node.focus()
-            }}
-            className="absolute inset-y-0 right-0 flex items-center pr-2"
-            aria-label="입력 지우기"
-            tabIndex={-1}
-          >
-            <XIcon />
-          </button>
-        )}
-
         {/* 비밀번호 토글 / 우측 아이콘 */}
         {type === 'password' && showPasswordToggle ? (
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
-            className={cn(
-              // clearable이면 clear 버튼이 차지하는 공간만큼 왼쪽으로 한 칸
-              `absolute inset-y-0 ${clearable ? 'right-8' : 'right-0'} flex items-center pr-3`
-            )}
+            className={cn(`absolute inset-y-0 flex items-center pr-3`)}
             aria-label={showPw ? '비밀번호 숨기기' : '비밀번호 표시'}
             tabIndex={-1}
           >

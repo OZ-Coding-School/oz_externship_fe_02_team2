@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 export type ClampArgs = { n: number; min: number; max: number }
 
 export function clamp({ n, min, max }: ClampArgs) {
@@ -10,11 +12,16 @@ export function range(start: number, end: number) {
   return out
 }
 
-export function threeWindow(current: number, total: number) {
-  if (total <= 3) return range(1, total)
-  if (current <= 2) return [1, 2, 3]
-  if (current >= total - 1) return [total - 2, total - 1, total]
-  return [current - 1, current, current + 1]
+export function visiblePageRange(
+  current: number,
+  total: number,
+  blockSize: number
+) {
+  if (total <= blockSize) return range(1, total)
+  const half = Math.floor(blockSize / 2)
+  const start = clamp({ n: current - half, min: 1, max: total - blockSize + 1 })
+  const end = start + blockSize - 1
+  return range(start, end)
 }
 
 export function normalizeWindow(page: number, total: number, win: number[]) {
@@ -35,4 +42,21 @@ export function normalizeWindow(page: number, total: number, win: number[]) {
 export const toInt = (v: unknown, fb = 1) => {
   const n = Number(v)
   return Number.isFinite(n) ? Math.floor(n) : fb
+}
+
+export default function useResponsivePageSize() {
+  const get = () => {
+    if (typeof window === 'undefined') return 5
+    return window.matchMedia('(min-width: 1024px)').matches ? 10 : 5
+  }
+  const [size, setSize] = useState<number>(get)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const listener = (e: MediaQueryListEvent) => setSize(e.matches ? 10 : 5)
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [])
+  return size
 }
