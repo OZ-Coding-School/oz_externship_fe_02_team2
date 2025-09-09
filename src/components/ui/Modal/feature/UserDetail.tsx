@@ -3,6 +3,7 @@ import { Button } from '../../Button'
 import { useState } from 'react'
 import Field from '../fields/Field'
 import UserRoleChange, { type UserRole } from './UserRoleChange'
+import UserDelete from './UserDelete'
 
 /** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
 export type MemberDetail = {
@@ -131,18 +132,23 @@ export default function MemberDetailModal({
   onClose,
   data,
   onEdit,
-  onDelete,
 }: {
   open: boolean
   onClose: () => void
   data: MemberDetail
   onEdit?: (m: MemberDetail) => void
-  onDelete?: (m: MemberDetail) => void
-  onChangeRole?: (m: MemberDetail) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<MemberDetail>(data)
   const [roleModalOpen, setRoleModalOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // 실제 삭제 함수 (추후 API 연동)
+  const deleteUser = async (userId: string) => {
+    // TODO: 서버 API 호출로 교체
+    // await api.delete(`/users/${userId}`)
+    await new Promise((r) => setTimeout(r, 500)) // 데모용
+  }
 
   const handleChange = (field: keyof MemberDetail, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -220,13 +226,24 @@ export default function MemberDetailModal({
                 <Button
                   btnStyle="danger"
                   btnText="삭제하기"
-                  onClick={() => onDelete?.(data)}
+                  onClick={() => setDeleteOpen(true)}
                 />
               </>
             )}
           </div>
         </div>
       </Modal.Footer>
+
+      <UserDelete
+        open={deleteOpen}
+        userId={form.id}
+        deleteUser={deleteUser}
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={() => {
+          // 삭제 성공 후, 토스트 띄우고 목록으로 복귀
+          onClose()
+        }}
+      />
     </Modal>
   )
 }
