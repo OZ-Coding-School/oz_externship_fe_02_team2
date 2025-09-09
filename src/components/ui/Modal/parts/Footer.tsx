@@ -1,18 +1,21 @@
 export default function Footer({
   children,
   align = 'end',
+  className = '',
 }: {
   children: React.ReactNode
   align?: 'start' | 'center' | 'end'
+  className?: string
 }) {
   const map = {
     start: 'justify-start',
     center: 'justify-center',
     end: 'justify-end',
   } as const
+
   return (
     <div
-      className={`mt-auto flex items-center ${map[align]} gap-2 border-t border-gray-200 bg-gray-50 px-6 py-4`}
+      className={`flex items-center ${map[align]} gap-2 px-6 py-4 ${className}`}
     >
       {children}
     </div>
