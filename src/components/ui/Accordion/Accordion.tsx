@@ -46,7 +46,7 @@ export default function Accordion({
   const iconOnly = rail // rail일 때만, 아이콘만 보임. 이외 아이콘+레이블
 
   return (
-    <div className="w-full cursor-pointer select-none">
+    <div className="w-full cursor-pointer pb-2 select-none">
       {/* 상위 메뉴(펼치기/접기 기능) */}
       <div
         className={cn(
@@ -69,13 +69,13 @@ export default function Accordion({
 
       {/* 하위 메뉴 */}
       {open && (
-        <div className="body-sm mt-2 text-gray-600">
+        <div className="body-sm text-gray-600">
           <ul className="ml-6">
             {items?.map(
               ({ defaultIcon, activeIcon, label, onClick, active }) => {
                 const LI_COMMON_STYLE = cn(
-                  'flex items-center hover:bg-primary-50 mb-1',
-                  'w-full rounded-lg px-3 py-2 gap-x-3',
+                  'flex items-center hover:bg-primary-50',
+                  'w-full rounded-lg px-3 py-2 gap-x-3 mt-1',
                   active &&
                     'bg-primary-100 text-primary-800 hover:bg-primary-100'
                 )
