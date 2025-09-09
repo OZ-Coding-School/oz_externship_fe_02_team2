@@ -21,8 +21,8 @@ const ROLE_OPTIONS: UserRole[] = ['관리자', '스태프', '일반회원']
 const ROLE_SELECTED = {
   base: 'w-full justify-start rounded-2xl px-5 py-4',
   default:
-    'text-secondary-text bg-white shadow-[inset_0_0_0_1px_#d1d5db] hover:bg-gray-50',
-  selected: 'text-primary-blue bg-blue-50 shadow-[inset_0_0_0_1px_#93c5fd]',
+    'text-primary-text bg-white shadow-[inset_0_0_0_1px_#e5e7eb] hover:bg-gray-50',
+  selected: 'text-primary-blue bg-[#EFF6FF] shadow-[inset_0_0_0_1px_#93c5fd]',
 } as const
 
 export default function UserRoleChange({
