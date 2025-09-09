@@ -180,10 +180,16 @@ export default function Sidebar({
           rail={!expanded}
           items={memberItems}
         />
-        <Accordion icon={Studies} label={'스터디 관리'} items={studyItems} />
+        <Accordion
+          icon={Studies}
+          label={'스터디 관리'}
+          rail={!expanded}
+          items={studyItems}
+        />
         <Accordion
           icon={Recruits}
           label={'스터디 구인 공고 관리'}
+          rail={!expanded}
           items={recruitItems}
         />
       </DesktopAside>

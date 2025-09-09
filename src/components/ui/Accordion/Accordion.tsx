@@ -20,16 +20,26 @@ type AccordionProps = {
   children?: ReactNode
 }
 
-type AccordionContentProps = { iconOnly: boolean; icon: string; label: string }
+type AccordionContentProps = {
+  iconOnly: boolean
+  icon: string
+  label: string
+  labelClassName?: string
+}
 
 // TODO: hover & active 디자인 추가
 // TODO: 부드러운 UX 위한 transition & animation 등 추가
 
-function AccordionContent({ iconOnly, icon, label }: AccordionContentProps) {
+function AccordionContent({
+  iconOnly,
+  icon,
+  label,
+  labelClassName,
+}: AccordionContentProps) {
   return (
     <div className="flex items-center gap-x-3">
       <img src={icon} alt={label} />
-      {!iconOnly && <p className="truncate">{label}</p>}
+      {!iconOnly && <p className={cn('truncate', labelClassName)}>{label}</p>}
     </div>
   )
 }
@@ -46,17 +56,28 @@ export default function Accordion({
   const iconOnly = rail // rail일 때만, 아이콘만 보임. 이외 아이콘+레이블
 
   return (
-    <div className="w-full cursor-pointer pb-2 select-none">
+    <div
+      className={cn(
+        'mb-2 w-full cursor-pointer pb-2 select-none',
+        rail && 'flex flex-col items-center rounded-full bg-gray-50 pb-0'
+      )}
+    >
       {/* 상위 메뉴(펼치기/접기 기능) */}
       <div
         className={cn(
-          'hover:bg-primary-50 flex items-center',
-          'justify-between rounded-lg px-3 py-2',
-          'body-sm font-medium'
+          'flex items-center justify-between',
+          rail
+            ? 'rounded-full bg-white px-4 py-4 hover:bg-white/60'
+            : 'hover:bg-primary-50 rounded-lg bg-transparent px-3 py-2'
         )}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <AccordionContent iconOnly={iconOnly} icon={icon} label={label} />
+        <AccordionContent
+          iconOnly={iconOnly}
+          icon={icon}
+          label={label}
+          labelClassName="body-sm font-medium"
+        />
 
         {/* rail이 아닐 때만 펼치기/접기 아이콘 보임 */}
         {!iconOnly && (
@@ -69,21 +90,27 @@ export default function Accordion({
 
       {/* 하위 메뉴 */}
       {open && (
-        <div className="body-sm text-gray-600">
-          <ul className="ml-6">
+        <div className="">
+          <ul className={rail ? 'mb-1.5' : 'ml-6'}>
             {items?.map(
               ({ defaultIcon, activeIcon, label, onClick, active }) => {
                 const LI_COMMON_STYLE = cn(
-                  'flex items-center hover:bg-primary-50',
-                  'w-full rounded-lg px-3 py-2 gap-x-3 mt-1',
-                  active &&
-                    'bg-primary-100 text-primary-800 hover:bg-primary-100'
+                  'flex items-center',
+                  'w-full px-3 mt-1',
+                  rail ? 'rounded-full py-3' : 'rounded-lg py-2',
+                  active
+                    ? 'bg-primary-100  hover:bg-primary-100'
+                    : 'hover:bg-primary-50'
                 )
 
                 return (
                   <li key={label} onClick={onClick} className={LI_COMMON_STYLE}>
-                    <img src={active ? activeIcon : defaultIcon} alt={label} />
-                    <span>{label}</span>
+                    <AccordionContent
+                      icon={active ? activeIcon : defaultIcon}
+                      label={label}
+                      iconOnly={iconOnly}
+                      labelClassName={`body-sm ${active ? 'text-primary-800' : 'text-gray-600'}`}
+                    />
                   </li>
                 )
               }
