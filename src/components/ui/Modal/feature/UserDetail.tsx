@@ -144,7 +144,8 @@ export default function MemberDetailModal({
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   // 실제 삭제 함수 (추후 API 연동)
-  const deleteUser = async (userId: string) => {
+  //const deleteUser = async (userId: string) => {
+  const deleteUser = async () => {
     // TODO: 서버 API 호출로 교체
     // await api.delete(`/users/${userId}`)
     await new Promise((r) => setTimeout(r, 500)) // 데모용
