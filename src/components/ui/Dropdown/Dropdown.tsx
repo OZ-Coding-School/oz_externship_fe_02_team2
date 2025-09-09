@@ -40,7 +40,9 @@ export default function Dropdown({
   )
   const selectedValue = (isControlled ? value : internalValue) ?? null
 
-  const selectedIndex = options.findIndex((o) => o.value === selectedValue)
+  const selectedIndex = options.findIndex(
+    (options) => options.value === selectedValue
+  )
   const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null
 
   const [open, setOpen] = useState(false)
@@ -185,27 +187,27 @@ export default function Dropdown({
           }
           className={cn(MENU_BASE, menuAlignClass(align), classes?.menu)}
         >
-          {options.map((o, i) => {
-            const selected = o.value === selectedValue
+          {options.map((options, i) => {
+            const selected = options.value === selectedValue
             const active = i === activeIndex
             return (
               <li
                 id={`${listId}-opt-${i}`}
-                key={o.value}
+                key={options.value}
                 role="option"
                 tabIndex={-1}
                 onMouseDown={(e) => e.preventDefault()}
-                onMouseEnter={() => !o.disabled && setActiveIndex(i)}
-                onClick={() => select(o)}
+                onMouseEnter={() => !options.disabled && setActiveIndex(i)}
+                onClick={() => select(options)}
                 className={cn(
                   OPTION_BASE,
                   selected && OPTION_SELECTED,
                   active && OPTION_ACTIVE,
-                  o.disabled && OPTION_DISABLED,
+                  options.disabled && OPTION_DISABLED,
                   classes?.option
                 )}
               >
-                {o.label}
+                {options.label}
               </li>
             )
           })}
