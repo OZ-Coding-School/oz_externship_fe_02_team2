@@ -2,6 +2,7 @@ import Modal from '../Modal'
 import { Button } from '../../Button'
 import { useState } from 'react'
 import Field from '../fields/Field'
+import UserRoleChange, { type UserRole } from './UserRoleChange'
 
 /** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
 export type MemberDetail = {
@@ -142,6 +143,7 @@ export default function MemberDetailModal({
 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<MemberDetail>(data)
+  const [roleModalOpen, setRoleModalOpen] = useState(false)
 
   const handleChange = (field: keyof MemberDetail, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -182,7 +184,16 @@ export default function MemberDetailModal({
           <Button
             btnStyle="success"
             btnText="권한 변경하기"
-            onClick={() => onChangeRole?.(data)}
+            onClick={() => setRoleModalOpen(true)}
+          />
+
+          <UserRoleChange
+            open={roleModalOpen}
+            value={(form.role as UserRole) || '일반회원'}
+            onClose={() => setRoleModalOpen(false)}
+            onConfirm={(nextRole) => {
+              setForm((prev) => ({ ...prev, role: nextRole }))
+            }}
           />
           <div className="flex gap-3">
             {editing ? (
