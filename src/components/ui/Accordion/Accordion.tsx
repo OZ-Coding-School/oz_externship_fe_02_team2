@@ -23,6 +23,7 @@ type AccordionProps = {
 type AccordionContentProps = { iconOnly: boolean; icon: string; label: string }
 
 // TODO: hover & active 디자인 추가
+// TODO: 부드러운 UX 위한 transition & animation 등 추가
 
 function AccordionContent({ iconOnly, icon, label }: AccordionContentProps) {
   return (
@@ -45,12 +46,12 @@ export default function Accordion({
   const iconOnly = rail // rail일 때만, 아이콘만 보임. 이외 아이콘+레이블
 
   return (
-    <div className="w-full cursor-pointer">
+    <div className="w-full cursor-pointer select-none">
       {/* 상위 메뉴(펼치기/접기 기능) */}
       <div
         className={cn(
           'hover:bg-primary-50 flex items-center',
-          'md:justify-between md:rounded-lg md:px-3 md:py-2',
+          'justify-between rounded-lg px-3 py-2',
           'body-sm font-medium'
         )}
         onClick={() => setOpen((prev) => !prev)}
@@ -69,12 +70,12 @@ export default function Accordion({
       {/* 하위 메뉴 */}
       {open && (
         <div className="body-sm mt-2 text-gray-600">
-          <ul className="md:ml-6">
+          <ul className="ml-6">
             {items?.map(
               ({ defaultIcon, activeIcon, label, onClick, active }) => {
                 const LI_COMMON_STYLE = cn(
                   'flex items-center hover:bg-primary-50 mb-1',
-                  'md:w-full md:rounded-lg md:px-3 md:py-2 md:gap-x-3',
+                  'w-full rounded-lg px-3 py-2 gap-x-3',
                   active &&
                     'bg-primary-100 text-primary-800 hover:bg-primary-100'
                 )

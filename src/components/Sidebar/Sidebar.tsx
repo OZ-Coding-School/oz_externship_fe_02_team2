@@ -99,7 +99,7 @@ export default function Sidebar({
         onClose={() => setDrawerOpen(false)}
         scope={scope}
       >
-        아코디언 메뉴
+        <Accordion icon={Members} label={'회원 관리'} items={memberItems} />
       </MobileDrawer>
     </>
   )

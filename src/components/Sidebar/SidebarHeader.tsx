@@ -12,7 +12,7 @@ export default function SidebarHeader({
   return (
     <header
       className={cn(
-        'flex items-center truncate py-6',
+        'flex items-center truncate py-6 select-none',
         compact ? 'justify-center px-0' : 'justify-between px-6'
       )}
     >
