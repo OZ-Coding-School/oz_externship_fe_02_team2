@@ -1,36 +1,46 @@
-import { Button } from '@components/ui/Button'
-import Burger from '@assets/icons/hamburger.svg'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { SidebarProps } from './Sidebar.types'
+import DesktopAside from './DesktopAside'
+import MobileDrawer from './MobileDrawer'
 
-export default function Sidebar() {
-  const [expanded, setExpanded] = useState(true)
+export default function Sidebar({
+  mobileDrawerOpen,
+  onMobileDrawerOpenChange,
+  scope = 'container',
+}: SidebarProps) {
+  const [expanded, setExpanded] = useState(true) // ≥md: Expanded↔Rail
+  const [internalOpen, setInternalOpen] = useState(false) // <md: Drawer
+  const drawerOpen = mobileDrawerOpen ?? internalOpen
+  const setDrawerOpen = onMobileDrawerOpenChange ?? setInternalOpen
 
-  const toggle = () => setExpanded((prev) => !prev)
+  // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
+  useEffect(() => {
+    if (!drawerOpen) return
+    if (scope !== 'viewport') return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [drawerOpen, scope])
 
   return (
-    <aside
-      className={`h-screen ${expanded ? 'w-64' : 'w-18'} overflow-hidden bg-white shadow-[inset_-1px_0_0_0_#e5e7eb] transition-[width] duration-200`}
-    >
-      {/* TODO: Sidebar 위치 고정 추후 추가 */}
-      <header
-        className={`flex items-center ${expanded ? 'justify-between px-6' : 'justify-center px-0'} py-6`}
+    <>
+      <DesktopAside
+        expanded={expanded}
+        onToggle={() => setExpanded((expanded) => !expanded)}
       >
-        {expanded && (
-          <h4 className={`font-bold transition-opacity`}>관리자 패널</h4>
-        )}
-        <Button
-          btnSize="small"
-          btnIcon={<img src={Burger} alt="메인 메뉴 토글" />}
-          className="hover:animate-spin-once bg-transparent p-0 hover:bg-transparent"
-          onClick={toggle}
-          iconOnly
-          aria-label={expanded ? '사이드바 접기' : '사이드바 펼치기'}
-          aria-expanded={expanded}
-        />
-      </header>
-      <nav className={`mb-2 w-full ${expanded ? 'px-4' : 'px-2'}`}>
+        {/* TODO: 아코디언 메뉴 제작 후 삽입 */}
         아코디언 메뉴
-      </nav>
-    </aside>
+      </DesktopAside>
+
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        scope={scope}
+      >
+        아코디언 메뉴
+      </MobileDrawer>
+    </>
   )
 }
