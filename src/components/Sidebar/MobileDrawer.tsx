@@ -1,7 +1,7 @@
 import { cn } from '@/lib'
 import type { MobileDrawerProps } from './Sidebar.types'
 import SidebarHeader from './SidebarHeader'
-import { COMMON_PANEL_STYLE } from './Sidebar.styles'
+import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from './Sidebar.styles'
 
 export default function MobileDrawer({
   open,
@@ -10,12 +10,7 @@ export default function MobileDrawer({
   children,
   title = '관리자 패널',
 }: MobileDrawerProps) {
-  const posOverlay =
-    scope === 'container' ? 'absolute inset-0' : 'fixed inset-0'
-  const posPanel =
-    scope === 'container'
-      ? 'absolute inset-y-0 left-0'
-      : 'fixed inset-y-0 left-0'
+  const positionByScope = scope === 'container' ? 'absolute' : 'fixed'
 
   return (
     <>
@@ -25,9 +20,9 @@ export default function MobileDrawer({
           if (e.target === e.currentTarget) onClose()
         }}
         className={cn(
-          'fixed inset-0 bg-gray-600/50 transition-opacity duration-200 md:hidden',
-          posOverlay,
-          open ? 'z-50 opacity-100' : 'pointer-events-none opacity-0'
+          'fixed inset-0 inset-y-0 left-0 z-50 bg-gray-600/50 transition-opacity duration-200 md:hidden',
+          positionByScope,
+          open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         aria-hidden={!open}
       />
@@ -35,8 +30,8 @@ export default function MobileDrawer({
       <aside
         className={cn(
           COMMON_PANEL_STYLE,
-          'w-[80vw] max-w-64 transition-transform duration-200 md:hidden',
-          posPanel,
+          'inset-y-0 left-0 w-[80vw] max-w-64 transition-transform duration-200 md:hidden',
+          positionByScope,
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -45,7 +40,7 @@ export default function MobileDrawer({
           onClick={onClose}
           buttonLabel="메뉴 닫기"
         />
-        <nav className="mb-2 w-full px-4">{children}</nav>
+        <nav className={cn(COMMON_NAV_STYLE, 'px-4')}>{children}</nav>
       </aside>
     </>
   )

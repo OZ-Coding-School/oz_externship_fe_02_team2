@@ -1,7 +1,7 @@
 import { cn } from '@/lib'
 import type { DesktopAsideProps } from './Sidebar.types'
 import SidebarHeader from './SidebarHeader'
-import { COMMON_PANEL_STYLE } from './Sidebar.styles'
+import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from './Sidebar.styles'
 
 export default function DesktopAside({
   expanded,
@@ -23,7 +23,7 @@ export default function DesktopAside({
         buttonLabel={expanded ? '사이드바 접기' : '사이드바 펼치기'}
         compact={!expanded}
       />
-      <nav className={cn('mb-2 w-full', expanded ? 'px-4' : 'px-2')}>
+      <nav className={cn(COMMON_NAV_STYLE, expanded ? 'px-4' : 'px-2')}>
         {children}
       </nav>
     </aside>
