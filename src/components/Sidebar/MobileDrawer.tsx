@@ -5,7 +5,7 @@ import SidebarHeader from './SidebarHeader'
 export default function MobileDrawer({
   open,
   onClose,
-  scope,
+  scope = 'container',
   children,
   title = '관리자 패널',
 }: MobileDrawerProps) {

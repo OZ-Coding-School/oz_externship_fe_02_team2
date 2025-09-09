@@ -1,4 +1,4 @@
-import { Button } from '../ui/Button'
+import { Button } from '@components/ui/Button'
 import type { SidebarHeaderProps } from './Sidebar.types'
 import Burger from '@assets/icons/hamburger.svg'
 
