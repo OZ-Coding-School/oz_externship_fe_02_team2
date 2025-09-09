@@ -1,6 +1,7 @@
 import { cn } from '@/lib'
 import type { DesktopAsideProps } from './Sidebar.types'
 import SidebarHeader from './SidebarHeader'
+import { COMMON_PANEL_STYLE } from './Sidebar.styles'
 
 export default function DesktopAside({
   expanded,
@@ -11,8 +12,8 @@ export default function DesktopAside({
   return (
     <aside
       className={cn(
-        'z-60 hidden h-screen overflow-hidden bg-white md:block',
-        'shadow-[inset_-1px_0_0_0_#e5e7eb] transition-[width] duration-200',
+        COMMON_PANEL_STYLE,
+        'hidden transition-[width] duration-200 md:block',
         expanded ? 'w-64' : 'w-18'
       )}
     >

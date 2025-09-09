@@ -1,6 +1,7 @@
 import { cn } from '@/lib'
 import type { MobileDrawerProps } from './Sidebar.types'
 import SidebarHeader from './SidebarHeader'
+import { COMMON_PANEL_STYLE } from './Sidebar.styles'
 
 export default function MobileDrawer({
   open,
@@ -33,10 +34,10 @@ export default function MobileDrawer({
       {/* 패널 */}
       <aside
         className={cn(
-          'z-60 h-screen w-[80vw] max-w-64 overflow-hidden bg-white md:hidden',
-          'shadow-[inset_-1px_0_0_0_#e5e7eb] transition-transform duration-200',
+          COMMON_PANEL_STYLE,
+          'w-[80vw] max-w-64 transition-transform duration-200 md:hidden',
           posPanel,
-          open ? 'z-60 translate-x-0' : '-translate-x-full'
+          open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <SidebarHeader
