@@ -40,7 +40,12 @@ export default function UserRoleChange({
   }, [open, value])
 
   return (
-    <Modal open={open} onClose={onClose} className="w-[448px]">
+    <Modal
+      open={open}
+      onClose={onClose}
+      className="w-[448px]"
+      showCloseIcon={false}
+    >
       <Modal.Header>
         <Modal.Title>권한 변경</Modal.Title>
       </Modal.Header>
