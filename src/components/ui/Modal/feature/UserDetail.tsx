@@ -132,7 +132,6 @@ export default function MemberDetailModal({
   data,
   onEdit,
   onDelete,
-  onChangeRole,
 }: {
   open: boolean
   onClose: () => void
@@ -178,8 +177,9 @@ export default function MemberDetailModal({
         <MemberDetailView m={form} editing={editing} onChange={handleChange} />
       </Modal.Body>
 
+      <div className="border-b border-gray-200" />
       {/* Footer */}
-      <Modal.Footer>
+      <Modal.Footer className="bg-gray-50 py-5">
         <div className="flex w-full justify-between">
           <Button
             btnStyle="success"
