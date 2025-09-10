@@ -85,7 +85,7 @@ function makeDetail(i: number): RecruitmentDetail {
   const deadlineDate =
     status === 'CLOSED'
       ? new Date(Date.now() - dayOffset * ONE_DAY_MS)
-      : new Date(Date.now() + dayOffset * ONE_HOUR_MS)
+      : new Date(Date.now() + dayOffset * ONE_DAY_MS)
 
   const tagCount = (i % 5) + 1
   const tags = Array.from({ length: tagCount }).map(
