@@ -6,7 +6,6 @@ import type {
 } from './admin-recruitments.types'
 import { listRecruitments, statusToKo } from './admin-recruitments.mock'
 import Badge from '@/components/ui/Badge/Badge'
-import { fmtDate } from '@/lib'
 import { useEffect, useState } from 'react'
 import { DataTable } from '@/components/table/DataTable'
 
@@ -58,13 +57,13 @@ const columns: Column<Row>[] = [
   {
     id: 'created',
     header: '생성일시',
-    accessor: (r) => fmtDate(r.created_at),
+    accessor: (r) => r.created_at,
     width: '160px',
   },
   {
     id: 'updated',
     header: '수정일시',
-    accessor: (r) => fmtDate(r.updated_at),
+    accessor: (r) => r.updated_at,
     width: '160px',
   },
 ]
