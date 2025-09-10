@@ -34,7 +34,7 @@ const columns: Column<Row>[] = [
     cell: ({ value }) => (
       <Badge
         tone={
-          value === '진행 중' ? 'green' : value === '대기중' ? 'blue' : 'gray'
+          value === '모집중' ? 'green' : value === '대기중' ? 'blue' : 'gray'
         }
       >
         {value}
