@@ -52,8 +52,8 @@ const fmtDateTime = (d: Date) =>
 /* === 상태 → 한글 라벨 === */
 export const statusToKo = (
   s: RecruitmentStatus
-): '대기중' | '진행중' | '종료됨' =>
-  s === 'OPEN' ? '진행중' : s === 'PENDING' ? '대기중' : '종료됨'
+): '대기중' | '모집중' | '종료됨' =>
+  s === 'OPEN' ? '모집중' : s === 'PENDING' ? '대기중' : '종료됨'
 
 /* === 더미 데이터 생성 === */
 function makeDetail(i: number): RecruitmentDetail {
