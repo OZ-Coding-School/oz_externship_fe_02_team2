@@ -1,21 +1,10 @@
 // 스터디 그룹 관리
 import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
-import { Badge } from '@components/table/Badges'
 import type { Column, TableState } from '@type/table'
 import { fmtDate } from '@/lib/table'
-
-export type StudyGroupRow = {
-  id: number | string
-  cover?: string
-  title: string
-  capacity: number
-  enrolled: number
-  period: { start: string; end: string }
-  status: '대기중' | '진행중' | '종료됨'
-  createdAt: string
-  updatedAt: string
-}
+import Badge from '@/components/ui/Badge/Badge'
+import type { StudyGroupRow } from '../Table.types'
 
 const columns: Column<StudyGroupRow>[] = [
   {
