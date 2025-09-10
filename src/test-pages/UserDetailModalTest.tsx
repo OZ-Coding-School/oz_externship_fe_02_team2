@@ -35,8 +35,6 @@ export default function TestMemberDetailPage() {
         onClose={() => setOpen(false)}
         data={mockMember}
         onEdit={(m) => alert(`EDIT: ${JSON.stringify(m)}`)}
-        onDelete={(m) => alert(`DELETE: ${m.id}`)}
-        onChangeRole={(m) => alert(`CHANGE ROLE: ${m.id}`)}
       />
     </div>
   )
