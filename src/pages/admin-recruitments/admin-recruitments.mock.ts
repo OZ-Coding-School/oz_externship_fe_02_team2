@@ -35,19 +35,34 @@ const TECHNOLOGIES = [
   'DevOps',
 ] as const
 
-const TAGS: Tag[] = Array.from({ length: 40 }).map((_, i) => ({
+export const SAMPLE_TAGS: Tag[] = Array.from({ length: 40 }).map((_, i) => ({
   id: `t${i + 1}`,
   name:
     TECHNOLOGIES[i % TECHNOLOGIES.length] +
     (i >= TECHNOLOGIES.length ? String(i) : ''),
 }))
 
+export async function listTags(queryText = ''): Promise<Tag[]> {
+  const normalizedQuery = queryText.trim().toLowerCase()
+  const filteredTags = normalizedQuery
+    ? SAMPLE_TAGS.filter((tag) =>
+        tag.name.toLowerCase().includes(normalizedQuery)
+      )
+    : SAMPLE_TAGS
+  await new Promise((resolve) => setTimeout(resolve, 60))
+  return filteredTags
+}
+
 /* === 날짜 유틸 === */
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n))
-const fmtDate = (d: Date) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-const fmtDateTime = (d: Date) =>
-  `${fmtDate(d)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+const padTwoDigits = (value: number) =>
+  value < 10 ? `0${value}` : String(value)
+const formatDate = (date: Date) =>
+  `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`
+const formatDateTime = (date: Date) =>
+  `${formatDate(date)} ${padTwoDigits(date.getHours())}:${padTwoDigits(date.getMinutes())}`
+
+const ONE_DAY_MS = 86_400_000
+const ONE_HOUR_MS = 3_600_000
 
 /* === 상태 → 한글 라벨 === */
 export const statusToKo = (
@@ -57,58 +72,58 @@ export const statusToKo = (
 
 /* === 더미 데이터 생성 === */
 function makeDetail(i: number): RecruitmentDetail {
-  const createdAt = new Date(Date.now() - i * 86_400_000)
-  const updatedAt = new Date(createdAt.getTime() + (i % 7) * 3_600_000)
+  const createdAt = new Date(Date.now() - i * ONE_DAY_MS)
+  const updatedAt = new Date(createdAt.getTime() + (i % 7) * ONE_HOUR_MS)
 
   // 상태 분포: 0=CLOSED, 1=OPEN, 2=PENDING
-  const mod = i % 3
+  const statusSelector = i % 3
   const status: RecruitmentStatus =
-    mod === 0 ? 'CLOSED' : mod === 1 ? 'OPEN' : 'PENDING'
+    statusSelector === 0 ? 'CLOSED' : statusSelector === 1 ? 'OPEN' : 'PENDING'
 
   // 상태별 마감일: OPEN/PENDING은 미래, CLOSED는 과거 (가끔 null)
-  const base = (i % 20) + 1
+  const dayOffset = (i % 20) + 1
   const deadlineDate =
     status === 'CLOSED'
-      ? new Date(Date.now() - base * 86_400_000)
-      : new Date(Date.now() + base * 86_400_000)
+      ? new Date(Date.now() - dayOffset * ONE_DAY_MS)
+      : new Date(Date.now() + dayOffset * ONE_HOUR_MS)
 
   const tagCount = (i % 5) + 1
   const tags = Array.from({ length: tagCount }).map(
-    (_, k) => TAGS[(i + k) % TAGS.length]
+    (_, tagOffset) => SAMPLE_TAGS[(i + tagOffset) % SAMPLE_TAGS.length]
   )
 
   return {
     id: String(i + 1),
     title: `스터디 구인 ${i + 1}`,
     tags,
-    deadline: i % 6 === 0 ? null : fmtDate(deadlineDate),
+    deadline: i % 6 === 0 ? null : formatDate(deadlineDate),
     status,
     views_count: 120 + (((i + 3) * 37) % 900),
     bookmarks_count: 5 + (((i + 7) * 13) % 120),
-    created_at: fmtDateTime(createdAt),
-    updated_at: fmtDateTime(updatedAt),
+    created_at: formatDateTime(createdAt),
+    updated_at: formatDateTime(updatedAt),
     content: `스터디 ${i + 1} 상세 본문입니다.\n주 ${1 + (i % 3)}회 모임, 온/오프 병행.`,
     author: { user_id: `u${i + 1}`, nickname: `작성자${i + 1}` },
   }
 }
 
-const ALL: RecruitmentDetail[] = Array.from({ length: 137 }).map((_, i) =>
-  makeDetail(i)
-)
+const ALL_RECRUITMENT_DETAILS: RecruitmentDetail[] = Array.from({
+  length: 137,
+}).map((_, i) => makeDetail(i))
 
 /* === 정렬 === */
 function sortRows(
   rows: RecruitmentDetail[],
-  key: SortKey
+  sortKey: SortKey
 ): RecruitmentDetail[] {
-  const byCreated = (a: RecruitmentDetail, b: RecruitmentDetail) =>
+  const byCreatedAscAtAsc = (a: RecruitmentDetail, b: RecruitmentDetail) =>
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
 
-  switch (key) {
+  switch (sortKey) {
     case 'created_asc':
-      return rows.slice().sort(byCreated)
+      return rows.slice().sort(byCreatedAscAtAsc)
     case 'created_desc':
-      return rows.slice().sort((a, b) => -byCreated(a, b))
+      return rows.slice().sort((a, b) => -byCreatedAscAtAsc(a, b))
     case 'views_desc':
       return rows.slice().sort((a, b) => b.views_count - a.views_count)
     case 'bookmarks_desc':
@@ -123,7 +138,7 @@ export async function listRecruitments(
   query: RecruitmentListQuery = {}
 ): Promise<RecruitmentListRes> {
   const {
-    q = '',
+    q: queryText = '',
     status = 'ALL',
     tags = [],
     sort = 'created_desc',
@@ -131,46 +146,50 @@ export async function listRecruitments(
     size = 10,
   } = query
 
-  let rows = ALL
+  let filteredRows = ALL_RECRUITMENT_DETAILS
 
   // 검색(제목)
-  if (q.trim()) {
-    const qq = q.toLowerCase()
-    rows = rows.filter((r) => r.title.toLowerCase().includes(qq))
+  if (queryText.trim()) {
+    const queryLower = queryText.toLowerCase()
+    filteredRows = filteredRows.filter((row) =>
+      row.title.toLowerCase().includes(queryLower)
+    )
   }
 
   // 상태 필터
   if (status !== 'ALL') {
-    rows = rows.filter((r) => r.status === status)
+    filteredRows = filteredRows.filter((row) => row.status === status)
   }
 
   // 태그 ID AND 필터
   if (tags.length) {
-    rows = rows.filter((r) =>
-      tags.every((tid) => r.tags.some((t) => t.id === tid))
+    filteredRows = filteredRows.filter((row) =>
+      tags.every((tagId) => row.tags.some((tag) => tag.id === tagId))
     )
   }
 
   // 정렬
-  rows = sortRows(rows, sort)
+  filteredRows = sortRows(filteredRows, sort)
 
   // 페이징 + 아이템 축약
-  const total = rows.length
+  const total = filteredRows.length
   const start = Math.max(0, (Math.max(1, page) - 1) * Math.max(1, size))
-  const items: RecruitmentItem[] = rows.slice(start, start + size).map((d) => ({
-    id: d.id,
-    title: d.title,
-    tags: d.tags,
-    deadline: d.deadline,
-    status: d.status,
-    views_count: d.views_count,
-    bookmarks_count: d.bookmarks_count,
-    created_at: d.created_at,
-    updated_at: d.updated_at,
-  }))
+  const items: RecruitmentItem[] = filteredRows
+    .slice(start, start + size)
+    .map((detail) => ({
+      id: detail.id,
+      title: detail.title,
+      tags: detail.tags,
+      deadline: detail.deadline,
+      status: detail.status,
+      views_count: detail.views_count,
+      bookmarks_count: detail.bookmarks_count,
+      created_at: detail.created_at,
+      updated_at: detail.updated_at,
+    }))
 
   // 네트워크 지연 흉내(Optional)
-  await new Promise((r) => setTimeout(r, 120))
+  await new Promise((resolve) => setTimeout(resolve, 120))
   return { total, page, size, items }
 }
 
@@ -178,7 +197,8 @@ export async function listRecruitments(
 export async function getRecruitmentDetail(
   id: string
 ): Promise<RecruitmentDetail | null> {
-  const found = ALL.find((r) => r.id === String(id)) ?? null
-  await new Promise((r) => setTimeout(r, 80))
+  const found =
+    ALL_RECRUITMENT_DETAILS.find((row) => row.id === String(id)) ?? null
+  await new Promise((resolve) => setTimeout(resolve, 80))
   return found
 }
