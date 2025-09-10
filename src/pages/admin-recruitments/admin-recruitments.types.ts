@@ -1,4 +1,4 @@
-export type RecruitmentStatus = 'OPEN' | 'CLOSED'
+export type RecruitmentStatus = 'OPEN' | 'CLOSED' | 'PENDING'
 export type RecruitmentStatusFilter = 'ALL' | RecruitmentStatus
 
 export interface Tag {
