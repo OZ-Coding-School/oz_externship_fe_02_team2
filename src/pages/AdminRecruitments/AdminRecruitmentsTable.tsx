@@ -27,17 +27,18 @@ function normalizeTags(value: unknown): Tag[] {
  */
 function TechTagsCell({ value }: { value: unknown }) {
   const tags = normalizeTags(value)
-  const maxVisible = 3
-  const visible = tags.slice(0, maxVisible)
-  const hidden = tags.slice(maxVisible)
-  const hiddenCount = Math.max(0, tags.length - maxVisible)
-  const hiddenLabel = hidden.map((t) => t.name).join(', ')
+  const MAX_GRID_CELLS = 4
+  const MAX_VISIBLE_TAGS = 3
+  const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS)
+  const hiddenTags = tags.slice(MAX_VISIBLE_TAGS)
+  const hiddenCount = Math.max(0, tags.length - MAX_VISIBLE_TAGS)
+  const hiddenLabel = hiddenTags.map((t) => t.name).join(', ')
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      {visible.map((t) => (
-        <Badge key={t.id ?? t.name} tone="gray">
-          {t.name}
+    <div className="grid grid-cols-2 gap-1">
+      {visibleTags.map((tag) => (
+        <Badge key={tag.id ?? tag.name} tone="gray">
+          {tag.name}
         </Badge>
       ))}
       {hiddenCount > 0 && (
@@ -49,6 +50,14 @@ function TechTagsCell({ value }: { value: unknown }) {
           +{hiddenCount}
         </Badge>
       )}
+      {Array.from({
+        length: Math.max(
+          0,
+          MAX_GRID_CELLS - (visibleTags.length + (hiddenCount > 0 ? 1 : 0))
+        ),
+      }).map((_, index) => (
+        <span key={`placeholder-${index}`} />
+      ))}
     </div>
   )
 }
