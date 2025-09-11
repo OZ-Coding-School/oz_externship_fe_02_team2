@@ -33,7 +33,11 @@ function TechTagsCell({ value }: { value: unknown }) {
         </Badge>
       ))}
       {hiddenCount > 0 && (
-        <Badge tone="gray" title={hiddenLabel}>
+        <Badge
+          tone="gray"
+          title={hiddenLabel}
+          aria-label={`숨겨진 기술 태그: ${hiddenLabel}`}
+        >
           +{hiddenCount}
         </Badge>
       )}
@@ -79,14 +83,14 @@ const columns: Column<RecruitmentItem>[] = [
     ),
   },
   {
-    id: 'views',
+    id: 'views_count',
     header: '조회수',
     accessor: (r) => r.views_count,
     width: '80px',
     align: 'right',
   },
   {
-    id: 'bm',
+    id: 'bookmarks_count',
     header: '북마크',
     accessor: (r) => r.bookmarks_count,
     width: '80px',
@@ -122,9 +126,9 @@ function mapTableSortToApi(sort: UnifiedSortState): SortKey {
   switch (id) {
     case 'created':
       return direction === 'asc' ? 'created_asc' : 'created_desc'
-    case 'views':
+    case 'views_count':
       return 'views_desc' // 오름차순 미지원
-    case 'bm':
+    case 'bookmarks_count':
       return 'bookmarks_desc' // 오름차순 미지원
     default:
       // 3. 처리되지 않은 id에 대한 기본값 명시
