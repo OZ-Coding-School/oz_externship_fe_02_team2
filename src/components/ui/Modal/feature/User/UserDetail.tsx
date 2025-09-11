@@ -105,7 +105,6 @@ export default function UserDetailModal({
                   btnText="수정하기"
                   onClick={() => setEditing(true)}
                 />
-
                 <Button
                   btnStyle="danger"
                   btnText="삭제하기"
