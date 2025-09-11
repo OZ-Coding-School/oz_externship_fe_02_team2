@@ -37,13 +37,13 @@ function TechTagsCell({ value }: { value: unknown }) {
   return (
     <div className="grid grid-cols-2 gap-1">
       {visibleTags.map((tag) => (
-        <Badge key={tag.id ?? tag.name} tone="gray">
+        <Badge key={tag.id ?? tag.name} variant="secondary" size="sm">
           {tag.name}
         </Badge>
       ))}
       {hiddenCount > 0 && (
         <Badge
-          tone="gray"
+          variant="default"
           title={hiddenLabel}
           aria-label={`숨겨진 기술 태그: ${hiddenLabel}`}
         >
@@ -91,7 +91,9 @@ const columns: Column<RecruitmentItem>[] = [
     accessor: (r) => statusToKo(r.status),
     width: '90px',
     cell: ({ value }) => (
-      <Badge tone={value === '모집중' ? 'green' : 'gray'}>{value}</Badge>
+      <Badge tone={value === '모집중' ? 'green' : 'gray'} size="sm">
+        {value}
+      </Badge>
     ),
   },
   {
