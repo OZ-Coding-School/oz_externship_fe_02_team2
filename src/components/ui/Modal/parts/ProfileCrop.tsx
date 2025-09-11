@@ -278,7 +278,7 @@ export default function ProfileCrop({
           <div className="flex flex-col items-center gap-4">
             <div
               ref={setContainerRef}
-              className="overflow-hidden overscroll-contain rounded-full ring-1 ring-gray-200 select-none"
+              className="overflow-hidden ring-1 ring-gray-200 select-none"
               tabIndex={0}
               aria-label="휠로 확대/축소"
             >
