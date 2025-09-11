@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import Modal from '../Modal'
-import { Button } from '../../Button'
+import Modal from '../../Modal'
+import { Button } from '../../../Button'
 import { cn } from '@/lib'
 
 export type UserRole = '관리자' | '스태프' | '일반회원'
