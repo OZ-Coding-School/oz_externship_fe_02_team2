@@ -37,9 +37,7 @@ const TECHNOLOGIES = [
 
 export const SAMPLE_TAGS: Tag[] = Array.from({ length: 40 }).map((_, i) => ({
   id: `t${i + 1}`,
-  name:
-    TECHNOLOGIES[i % TECHNOLOGIES.length] +
-    (i >= TECHNOLOGIES.length ? String(i) : ''),
+  name: TECHNOLOGIES[i % TECHNOLOGIES.length],
 }))
 
 export async function listTags(queryText = ''): Promise<Tag[]> {
