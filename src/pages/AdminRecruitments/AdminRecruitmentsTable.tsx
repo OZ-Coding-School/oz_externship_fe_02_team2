@@ -133,7 +133,7 @@ function mapTableSortToApi(sort: TableSort): SortKey {
   // 2. switch 문을 사용해 가독성 향상
   switch (id) {
     case 'created':
-      return desc ? 'created_asc' : 'created_desc'
+      return desc ? 'created_desc' : 'created_asc'
     case 'views_count':
       return 'views_desc' // 오름차순 미지원
     case 'bookmarks_count':
