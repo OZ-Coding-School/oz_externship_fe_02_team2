@@ -3,21 +3,52 @@ import type {
   RecruitmentItem,
   RecruitmentListRes,
   SortKey,
+  Tag,
 } from './admin-recruitments.types'
 import { listRecruitments, statusToKo } from './admin-recruitments.mock'
 import Badge from '@/components/ui/Badge/Badge'
 import { useEffect, useState } from 'react'
 import { DataTable } from '@/components/table/DataTable'
 
-type Row = RecruitmentItem
+function normalizeTags(value: unknown): Tag[] {
+  if (Array.isArray(value)) {
+    return value as Tag[]
+  }
+  return []
+}
 
-const columns: Column<Row>[] = [
+function TechTagsCell({ value }: { value: unknown }) {
+  const tags = normalizeTags(value)
+  const maxVisible = 3
+  const visible = tags.slice(0, maxVisible)
+  const hidden = tags.slice(maxVisible)
+  const hiddenCount = Math.max(0, tags.length - maxVisible)
+  const hiddenLabel = hidden.map((t) => t.name).join(', ')
+
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {visible.map((t) => (
+        <Badge key={t.id ?? t.name} tone="gray">
+          {t.name}
+        </Badge>
+      ))}
+      {hiddenCount > 0 && (
+        <Badge tone="gray" title={hiddenLabel}>
+          +{hiddenCount}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
+const columns: Column<RecruitmentItem>[] = [
   { id: 'title', header: '공고 제목', accessor: 'title' },
   {
     id: 'tags',
     header: '태그',
-    accessor: (r) => r.tags.map((t) => t.name).join(', '),
+    accessor: 'tags',
     width: '240px',
+    cell: ({ value }) => <TechTagsCell value={value} />,
   },
   {
     id: 'deadline',
@@ -100,7 +131,7 @@ export default function RecruitmentsTable() {
     pageSize: 10,
     sort: null,
   })
-  const [rows, setRows] = useState<Row[]>([])
+  const [rows, setRows] = useState<RecruitmentItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null) // 에러 상태 추가
@@ -131,7 +162,7 @@ export default function RecruitmentsTable() {
   }
 
   return (
-    <DataTable<Row>
+    <DataTable<RecruitmentItem>
       columns={columns}
       data={rows}
       state={state}
