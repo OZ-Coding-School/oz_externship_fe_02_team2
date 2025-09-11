@@ -63,6 +63,7 @@ const formatDateTime = (date: Date) =>
 
 const ONE_DAY_MS = 86_400_000
 const ONE_HOUR_MS = 3_600_000
+const NETWORK_DELAY_MS = 120
 
 /* === 상태 → 한글 라벨 === */
 export const statusToKo = (
@@ -120,14 +121,14 @@ function sortRows(
   rows: RecruitmentDetail[],
   sortKey: SortKey
 ): RecruitmentDetail[] {
-  const byCreatedAscAtAsc = (a: RecruitmentDetail, b: RecruitmentDetail) =>
+  const byCreatedAsc = (a: RecruitmentDetail, b: RecruitmentDetail) =>
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
 
   switch (sortKey) {
     case 'created_asc':
-      return rows.slice().sort(byCreatedAscAtAsc)
+      return rows.slice().sort(byCreatedAsc)
     case 'created_desc':
-      return rows.slice().sort((a, b) => -byCreatedAscAtAsc(a, b))
+      return rows.slice().sort((a, b) => -byCreatedAsc(a, b))
     case 'views_desc':
       return rows.slice().sort((a, b) => b.views_count - a.views_count)
     case 'bookmarks_desc':
@@ -193,7 +194,7 @@ export async function listRecruitments(
     }))
 
   // 네트워크 지연 흉내(Optional)
-  await new Promise((resolve) => setTimeout(resolve, VIEW_COUNT_BASE))
+  await new Promise((resolve) => setTimeout(resolve, NETWORK_DELAY_MS))
   return { total, page, size, items }
 }
 
