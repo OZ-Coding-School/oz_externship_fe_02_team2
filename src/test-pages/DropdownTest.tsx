@@ -56,7 +56,7 @@ export default function DropDownTest() {
       {/* 2) Controlled - 공고 상태 (align=end) */}
       <section className="space-y-3">
         <h2 className="text-lg font-medium">
-          2) Controlled - 공고 상태 (align="end")
+          {`2) Controlled - 공고 상태 (align="end")`}
         </h2>
         <div className="flex items-center gap-3">
           <Dropdown
