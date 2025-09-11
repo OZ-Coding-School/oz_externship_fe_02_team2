@@ -1,4 +1,4 @@
-export type RecruitmentStatus = 'OPEN' | 'CLOSED' | 'PENDING'
+export type RecruitmentStatus = 'OPEN' | 'CLOSED'
 export type RecruitmentStatusFilter = 'ALL' | RecruitmentStatus
 
 export interface Tag {
@@ -44,4 +44,28 @@ export interface RecruitmentListQuery {
   sort?: SortKey
   page?: number
   size?: number
+}
+
+/**
+ * 필터바에서 부모(테이블)로 올리는 값의 형태
+ * - queryText: 제목 검색어
+ * - status   : 상태 필터(ALL | OPEN | CLOSED)
+ * - sortKey  : 정렬 키
+ */
+export type AdminRecruitmentsFiltersProps = {
+  value: {
+    queryText: string
+    status: RecruitmentStatusFilter
+    sortKey: SortKey
+  }
+  /**
+   * 부분 업데이트를 허용하는 onChange
+   * - 검색어만 바꾸거나, 정렬만 바꾸는 등 일부만 전달해도 된다.
+   * - 부모에서 기존 값과 병합 처리
+   */
+  onChange: (nextValue: {
+    queryText?: string
+    status?: RecruitmentStatusFilter
+    sortKey?: SortKey
+  }) => void
 }
