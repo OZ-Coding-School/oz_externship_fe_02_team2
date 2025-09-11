@@ -6,6 +6,7 @@ import type {
 } from './AdminRecruitments.types'
 import { Input } from '@/components/ui/input/Input'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
+import { useDebounce } from '@/hooks'
 
 /** 상태 드롭다운 옵션(라벨은 화면 표시용, value는 API 파라미터로 사용) */
 const statusOptions = [
@@ -35,6 +36,7 @@ export default function AdminRecruitmentsFilters({
 
   /** 검색 인풋의 로컬 상태(디바운싱을 위해 부모값과 분리) */
   const [internalQueryText, setInternalQueryText] = useState(queryText)
+  const debouncedQueryText = useDebounce(internalQueryText)
 
   /** 부모에서 queryText가 외부 요인으로 바뀐 경우(리셋 등) 로컬 인풋도 동기화 */
   useEffect(() => setInternalQueryText(queryText), [queryText])
@@ -44,16 +46,11 @@ export default function AdminRecruitmentsFilters({
    * - 부모 onChange는 부분 업데이트를 받기 때문에 { queryText }만 전달
    */
 
-  const DELAY = 300
-
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (internalQueryText !== queryText) {
-        onChange({ queryText: internalQueryText })
-      }
-    }, DELAY)
-    return () => clearTimeout(timer)
-  }, [internalQueryText, queryText, onChange])
+    if (debouncedQueryText !== queryText) {
+      onChange({ queryText: debouncedQueryText })
+    }
+  }, [debouncedQueryText, queryText, onChange])
 
   /** 드롭다운의 현재 선택값(언컨트롤 이슈 방지를 위한 기본값 보정) */
   const statusValue = useMemo(() => status ?? 'ALL', [status])
