@@ -42,6 +42,13 @@ function TechTagsCell({ value }: { value: unknown }) {
 }
 
 const columns: Column<RecruitmentItem>[] = [
+  {
+    id: 'id',
+    header: 'ID',
+    accessor: (r) => r.id,
+    width: '80px',
+    align: 'center',
+  },
   { id: 'title', header: '공고 제목', accessor: 'title' },
   {
     id: 'tags',
