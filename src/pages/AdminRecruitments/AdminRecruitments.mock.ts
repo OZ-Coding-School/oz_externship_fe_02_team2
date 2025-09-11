@@ -6,7 +6,7 @@ import type {
   RecruitmentStatus,
   SortKey,
   Tag,
-} from './admin-recruitments.types'
+} from './AdminRecruitments.types'
 
 /* === 샘플 태그 === */
 const TECHNOLOGIES = [

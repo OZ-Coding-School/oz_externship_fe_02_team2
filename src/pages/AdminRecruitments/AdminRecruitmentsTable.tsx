@@ -4,8 +4,8 @@ import type {
   RecruitmentListRes,
   SortKey,
   Tag,
-} from './admin-recruitments.types'
-import { listRecruitments, statusToKo } from './admin-recruitments.mock'
+} from './AdminRecruitments.types'
+import { listRecruitments, statusToKo } from './AdminRecruitments.mock'
 import Badge from '@/components/ui/Badge/Badge'
 import { useEffect, useMemo, useState } from 'react'
 import { DataTable } from '@/components/table/DataTable'
