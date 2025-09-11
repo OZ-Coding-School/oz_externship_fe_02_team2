@@ -66,10 +66,8 @@ const ONE_HOUR_MS = 3_600_000
 const NETWORK_DELAY_MS = 120
 
 /* === 상태 → 한글 라벨 === */
-export const statusToKo = (
-  s: RecruitmentStatus
-): '대기중' | '모집중' | '종료됨' =>
-  s === 'OPEN' ? '모집중' : s === 'PENDING' ? '대기중' : '종료됨'
+export const statusToKo = (s: RecruitmentStatus): '모집중' | '마감' =>
+  s === 'OPEN' ? '모집중' : '마감'
 
 /* === 더미 데이터 생성 === */
 const STATUS_DISTRIBUTION_CYCLE = 3
@@ -80,12 +78,11 @@ function makeDetail(i: number): RecruitmentDetail {
   const createdAt = new Date(Date.now() - i * ONE_DAY_MS)
   const updatedAt = new Date(createdAt.getTime() + (i % 7) * ONE_HOUR_MS)
 
-  // 상태 분포: 0=CLOSED, 1=OPEN, 2=PENDING
+  // 상태 분포: 0=CLOSED, 1=OPEN,
   const statusSelector = i % STATUS_DISTRIBUTION_CYCLE
-  const status: RecruitmentStatus =
-    statusSelector === 0 ? 'CLOSED' : statusSelector === 1 ? 'OPEN' : 'PENDING'
+  const status: RecruitmentStatus = statusSelector === 0 ? 'CLOSED' : 'OPEN'
 
-  // 상태별 마감일: OPEN/PENDING은 미래, CLOSED는 과거 (가끔 null)
+  // 상태별 마감일: OPEN은 미래, CLOSED는 과거 (가끔 null)
   const dayOffset = (i % 20) + 1
   const deadlineDate =
     status === 'CLOSED'

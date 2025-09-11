@@ -1,4 +1,4 @@
-import RecruitmentsTable from '@/pages/admin-recruitments/admin-recruitmentsTable'
+import RecruitmentsTable from '@/pages/AdminRecruitments/AdminRecruitmentsTable'
 
 export default function AdminRecruitmentsPage() {
   return (
