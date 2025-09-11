@@ -71,12 +71,16 @@ export const statusToKo = (
   s === 'OPEN' ? '모집중' : s === 'PENDING' ? '대기중' : '종료됨'
 
 /* === 더미 데이터 생성 === */
+const STATUS_DISTRIBUTION_CYCLE = 3
+const MAX_TAGS_PER_ITEM = 5
+const VIEW_COUNT_BASE = 120
+
 function makeDetail(i: number): RecruitmentDetail {
   const createdAt = new Date(Date.now() - i * ONE_DAY_MS)
   const updatedAt = new Date(createdAt.getTime() + (i % 7) * ONE_HOUR_MS)
 
   // 상태 분포: 0=CLOSED, 1=OPEN, 2=PENDING
-  const statusSelector = i % 3
+  const statusSelector = i % STATUS_DISTRIBUTION_CYCLE
   const status: RecruitmentStatus =
     statusSelector === 0 ? 'CLOSED' : statusSelector === 1 ? 'OPEN' : 'PENDING'
 
@@ -87,7 +91,7 @@ function makeDetail(i: number): RecruitmentDetail {
       ? new Date(Date.now() - dayOffset * ONE_DAY_MS)
       : new Date(Date.now() + dayOffset * ONE_DAY_MS)
 
-  const tagCount = (i % 5) + 1
+  const tagCount = (i % MAX_TAGS_PER_ITEM) + 1
   const tags = Array.from({ length: tagCount }).map(
     (_, tagOffset) => SAMPLE_TAGS[(i + tagOffset) % SAMPLE_TAGS.length]
   )
@@ -98,8 +102,8 @@ function makeDetail(i: number): RecruitmentDetail {
     tags,
     deadline: i % 6 === 0 ? null : formatDate(deadlineDate),
     status,
-    views_count: 120 + (((i + 3) * 37) % 900),
-    bookmarks_count: 5 + (((i + 7) * 13) % 120),
+    views_count: VIEW_COUNT_BASE + (((i + 3) * 37) % 900),
+    bookmarks_count: 5 + (((i + 7) * 13) % VIEW_COUNT_BASE),
     created_at: formatDateTime(createdAt),
     updated_at: formatDateTime(updatedAt),
     content: `스터디 ${i + 1} 상세 본문입니다.\n주 ${1 + (i % 3)}회 모임, 온/오프 병행.`,
@@ -173,7 +177,7 @@ export async function listRecruitments(
 
   // 페이징 + 아이템 축약
   const total = filteredRows.length
-  const start = Math.max(0, (Math.max(1, page) - 1) * Math.max(1, size))
+  const start = (page - 1) * size
   const items: RecruitmentItem[] = filteredRows
     .slice(start, start + size)
     .map((detail) => ({
@@ -189,7 +193,7 @@ export async function listRecruitments(
     }))
 
   // 네트워크 지연 흉내(Optional)
-  await new Promise((resolve) => setTimeout(resolve, 120))
+  await new Promise((resolve) => setTimeout(resolve, VIEW_COUNT_BASE))
   return { total, page, size, items }
 }
 
