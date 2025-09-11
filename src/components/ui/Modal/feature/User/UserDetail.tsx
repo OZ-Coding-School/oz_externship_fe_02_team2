@@ -8,8 +8,6 @@ import UserDetailView from './UserDetailView'
 
 /** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
 
-/** 바디에 들어갈 “내용”만 분리 — 모달 외부에서도 단독 재사용 가능 */
-
 /** 실제 모달 — 상단 우측 닫기 버튼 포함 */
 export default function UserDetailModal({
   open,

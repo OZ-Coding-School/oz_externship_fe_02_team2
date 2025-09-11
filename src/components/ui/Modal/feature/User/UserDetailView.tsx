@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import Field from '../../fields/Field'
 import type { UserDetail } from './User.types'
-
+import ProfileCrop from '@/components/ui/Modal/parts/ProfileCrop'
 export default function UserDetailView({
   m,
   editing,
@@ -10,20 +11,61 @@ export default function UserDetailView({
   editing: boolean
   onChange: (field: keyof UserDetail, value: string) => void
 }) {
+  const [cropOpen, setCropOpen] = useState(false)
+
+  const avatar = m.avatarUrl || 'https://placehold.co/80x80?text=👤'
+
   return (
     <div className="space-y-8">
       {/* 상단 프로필 영역 */}
       <div className="flex items-center gap-4">
-        <img
-          src={m.avatarUrl || 'https://placehold.co/80x80?text=👤'}
-          alt={`${m.name} 프로필 이미지`}
-          className="size-20 rounded-full object-cover"
-        />
+        {editing ? (
+          <button
+            type="button"
+            className="focus:ring-primary-500 relative size-20 overflow-hidden rounded-full ring-1 ring-gray-200 hover:opacity-90 focus:ring-2 focus:outline-none"
+            onClick={() => setCropOpen(true)}
+            aria-label="프로필 이미지 변경"
+            title="프로필 이미지 변경"
+          >
+            <img
+              src={avatar}
+              alt={`${m.name} 프로필 이미지`}
+              className="h-full w-full object-cover"
+            />
+          </button>
+        ) : (
+          <img
+            src={avatar}
+            alt={`${m.name} 프로필 이미지`}
+            className="size-20 rounded-full object-cover"
+          />
+        )}
         <div>
           <h4>{m.name}</h4>
           <div className="text-gray-500">{m.email}</div>
         </div>
       </div>
+
+      {/* 크롭 모달 */}
+      <ProfileCrop
+        open={cropOpen}
+        initialSrc={m.avatarUrl || 'https://placehold.co/300x300?text=👤'}
+        onClose={() => setCropOpen(false)}
+        onConfirm={({ previewURL /*, blob*/ }) => {
+          // 즉시 부모 상태에 반영 (서버 없이 미리보기 URL 사용)
+          onChange('avatarUrl', previewURL)
+          setCropOpen(false)
+
+          // TODO: API 연결 시 여기서 blob 업로드 후, 서버가 준 최종 URL로 다시 onChange 호출
+          // const fd = new FormData()
+          // fd.append('file', blob, 'avatar.png')
+          // const { url } = await api.user.updateAvatar(m.id, fd)
+          // onChange('avatarUrl', url)
+        }}
+        // react-image-crop 버전 ProfileCrop props
+        aspect={1}
+        size={300}
+      />
 
       {/* 그리드 정보 폼 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
