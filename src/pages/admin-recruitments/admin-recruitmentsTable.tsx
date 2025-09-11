@@ -7,7 +7,7 @@ import type {
 } from './admin-recruitments.types'
 import { listRecruitments, statusToKo } from './admin-recruitments.mock'
 import Badge from '@/components/ui/Badge/Badge'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DataTable } from '@/components/table/DataTable'
 
 function normalizeTags(value: unknown): Tag[] {
@@ -142,16 +142,22 @@ export default function RecruitmentsTable() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null) // 에러 상태 추가
+
+  // API 쿼리 객체를 useMemo로 메모이제이션
+  const apiQuery = useMemo(() => {
+    return {
+      page: state.page,
+      size: state.pageSize,
+      sort: mapTableSortToApi(state.sort as UnifiedSortState),
+    }
+  }, [state.page, state.pageSize, state.sort])
+
   useEffect(() => {
     const run = async () => {
       setLoading(true)
       setError(null) // 요청 시작 시 에러 초기화
       try {
-        const res: RecruitmentListRes = await listRecruitments({
-          page: state.page,
-          size: state.pageSize,
-          sort: mapTableSortToApi(state.sort as UnifiedSortState),
-        })
+        const res: RecruitmentListRes = await listRecruitments(apiQuery)
         setRows(res.items)
         setTotal(res.total)
       } catch (err) {
@@ -162,7 +168,7 @@ export default function RecruitmentsTable() {
       }
     }
     run()
-  }, [state.page, state.pageSize, state.sort])
+  }, [apiQuery])
 
   if (error) {
     return <div>데이터를 불러오는 중 오류가 발생했습니다: {error.message}</div>
