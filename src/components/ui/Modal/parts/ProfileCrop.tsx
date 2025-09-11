@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import ReactCrop, {
   centerCrop,
   makeAspectCrop,
@@ -31,34 +31,88 @@ export default function ProfileCrop({
   const fileInputId = useId()
   const imgRef = useRef<HTMLImageElement | null>(null) // ← 크롭 이미지 ref
   const fileRef = useRef<HTMLInputElement | null>(null) // ← 파일 인풋 ref (새로 추가)
-  const lastObjUrlRef = useRef<string | null>(null)
+
+  // blob URL lifecycle refs
+  const currentBlobRef = useRef<string | null>(null)
+  const pendingBlobRef = useRef<string | null>(null)
+  const prevSrcRef = useRef<string | null>(null)
 
   const [imgSrc, setImgSrc] = useState<string>(initialSrc ?? '')
-  const [scale, setScale] = useState(1.2)
+  const [zoomExp, setZoomExp] = useState(0) // 줌 기능
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
   const [exportMime, setExportMime] = useState<
     'image/png' | 'image/jpeg' | 'image/webp'
   >('image/png')
+  const containerElRef = useRef<HTMLDivElement | null>(null) // wheel zoom용 컨테이너 & 핸들러
 
-  // blob: URL 정리
-  const revokeObjUrl = () => {
-    const u = lastObjUrlRef.current
-    if (u && u.startsWith('blob:')) URL.revokeObjectURL(u)
-    lastObjUrlRef.current = null
-  }
+  // 지수(-3~3) → 실제 배율(0.125~8)
+  const getRealZoom = (exp: number) => Math.min(8, Math.max(0.125, 2 ** exp))
+  const clampExp = (v: number) => Math.max(-3, Math.min(3, v))
 
+  // 휠 줌을 native wheel로 비수동(passive:false) 등록해 preventDefault 허용
+  // wheel 핸들러 (함수형 업데이트만 쓰므로 deps 불필요 → 안정적)
+  const onWheelNative = useCallback((e: WheelEvent) => {
+    // 크롭 영역 위에서만 적용 & 페이지 스크롤 방지
+    e.preventDefault()
+    e.stopPropagation()
+    const base = e.ctrlKey || e.metaKey ? 0.002 : e.shiftKey ? 0.0012 : 0.0008
+    // deltaY: 아래 양수(축소), 위 음수(확대)
+    const deltaExp = -e.deltaY * base
+    setZoomExp((z) => clampExp(z + deltaExp))
+  }, [])
+
+  // 콜백 ref: 엘리먼트가 바뀔 때마다 비수동(passive:false)로 wheel 바인딩
+  const setContainerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      // 이전 것 해제
+      if (containerElRef.current) {
+        containerElRef.current.removeEventListener(
+          'wheel',
+          onWheelNative as EventListener
+        )
+      }
+      containerElRef.current = node
+      if (node) {
+        node.addEventListener('wheel', onWheelNative as EventListener, {
+          passive: false,
+        })
+      }
+    },
+    [onWheelNative]
+  )
+
+  // 모달 열릴 때 상태만 초기화 (revoke는 하지 않음)
   useEffect(() => {
     if (open) {
-      revokeObjUrl()
       setImgSrc(initialSrc ?? '')
-      setScale(1.2)
+      setZoomExp(0)
       setCrop(undefined)
       setCompletedCrop(undefined)
-      setExportMime('image/png') // 투명 배경 기본
+      setExportMime('image/png')
     }
-    return () => revokeObjUrl()
   }, [open, initialSrc])
+
+  // imgSrc가 바뀔 때, "이전" blob만 안전하게 정리
+  useEffect(() => {
+    const prev = prevSrcRef.current
+    if (prev && prev !== imgSrc && prev.startsWith('blob:')) {
+      URL.revokeObjectURL(prev)
+    }
+    prevSrcRef.current = imgSrc || null
+  }, [imgSrc])
+
+  // 언마운트 시 마지막 blob 정리
+  useEffect(() => {
+    return () => {
+      if (currentBlobRef.current?.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBlobRef.current)
+      }
+      if (pendingBlobRef.current?.startsWith('blob:')) {
+        URL.revokeObjectURL(pendingBlobRef.current)
+      }
+    }
+  }, [])
 
   // 초기 크롭을 가운데/aspect 맞춤으로 생성
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -69,17 +123,26 @@ export default function ProfileCrop({
       h
     )
     setCrop(initial)
+
+    // 새로 로드된 src가 pending 이라면, 이제야 이전(current) revoke
+    const loadedSrc = (e.currentTarget as HTMLImageElement).src
+    if (pendingBlobRef.current && loadedSrc === pendingBlobRef.current) {
+      if (currentBlobRef.current?.startsWith('blob:')) {
+        URL.revokeObjectURL(currentBlobRef.current)
+      }
+      currentBlobRef.current = pendingBlobRef.current
+      pendingBlobRef.current = null
+    }
   }
 
   // 파일 선택
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    revokeObjUrl()
     const url = URL.createObjectURL(f)
-    lastObjUrlRef.current = url
-    setImgSrc(url)
-    setScale(1.2)
+    pendingBlobRef.current = url
+    setImgSrc(url) // <- onImageLoad에서 성공 확인 후 이전 blob revoke
+    setZoomExp(0)
 
     if (f.type === 'image/jpeg' || f.type === 'image/jpg')
       setExportMime('image/jpeg')
@@ -127,9 +190,7 @@ export default function ProfileCrop({
     const srcW = completedCrop.width * scaleX
     const srcH = completedCrop.height * scaleY
 
-    // scale(줌) 적용: 표시 시 이미지에 transform을 줬으므로,
-    // 내보낼 때는 크롭 박스를 확대해서 대응
-    const zoom = scale
+    const zoom = getRealZoom(zoomExp)
     const dstW = outW
     const dstH = outH
 
@@ -139,18 +200,16 @@ export default function ProfileCrop({
     const zoomedSrcX = srcX + (srcW - zoomedSrcW) / 2
     const zoomedSrcY = srcY + (srcH - zoomedSrcH) / 2
 
+    // 이미지 경계 밖으로 나가지 않게 클램프
+    const clamp = (v: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, v))
+    const zx = clamp(zoomedSrcX, 0, image.naturalWidth - 1)
+    const zy = clamp(zoomedSrcY, 0, image.naturalHeight - 1)
+    const zw = clamp(zoomedSrcW, 1, image.naturalWidth - zx)
+    const zh = clamp(zoomedSrcH, 1, image.naturalHeight - zy)
+
     ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(
-      image,
-      zoomedSrcX,
-      zoomedSrcY,
-      zoomedSrcW,
-      zoomedSrcH,
-      0,
-      0,
-      dstW,
-      dstH
-    )
+    ctx.drawImage(image, zx, zy, zw, zh, 0, 0, dstW, dstH)
 
     if (exportMime !== 'image/jpeg') {
       ctx.restore()
@@ -203,14 +262,6 @@ export default function ProfileCrop({
               tabIndex={-1}
               readOnly
             />
-            <input
-              id={`${fileInputId}-file`}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={onFileSelected}
-              aria-label="프로필 이미지 선택"
-            />
             <label htmlFor={`${fileInputId}-file`} className="inline-block">
               <Button
                 btnStyle="primary"
@@ -225,7 +276,12 @@ export default function ProfileCrop({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4">
-            <div className="overflow-hidden rounded-full ring-1 ring-gray-200">
+            <div
+              ref={setContainerRef}
+              className="overflow-hidden overscroll-contain rounded-full ring-1 ring-gray-200 select-none"
+              tabIndex={0}
+              aria-label="휠로 확대/축소"
+            >
               <ReactCrop
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -235,12 +291,19 @@ export default function ProfileCrop({
                 minWidth={50}
                 keepSelection
                 ruleOfThirds={false}
+                className="h-auto w-[var(--w)] object-contain"
+                style={
+                  {
+                    '--w': `${size}px`,
+                    '--zoom': String(getRealZoom(zoomExp)),
+                  } as React.CSSProperties
+                }
               >
                 <img
                   ref={imgRef}
                   src={imgSrc}
                   onLoad={onImageLoad}
-                  className={`transform scale-[${scale}]`}
+                  className="block h-auto w-full origin-center scale-[var(--zoom)] object-contain"
                   alt="미리보기"
                 />
               </ReactCrop>
@@ -249,15 +312,15 @@ export default function ProfileCrop({
             <div className="mt-2 flex items-center gap-3">
               <input
                 type="range"
-                min={1}
-                max={4}
+                min={-3}
+                max={3}
                 step={0.01}
-                value={scale}
-                onChange={(e) => setScale(Number(e.target.value))}
+                value={zoomExp}
+                onChange={(e) => setZoomExp(Number(e.target.value))}
                 aria-label="확대/축소"
               />
               <span className="text-sm text-gray-500">
-                줌: {scale.toFixed(2)}x
+                줌: {getRealZoom(zoomExp).toFixed(2)}x
               </span>
 
               {/* 다른 이미지 선택 */}
