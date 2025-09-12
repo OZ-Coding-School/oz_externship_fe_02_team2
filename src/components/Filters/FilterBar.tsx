@@ -57,28 +57,32 @@ export default function FilterBar<Status extends string, Sort extends string>({
       </div>
 
       {/* 상태 드롭다운 */}
-      <div>
-        <label className={cn('body-sm mb-1.5 block text-gray-600')}>
-          {statusLabel}
-        </label>
-        <Dropdown
-          options={statusOptions}
-          value={statusValue}
-          onChange={(nextValue) => onChange({ status: nextValue as Status })}
-        />
-      </div>
+      {statusOptions && statusOptions.length > 0 && (
+        <div>
+          <label className={cn('body-sm mb-1.5 block text-gray-600')}>
+            {statusLabel}
+          </label>
+          <Dropdown
+            options={statusOptions}
+            value={statusValue}
+            onChange={(nextValue) => onChange({ status: nextValue as Status })}
+          />
+        </div>
+      )}
 
       {/* 정렬 드롭다운 */}
-      <div>
-        <label className={cn('body-sm mb-1.5 block text-gray-600')}>
-          {sortLabel}
-        </label>
-        <Dropdown
-          options={sortOptions}
-          value={sortValue}
-          onChange={(nextValue) => onChange({ sortKey: nextValue as Sort })}
-        />
-      </div>
+      {sortOptions && sortOptions.length > 0 && (
+        <div>
+          <label className={cn('body-sm mb-1.5 block text-gray-600')}>
+            {sortLabel}
+          </label>
+          <Dropdown
+            options={sortOptions}
+            value={sortValue}
+            onChange={(nextValue) => onChange({ sortKey: nextValue as Sort })}
+          />
+        </div>
+      )}
     </div>
   )
 }
