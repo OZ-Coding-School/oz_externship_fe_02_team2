@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { NavKey } from './nav/nav.types'
+import type { NavKey } from '../nav'
 
 export type SidebarProps = {
   mobileDrawerOpen?: boolean

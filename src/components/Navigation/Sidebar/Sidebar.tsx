@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer, Nav } from './parts'
-import type { NavKey } from './nav/nav.types'
+import type { NavKey } from '../nav'
 
 // import { useNavigate } from 'react-router'
 // TODO: 현재 경로에 따라 active 상태 매핑 + 그냥 메인으로 들어왔을 경우 최상단 /users로

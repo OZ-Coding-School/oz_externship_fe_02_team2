@@ -1,6 +1,6 @@
 import { Accordion } from '@components/ui/Accordion'
 import type { SidebarNavProps } from '../Sidebar.types'
-import { NAV_SECTIONS, toAccordionItems } from '../nav'
+import { NAV_SECTIONS, toAccordionItems } from '../../nav'
 
 export default function Nav({
   expanded,
