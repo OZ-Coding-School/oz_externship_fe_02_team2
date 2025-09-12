@@ -20,7 +20,7 @@ export default function SidebarHeader({
       <Button
         btnSize="small"
         btnIcon={<img src={Burger} alt={buttonLabel} />}
-        className="hover:animate-spin-once bg-transparent p-0 hover:bg-transparent"
+        className="bg-transparent p-0 hover:bg-transparent"
         onClick={onClick}
         iconOnly
         aria-label={buttonLabel}

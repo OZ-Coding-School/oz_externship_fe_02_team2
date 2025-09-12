@@ -14,7 +14,7 @@ export default function Actionbar({
         <Button
           btnSize="small"
           btnIcon={<img src={Burger} alt="메뉴 열기" />}
-          className="hover:animate-spin-once bg-transparent p-0 hover:bg-transparent"
+          className="bg-transparent p-0 hover:bg-transparent"
           onClick={onMenuClick}
           iconOnly
           aria-label="메뉴 열기"
