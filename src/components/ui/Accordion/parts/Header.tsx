@@ -1,7 +1,7 @@
 import { cn } from '@/lib'
-import AccordionContent from './Content'
-import AccordionChevron from './Chevron'
-import type { HeaderProps } from '../Accordion.types'
+import type { AccordionHeaderProps } from '../Accordion.types'
+import AccordionContent from './AccordionContent'
+import AccordionChevron from './AccordionChevron'
 
 export default function Header({
   icon,
@@ -10,7 +10,7 @@ export default function Header({
   open,
   iconOnly,
   onClick,
-}: HeaderProps) {
+}: AccordionHeaderProps) {
   return (
     <div
       className={cn(

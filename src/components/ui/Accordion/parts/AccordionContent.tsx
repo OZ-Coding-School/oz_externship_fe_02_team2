@@ -1,12 +1,12 @@
 import { cn } from '@/lib'
-import type { ContentProps } from '../Accordion.types'
+import type { AccordionContentProps } from '../Accordion.types'
 
-export default function Content({
+export default function AccordionContent({
   iconOnly,
   icon,
   label,
   labelClassName,
-}: ContentProps) {
+}: AccordionContentProps) {
   return (
     <div className="flex items-center gap-x-3">
       <img src={icon} alt={label} />

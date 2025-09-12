@@ -39,3 +39,7 @@ export default function Accordion({
     </div>
   )
 }
+
+// 조합형 API
+Accordion.Header = Header
+Accordion.List = List

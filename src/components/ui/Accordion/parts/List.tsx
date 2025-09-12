@@ -1,6 +1,6 @@
 import { cn } from '@/lib'
-import AccordionContent from './Content'
-import type { ListProps } from '../Accordion.types'
+import AccordionContent from './AccordionContent'
+import type { AccordionListProps } from '../Accordion.types'
 
 export default function List({
   open,
@@ -8,7 +8,7 @@ export default function List({
   iconOnly,
   items,
   children,
-}: ListProps) {
+}: AccordionListProps) {
   return (
     <div
       className={cn(
@@ -45,7 +45,6 @@ export default function List({
             </li>
           )
         })}
-
         {children}
       </ul>
     </div>
