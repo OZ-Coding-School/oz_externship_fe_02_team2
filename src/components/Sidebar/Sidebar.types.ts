@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { NavKey } from './nav/nav.types'
 
 export type SidebarProps = {
   mobileDrawerOpen?: boolean
@@ -26,4 +27,11 @@ export type MobileDrawerProps = {
   scope?: 'container' | 'viewport'
   children?: ReactNode // 아코디언 메뉴
   title?: string
+}
+
+export type NavProps = {
+  expanded: boolean
+  active: NavKey | null
+  setActive: (k: NavKey) => void
+  rail?: boolean
 }
