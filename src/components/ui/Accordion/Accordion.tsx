@@ -1,30 +1,7 @@
 import Up from '@assets/icons/accord-up.svg'
-
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib'
-
-type AccordionItem = {
-  defaultIcon: string
-  activeIcon: string
-  label: string
-  onClick?: () => void
-  active?: boolean
-}
-
-type AccordionProps = {
-  icon: string
-  label: string
-  rail?: boolean // 사이드바 확장 여부 (≥md) true -> 접힘, false -> 확장
-  items?: AccordionItem[]
-  children?: ReactNode
-}
-
-type AccordionContentProps = {
-  iconOnly: boolean
-  icon: string
-  label: string
-  labelClassName?: string
-}
+import type { AccordionContentProps, AccordionProps } from './Accordion.types'
 
 function AccordionContent({
   iconOnly,
