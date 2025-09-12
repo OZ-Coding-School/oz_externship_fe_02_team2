@@ -1,8 +1,8 @@
 import { useDebounce } from '@/hooks'
 import type { CommonFilterBarProps } from '@/types/filter'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Input } from '../ui/input/Input'
-import Dropdown from '../ui/Dropdown/Dropdown'
+import { Input } from '../../ui/input/Input'
+import Dropdown from '../../ui/Dropdown/Dropdown'
 import { cn } from '@/lib'
 
 export default function FilterBar<Status extends string, Sort extends string>({
