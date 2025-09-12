@@ -7,7 +7,7 @@ export type SidebarProps = {
   scope?: 'viewport' | 'container' // viewport가 전체 화면, container는 테스트 페이지 위해 컨테이너 안에서만
 }
 
-export type HeaderProps = {
+export type SidebarHeaderProps = {
   title: string
   onClick: () => void
   buttonLabel: string
@@ -29,7 +29,7 @@ export type MobileDrawerProps = {
   title?: string
 }
 
-export type NavProps = {
+export type SidebarNavProps = {
   expanded: boolean
   active: NavKey | null
   setActive: (k: NavKey) => void

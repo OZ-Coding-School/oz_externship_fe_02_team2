@@ -60,3 +60,8 @@ export default function Sidebar({
     </>
   )
 }
+
+// 조합형 API
+Sidebar.DesktopAside = DesktopAside
+Sidebar.MobileDrawer = MobileDrawer
+Sidebar.Nav = Nav

@@ -1,7 +1,7 @@
 import { cn } from '@/lib'
 import type { DesktopAsideProps } from '../Sidebar.types'
 import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from '../Sidebar.styles'
-import Header from './Header'
+import SidebarHeader from './SidebarHeader'
 
 export default function DesktopAside({
   expanded,
@@ -17,7 +17,7 @@ export default function DesktopAside({
         expanded ? 'w-64' : 'w-18'
       )}
     >
-      <Header
+      <SidebarHeader
         title={title}
         onClick={onToggle}
         buttonLabel={expanded ? '사이드바 접기' : '사이드바 펼치기'}
