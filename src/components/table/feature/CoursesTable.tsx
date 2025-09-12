@@ -1,20 +1,10 @@
 // 강의 관리
 import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
-import { Badge } from '@components/table/Badges'
 import type { Column, TableState } from '@type/table'
 import { fmtDate } from '@/lib/table'
-
-export type CourseRow = {
-  id: number
-  thumbnail?: string
-  title: string
-  instructor: string
-  platform: 'Udemy' | 'Inflearn' | 'Fastcampus' | 'ETC'
-  openedAt: string // 생성일시
-  completedAt?: string // 수정일시
-  link?: string
-}
+import type { CourseRow } from '../Table.types'
+import Badge from '@/components/ui/Badge/Badge'
 
 const columns: Column<CourseRow>[] = [
   {

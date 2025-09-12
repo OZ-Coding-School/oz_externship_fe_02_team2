@@ -1,22 +1,11 @@
 // 회원 관리
 import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
-import { Badge } from '@components/table/Badges'
 import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
-import { roleToTone } from '@/lib/mappers'
-
-export type UserRow = {
-  memberId: string
-  email: string
-  nickname: string
-  name: string
-  birth: string
-  role: '관리자' | '스태프' | '일반회원'
-  status: '활성' | '정지' | '탈퇴요청'
-  joinedAt: string
-  withdrawnAt?: string
-}
+import { roleToTone, statusToTone } from '@/lib/mappers'
+import Badge from '@/components/ui/Badge/Badge'
+import type { UserRow } from '../Table.types'
 
 const columns: Column<UserRow>[] = [
   {
@@ -42,12 +31,8 @@ const columns: Column<UserRow>[] = [
     header: '상태',
     accessor: 'status',
     width: '100px',
-    cell: ({ value }) => (
-      <Badge
-        tone={value === '활성' ? 'green' : value === '정지' ? 'red' : 'yellow'}
-      >
-        {value}
-      </Badge>
+    cell: ({ value }: { value: UserRow['status'] }) => (
+      <Badge tone={statusToTone[value]}>{value}</Badge>
     ),
   },
   {
