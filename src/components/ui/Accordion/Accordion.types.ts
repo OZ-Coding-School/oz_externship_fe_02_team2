@@ -4,17 +4,28 @@ export type AccordionItem = {
   defaultIcon: string
   activeIcon: string
   label: string
-  onClick?: () => void
+  onClick: () => void
   active?: boolean
 }
 
 export type AccordionProps = {
   icon: string
   label: string
+  items: AccordionItem[]
   rail?: boolean // 사이드바 확장 여부 (≥md) true -> 접힘, false -> 확장
-  items?: AccordionItem[]
   children?: ReactNode
 }
+
+export type AccordionHeaderProps = {
+  iconOnly: boolean
+  icon: string
+  label: string
+  open: boolean
+  rail: boolean
+  onClick: () => void
+}
+
+export type AccordionChevronProps = { open: boolean }
 
 export type AccordionContentProps = {
   iconOnly: boolean

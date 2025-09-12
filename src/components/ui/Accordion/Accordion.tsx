@@ -1,21 +1,8 @@
-import Up from '@assets/icons/accord-up.svg'
 import { useState } from 'react'
 import { cn } from '@/lib'
-import type { AccordionContentProps, AccordionProps } from './Accordion.types'
-
-function AccordionContent({
-  iconOnly,
-  icon,
-  label,
-  labelClassName,
-}: AccordionContentProps) {
-  return (
-    <div className="flex items-center gap-x-3">
-      <img src={icon} alt={label} />
-      {!iconOnly && <p className={cn('truncate', labelClassName)}>{label}</p>}
-    </div>
-  )
-}
+import type { AccordionProps } from './Accordion.types'
+import AccordionContent from './parts/AccordionContent'
+import AccordionHeader from './parts/AccordionHeader'
 
 export default function Accordion({
   icon,
@@ -35,36 +22,15 @@ export default function Accordion({
         rail && 'flex flex-col items-center rounded-full bg-gray-50 pb-0'
       )}
     >
-      {/* 상위 메뉴(펼치기/접기 기능) */}
-      <div
-        className={cn(
-          'flex items-center justify-between',
-          'transition-colors duration-200',
-          rail
-            ? 'rounded-full bg-white px-4 py-4 hover:bg-white/60'
-            : 'hover:bg-primary-50 rounded-lg bg-transparent px-3 py-2'
-        )}
+      {/* 상위 메뉴 */}
+      <AccordionHeader
+        icon={icon}
+        label={label}
+        rail={rail}
+        open={open}
+        iconOnly={iconOnly}
         onClick={() => setOpen((prev) => !prev)}
-      >
-        <AccordionContent
-          iconOnly={iconOnly}
-          icon={icon}
-          label={label}
-          labelClassName="body-sm font-medium"
-        />
-
-        {/* rail이 아닐 때만 펼치기/접기 아이콘 보임 */}
-        {!iconOnly && (
-          <img
-            src={Up}
-            alt={open ? '메뉴 접기' : '메뉴 펼치기'}
-            className={cn(
-              'transition-transform duration-200',
-              open ? 'rotate-90' : 'rotate-0'
-            )}
-          />
-        )}
-      </div>
+      />
 
       {/* 하위 메뉴 */}
 
