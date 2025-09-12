@@ -11,6 +11,7 @@ export default function FilterBar<Status extends string, Sort extends string>({
   statusOptions,
   sortOptions,
   searchLabel = '검색어',
+  searchPlaceholder = '제목으로 검색',
   statusLabel = '상태',
   sortLabel = '정렬',
   debounceMs = 300,
@@ -50,7 +51,7 @@ export default function FilterBar<Status extends string, Sort extends string>({
       <div className="min-w-[280px] flex-1">
         <Input
           label={searchLabel}
-          placeholder="제목으로 검색"
+          placeholder={searchPlaceholder}
           value={internalQueryText}
           onChange={(e) => setInternalQueryText(e.currentTarget.value)}
         />
