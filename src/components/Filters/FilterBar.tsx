@@ -1,6 +1,6 @@
 import { useDebounce } from '@/hooks'
 import type { CommonFilterBarProps } from '@/types/filter'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Input } from '../ui/input/Input'
 import Dropdown from '../ui/Dropdown/Dropdown'
 import { cn } from '@/lib'
@@ -25,11 +25,14 @@ export default function FilterBar<Status extends string, Sort extends string>({
   // 외부에서 queryText가 리셋되거나 바뀐 경우 인풋 동기화
   useEffect(() => setInternalQueryText(queryText), [queryText])
 
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange // 매 렌더링마다 최신 함수를 참조
+
   // 디바운스 완료 시 부모에게 반영
   useEffect(() => {
     if (debouncedQueryText !== queryText)
-      onChange({ queryText: debouncedQueryText })
-  }, [debouncedQueryText, queryText, onChange])
+      onChangeRef.current({ queryText: debouncedQueryText })
+  }, [debouncedQueryText, queryText])
 
   // 드롭다운 value 안전 보정
   const statusValue = useMemo(
