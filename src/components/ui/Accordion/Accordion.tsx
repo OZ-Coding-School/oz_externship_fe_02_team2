@@ -1,5 +1,4 @@
 import Up from '@assets/icons/accord-up.svg'
-import Down from '@assets/icons/accord-down.svg'
 
 import { useState, type ReactNode } from 'react'
 import { cn } from '@/lib'
@@ -27,7 +26,6 @@ type AccordionContentProps = {
   labelClassName?: string
 }
 
-// TODO: hover & active 디자인 추가
 // TODO: 부드러운 UX 위한 transition & animation 등 추가
 
 function AccordionContent({
@@ -66,6 +64,7 @@ export default function Accordion({
       <div
         className={cn(
           'flex items-center justify-between',
+          'transition-colors duration-200',
           rail
             ? 'rounded-full bg-white px-4 py-4 hover:bg-white/60'
             : 'hover:bg-primary-50 rounded-lg bg-transparent px-3 py-2'
@@ -82,43 +81,56 @@ export default function Accordion({
         {/* rail이 아닐 때만 펼치기/접기 아이콘 보임 */}
         {!iconOnly && (
           <img
-            src={open ? Down : Up}
+            src={Up}
             alt={open ? '메뉴 접기' : '메뉴 펼치기'}
+            className={cn(
+              'transition-transform duration-200',
+              open ? 'rotate-90' : 'rotate-0'
+            )}
           />
         )}
       </div>
 
       {/* 하위 메뉴 */}
-      {open && (
-        <div className="">
-          <ul className={rail ? 'mb-1.5' : 'ml-6'}>
-            {items?.map(
-              ({ defaultIcon, activeIcon, label, onClick, active }) => {
-                const LI_COMMON_STYLE = cn(
-                  'flex items-center',
-                  'w-full px-3 mt-1',
-                  rail ? 'rounded-full py-3' : 'rounded-lg py-2',
-                  active
-                    ? 'bg-primary-100  hover:bg-primary-100'
-                    : 'hover:bg-primary-50'
-                )
 
-                return (
-                  <li key={label} onClick={onClick} className={LI_COMMON_STYLE}>
-                    <AccordionContent
-                      icon={active ? activeIcon : defaultIcon}
-                      label={label}
-                      iconOnly={iconOnly}
-                      labelClassName={`body-sm ${active ? 'text-primary-800' : 'text-gray-600'}`}
-                    />
-                  </li>
-                )
-              }
-            )}
-            {children}
-          </ul>
-        </div>
-      )}
+      <div
+        className={cn(
+          'grid overflow-hidden',
+          'transition-[grid-template-rows,opacity] duration-200 ease-out', // 높이+투명도 전환
+          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        )}
+      >
+        <ul
+          className={cn(
+            rail ? 'mb-1.5' : 'ml-6',
+            rail && !open && 'mb-0',
+            'min-h-0'
+          )}
+        >
+          {items?.map(({ defaultIcon, activeIcon, label, onClick, active }) => {
+            const LI_COMMON_STYLE = cn(
+              'flex items-center w-full px-3 mt-1',
+              'transition-colors duration-200',
+              rail ? 'rounded-full py-3' : 'rounded-lg py-2',
+              active
+                ? 'bg-primary-100  hover:bg-primary-100'
+                : 'hover:bg-primary-50'
+            )
+
+            return (
+              <li key={label} onClick={onClick} className={LI_COMMON_STYLE}>
+                <AccordionContent
+                  icon={active ? activeIcon : defaultIcon}
+                  label={label}
+                  iconOnly={iconOnly}
+                  labelClassName={`body-sm ${active ? 'text-primary-800' : 'text-gray-600'}`}
+                />
+              </li>
+            )
+          })}
+          {children}
+        </ul>
+      </div>
     </div>
   )
 }
