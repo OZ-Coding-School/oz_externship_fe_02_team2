@@ -1,10 +1,11 @@
-import Actionbar from '@/components/Actionbar/Actionbar'
-import Sidebar from '@/components/Sidebar/Sidebar'
+import Actionbar from '@/components/Navigation/Actionbar/Actionbar'
+import Sidebar from '@/components/Navigation/Sidebar/Sidebar'
 import { useState } from 'react'
 
-const SIDEBAR_TESTPAGE_TITLE = 'Sidebar 컴포넌트 테스트'
+const SIDEBAR_TESTPAGE_TITLE =
+  'Navigation(Sidebar & 모바일 Actionbar) 컴포넌트 테스트'
 
-export default function SidebarTest() {
+export default function NavigationTest() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
