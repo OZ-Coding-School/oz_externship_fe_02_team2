@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer } from './parts'
-
-import Accordion from '../ui/Accordion/Accordion'
+import { Accordion } from '@components/ui/Accordion'
 
 import Members from '@assets/icons/nav_member.svg'
 import UsersD from '@assets/icons/nav_member_users_default.svg'
