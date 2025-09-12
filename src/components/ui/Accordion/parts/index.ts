@@ -1,2 +1,2 @@
-export { default as AccordionHeader } from './AccordionHeader'
-export { default as AccordionList } from './AccordionList'
+export { default as Header } from './Header'
+export { default as List } from './List'

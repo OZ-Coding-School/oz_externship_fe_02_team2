@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib'
 import type { AccordionProps } from './Accordion.types'
-import { AccordionHeader, AccordionList } from './parts'
+import { Header, List } from './parts'
 
 export default function Accordion({
   icon,
@@ -23,7 +23,7 @@ export default function Accordion({
       )}
     >
       {/* 상위 메뉴 */}
-      <AccordionHeader
+      <Header
         icon={icon}
         label={label}
         rail={rail}
@@ -33,9 +33,9 @@ export default function Accordion({
       />
 
       {/* 하위 메뉴 */}
-      <AccordionList open={open} rail={rail} iconOnly={iconOnly} items={items}>
+      <List open={open} rail={rail} iconOnly={iconOnly} items={items}>
         {children}
-      </AccordionList>
+      </List>
     </div>
   )
 }

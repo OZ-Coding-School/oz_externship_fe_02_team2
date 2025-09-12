@@ -1,8 +1,8 @@
 import { cn } from '@/lib'
 import Up from '@assets/icons/accord-up.svg'
-import type { AccordionChevronProps } from '../Accordion.types'
+import type { ChevronProps } from '../Accordion.types'
 
-export default function AccordionChevron({ open }: AccordionChevronProps) {
+export default function Chevron({ open }: ChevronProps) {
   return (
     <img
       src={Up}

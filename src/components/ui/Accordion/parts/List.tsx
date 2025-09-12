@@ -1,14 +1,14 @@
 import { cn } from '@/lib'
-import AccordionContent from './AccordionContent'
-import type { AccordionListProps } from '../Accordion.types'
+import AccordionContent from './Content'
+import type { ListProps } from '../Accordion.types'
 
-export default function AccordionList({
+export default function List({
   open,
   rail,
   iconOnly,
   items,
   children,
-}: AccordionListProps) {
+}: ListProps) {
   return (
     <div
       className={cn(

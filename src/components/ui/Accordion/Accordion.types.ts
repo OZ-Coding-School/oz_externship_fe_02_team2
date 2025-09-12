@@ -36,16 +36,16 @@ export type AccordionProps = BaseVisual & {
 }
 
 /** 상단 헤더 메뉴(접기-펼치기 트리거) */
-export type AccordionHeaderProps = BaseVisual &
+export type HeaderProps = BaseVisual &
   Pick<AccordionSharedState, 'iconOnly' | 'open' | 'rail'> & {
     onClick: () => void
   }
 
 /** 펼치기/접기 셰브론 아이콘 */
-export type AccordionChevronProps = Pick<AccordionSharedState, 'open'>
+export type ChevronProps = Pick<AccordionSharedState, 'open'>
 
 /** 하위 메뉴 목록 (래퍼) */
-export type AccordionListProps = Pick<
+export type ListProps = Pick<
   AccordionSharedState,
   'iconOnly' | 'open' | 'rail'
 > & {
@@ -54,7 +54,7 @@ export type AccordionListProps = Pick<
 }
 
 /** 공통 목록 컴포넌트 - 아이콘+라벨 파츠 */
-export type AccordionContentProps = Pick<BaseVisual, 'icon' | 'label'> & {
+export type ContentProps = Pick<BaseVisual, 'icon' | 'label'> & {
   iconOnly: boolean
   labelClassName?: string
 }
