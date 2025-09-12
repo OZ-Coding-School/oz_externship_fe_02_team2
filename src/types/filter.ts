@@ -28,6 +28,7 @@ export type CommonFilterBarProps<
 
   /** 라벨/동작 커스터마이징 */
   searchLabel?: string
+  searchPlaceholder?: string
   statusLabel?: string
   sortLabel?: string
   debounceMs?: number
