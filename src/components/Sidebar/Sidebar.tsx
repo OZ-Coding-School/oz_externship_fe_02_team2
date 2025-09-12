@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
-import { DesktopAside, MobileDrawer, SidebarNav } from './parts'
+import { DesktopAside, MobileDrawer, Nav } from './parts'
 import type { NavKey } from './nav/nav.types'
 
 // import { useNavigate } from 'react-router'
@@ -38,7 +38,7 @@ export default function Sidebar({
         onToggle={() => setExpanded((prev) => !prev)}
       >
         {/* TODO: 상위 메뉴 열고 접은 상태 로컬 스토리지 통해 유지 */}
-        <SidebarNav
+        <Nav
           expanded={expanded}
           active={activeMenu}
           setActive={setActiveMenu}
@@ -50,7 +50,7 @@ export default function Sidebar({
         onClose={() => setDrawerOpen(false)}
         scope={scope}
       >
-        <SidebarNav
+        <Nav
           expanded
           active={activeMenu}
           setActive={setActiveMenu}
