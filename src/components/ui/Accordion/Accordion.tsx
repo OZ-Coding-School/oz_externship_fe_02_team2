@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib'
 import type { AccordionProps } from './Accordion.types'
-import AccordionHeader from './parts/AccordionHeader'
-import AccordionList from './parts/AccordionList'
+import { AccordionHeader, AccordionList } from './parts'
 
 export default function Accordion({
   icon,
