@@ -1,14 +1,14 @@
 import { Button } from '@components/ui/Button'
 import Burger from '@assets/icons/hamburger.svg'
 import { cn } from '@/lib'
-import type { SidebarHeaderProps } from '../Sidebar.types'
+import type { HeaderProps } from '../Sidebar.types'
 
-export default function SidebarHeader({
+export default function Header({
   title,
   onClick,
   buttonLabel,
   compact = false,
-}: SidebarHeaderProps) {
+}: HeaderProps) {
   return (
     <header
       className={cn(

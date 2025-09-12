@@ -6,7 +6,7 @@ export type SidebarProps = {
   scope?: 'viewport' | 'container' // viewport가 전체 화면, container는 테스트 페이지 위해 컨테이너 안에서만
 }
 
-export type SidebarHeaderProps = {
+export type HeaderProps = {
   title: string
   onClick: () => void
   buttonLabel: string

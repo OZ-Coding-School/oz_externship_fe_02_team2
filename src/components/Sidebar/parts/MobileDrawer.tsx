@@ -1,6 +1,6 @@
 import { cn } from '@/lib'
 import type { MobileDrawerProps } from '../Sidebar.types'
-import SidebarHeader from './SidebarHeader'
+import Header from './Header'
 import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from '../Sidebar.styles'
 
 export default function MobileDrawer({
@@ -35,11 +35,7 @@ export default function MobileDrawer({
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <SidebarHeader
-          title={title}
-          onClick={onClose}
-          buttonLabel="메뉴 닫기"
-        />
+        <Header title={title} onClick={onClose} buttonLabel="메뉴 닫기" />
         <nav className={cn(COMMON_NAV_STYLE, 'px-4')}>{children}</nav>
       </aside>
     </>
