@@ -27,6 +27,14 @@ export type AccordionHeaderProps = {
 
 export type AccordionChevronProps = { open: boolean }
 
+export type AccordionListProps = {
+  iconOnly: boolean
+  open: boolean
+  rail: boolean
+  items: AccordionItem[]
+  children?: ReactNode
+}
+
 export type AccordionContentProps = {
   iconOnly: boolean
   icon: string
