@@ -26,8 +26,6 @@ type AccordionContentProps = {
   labelClassName?: string
 }
 
-// TODO: 부드러운 UX 위한 transition & animation 등 추가
-
 function AccordionContent({
   iconOnly,
   icon,
