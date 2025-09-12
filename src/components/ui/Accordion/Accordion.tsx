@@ -11,7 +11,7 @@ export default function Accordion({
   items,
   children,
 }: AccordionProps) {
-  const [open, setOpen] = useState(false) // 상위 메뉴 접기 펼치기
+  const [open, setOpen] = useState(true) // 상위 메뉴 접기 펼치기
 
   /** rail일 때만, 아이콘만 보임. 이외 아이콘+레이블 */
   const iconOnly = rail
