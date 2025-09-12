@@ -3,6 +3,7 @@ import type { CommonFilterBarProps } from '@/types/filter'
 import { useEffect, useMemo, useState } from 'react'
 import { Input } from '../ui/input/Input'
 import Dropdown from '../ui/Dropdown/Dropdown'
+import { cn } from '@/lib'
 
 export default function FilterBar<Status extends string, Sort extends string>({
   value,
@@ -41,11 +42,7 @@ export default function FilterBar<Status extends string, Sort extends string>({
   )
 
   return (
-    <div
-      className={['mb-4 flex flex-wrap items-end gap-2', className]
-        .filter(Boolean)
-        .join(' ')}
-    >
+    <div className={cn('mb-4 flex flex-wrap items-end gap-2', className)}>
       {/* 검색어 인풋 */}
       <div className="min-w-[280px] flex-1">
         <Input
@@ -58,7 +55,7 @@ export default function FilterBar<Status extends string, Sort extends string>({
 
       {/* 상태 드롭다운 */}
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+        <label className={cn('body-sm mb-1.5 block text-gray-600')}>
           {statusLabel}
         </label>
         <Dropdown
@@ -70,7 +67,7 @@ export default function FilterBar<Status extends string, Sort extends string>({
 
       {/* 정렬 드롭다운 */}
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+        <label className={cn('body-sm mb-1.5 block text-gray-600')}>
           {sortLabel}
         </label>
         <Dropdown
