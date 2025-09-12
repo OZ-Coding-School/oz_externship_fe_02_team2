@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/Button'
-import type { SidebarHeaderProps } from './Sidebar.types'
 import Burger from '@assets/icons/hamburger.svg'
 import { cn } from '@/lib'
+import type { SidebarHeaderProps } from '../Sidebar.types'
 
 export default function SidebarHeader({
   title,

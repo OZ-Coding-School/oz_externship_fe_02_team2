@@ -1,7 +1,7 @@
 import { cn } from '@/lib'
-import type { DesktopAsideProps } from './Sidebar.types'
+import type { DesktopAsideProps } from '../Sidebar.types'
+import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from '../Sidebar.styles'
 import SidebarHeader from './SidebarHeader'
-import { COMMON_NAV_STYLE, COMMON_PANEL_STYLE } from './Sidebar.styles'
 
 export default function DesktopAside({
   expanded,
