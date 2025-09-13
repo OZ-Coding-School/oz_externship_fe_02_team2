@@ -1,5 +1,3 @@
-export { default as Sidebar } from './Sidebar'
 export { default as DesktopAside } from './DesktopAside'
 export { default as MobileDrawer } from './MobileDrawer'
-export * from './Sidebar.types'
-export * from './Sidebar.styles'
+export { default as Nav } from './Nav'
