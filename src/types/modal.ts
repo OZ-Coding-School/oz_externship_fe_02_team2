@@ -8,6 +8,7 @@ export type ModalSize =
   | '2xl'
   | '3xl'
   | 'full'
+  | 'none'
 export type ModalPlacement = 'center' | 'top'
 
 export interface ModalProps {
