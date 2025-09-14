@@ -87,7 +87,6 @@ function BasicTable({ items }: TableData<UserRow>) {
               <td className="border-b p-2">{r.email}</td>
               <td className="border-b p-2">{r.status}</td>
               <td className="border-b p-2">{r.role}</td>
-              <td className="border-b p-2">{r.age}</td>
             </tr>
           ))}
         </tbody>
