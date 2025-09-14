@@ -46,3 +46,45 @@ export type TableMeta<T> = {
   emptyText?: string
   rowKey?: (row: T, index: number) => React.Key
 }
+
+export type SortDirection = 'asc' | 'desc' | null
+
+export type FilterOption = {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
+export type TableQuery = {
+  q: string // 검색어
+  status: string | null // 상태 필터
+  role: string | null // 권한 필터
+  sortBy: string | null // 정렬 컬럼
+  sortDir: SortDirection // 정렬 방향
+  page: number // 현재 페이지
+  pageSize: number // 페이지당 항목 수
+}
+
+export type TableFilterConfig = {
+  searchPlaceholder?: string
+  statusPlaceholder?: string
+  rolePlaceholder?: string
+  statusOptions?: FilterOption[]
+  roleOptions?: FilterOption[]
+  debounceMs?: number
+  mode: 'client' | 'server'
+}
+
+export type TableData<T = Record<string, any>> = {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export type UseTableQueryOptions = {
+  initialQuery?: Partial<TableQuery>
+  onQueryChange?: (query: TableQuery) => void | Promise<void>
+  syncUrl?: boolean
+}
