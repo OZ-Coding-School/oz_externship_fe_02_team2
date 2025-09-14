@@ -77,4 +77,5 @@ export type UseTableQueryOptions = {
   initialQuery?: Partial<TableQuery>
   onQueryChange?: (query: TableQuery) => void | Promise<void>
   syncUrl?: boolean
+  debounceMs?: number
 }

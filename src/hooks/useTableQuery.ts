@@ -13,9 +13,14 @@ const DEFAULT_QUERY: TableQuery = {
 }
 
 export function useTableQuery(options: UseTableQueryOptions = {}) {
-  const { initialQuery = {}, onQueryChange, syncUrl = true } = options
+  const {
+    initialQuery = {},
+    onQueryChange,
+    syncUrl = true,
+    debounceMs = 300,
+  } = options
   const [searchParams, setSearchParams] = useSearchParams()
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // URL에서 초기 상태 복원
   const getInitialQueryFromUrl = useCallback((): TableQuery => {
@@ -47,6 +52,12 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       }
     }
 
+    const size = searchParams.get('size')
+    if (size) {
+      const s = parseInt(size, 10)
+      if (!isNaN(s) && s > 0) urlQuery.pageSize = s
+    }
+
     return { ...DEFAULT_QUERY, ...initialQuery, ...urlQuery }
   }, [searchParams, syncUrl, initialQuery])
 
@@ -57,7 +68,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     (newQuery: TableQuery) => {
       if (!syncUrl) return
 
-      const params = new URLSearchParams()
+      const params = new URLSearchParams(searchParams)
+      ;['q', 'status', 'role', 'sort', 'page', 'size'].forEach((k) =>
+        params.delete(k)
+      )
 
       if (newQuery.q) params.set('q', newQuery.q)
       if (newQuery.status) params.set('status', newQuery.status)
@@ -66,11 +80,14 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         params.set('sort', `${newQuery.sortBy}.${newQuery.sortDir}`)
       }
       if (newQuery.page > 1) params.set('page', newQuery.page.toString())
+      if (newQuery.pageSize !== DEFAULT_QUERY.pageSize) {
+        params.set('size', newQuery.pageSize.toString())
+      }
 
       // router.replace 대신 setSearchParams를 사용합니다.
       setSearchParams(params, { replace: true })
     },
-    [setSearchParams, syncUrl]
+    [setSearchParams, searchParams, syncUrl]
   )
 
   // 쿼리 업데이트 (디바운스 포함)
@@ -97,10 +114,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       if (immediate || !('q' in updates)) {
         executeUpdate()
       } else {
-        debounceRef.current = setTimeout(executeUpdate, 300)
+        debounceRef.current = setTimeout(executeUpdate, debounceMs)
       }
     },
-    [query, updateUrl, onQueryChange]
+    [query, updateUrl, onQueryChange, debounceMs]
   )
 
   // 개별 액션들
@@ -160,6 +177,19 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     }
   }, [])
 
+  const setPageSize = useCallback(
+    (pageSize: number) => updateQuery({ pageSize, page: 1 }, true),
+    [updateQuery]
+  )
+
+  useEffect(() => {
+    if (!syncUrl) return
+    const fromUrl = getInitialQueryFromUrl()
+    setQuery((prev) =>
+      JSON.stringify(prev) === JSON.stringify(fromUrl) ? prev : fromUrl
+    )
+  }, [searchParams, getInitialQueryFromUrl, syncUrl])
+
   return {
     query,
     setSearch,
@@ -170,5 +200,6 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     setPage,
     reset,
     updateQuery,
+    setPageSize,
   }
 }
