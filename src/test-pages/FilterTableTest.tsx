@@ -6,9 +6,8 @@ type UserRow = {
   id: number
   name: string
   email: string
-  status: 'active' | 'inactive'
-  role: 'admin' | 'member' | 'guest'
-  age: number
+  status: '활성' | '비활성'
+  role: '관리자' | '회원' | '게스트'
 }
 
 const SAMPLE: UserRow[] = [
@@ -16,41 +15,36 @@ const SAMPLE: UserRow[] = [
     id: 1,
     name: 'Alice',
     email: 'alice@test.com',
-    status: 'active',
-    role: 'admin',
-    age: 30,
+    status: '활성',
+    role: '관리자',
   },
   {
     id: 2,
     name: 'Bob',
     email: 'bob@test.com',
-    status: 'inactive',
-    role: 'member',
-    age: 22,
+    status: '비활성',
+    role: '회원',
   },
   {
     id: 3,
     name: 'Cara',
     email: 'cara@test.com',
-    status: 'active',
-    role: 'member',
-    age: 27,
+    status: '활성',
+    role: '회원',
   },
   {
     id: 4,
     name: 'Duke',
     email: 'duke@test.com',
-    status: 'active',
-    role: 'admin',
-    age: 41,
+    status: '활성',
+    role: '관리자',
   },
   {
     id: 5,
     name: 'Evan',
     email: 'evan@test.com',
-    status: 'inactive',
-    role: 'guest',
-    age: 20,
+    status: '비활성',
+    role: '게스트',
   },
 ]
 
