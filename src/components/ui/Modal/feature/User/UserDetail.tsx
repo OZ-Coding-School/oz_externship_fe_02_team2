@@ -1,10 +1,11 @@
 import Modal from '../../Modal'
 import { Button } from '../../../Button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import UserRoleChange, { type UserRole } from './UserRoleChange'
 import UserDelete from './UserDelete'
 import type { UserDetail } from './User.types'
 import UserDetailView from './UserDetailView'
+import { useFormHandlers } from '@/hooks/useFormHandlers'
 
 /** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
 
@@ -20,8 +21,17 @@ export default function UserDetailModal({
   data: UserDetail
   onEdit?: (m: UserDetail) => void
 }) {
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState<UserDetail>(data)
+  const {
+    form,
+    setForm,
+    editing,
+    setEditing,
+    handleChange,
+    handleSave,
+    handleCancel,
+    resetForm,
+  } = useFormHandlers<UserDetail>(data, { onEdit })
+
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -32,20 +42,10 @@ export default function UserDetailModal({
     // await api.delete(`/users/${userId}`)
     await new Promise((r) => setTimeout(r, 500)) // 데모용
   }
-
-  const handleChange = (field: keyof UserDetail, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSave = () => {
-    onEdit?.(form)
-    setEditing(false)
-  }
-
-  const handleCancel = () => {
-    setForm(data)
-    setEditing(false)
-  }
+  // data prop이 바뀔 때 form 동기화
+  useEffect(() => {
+    resetForm(data)
+  }, [data, resetForm])
 
   return (
     <Modal
@@ -58,7 +58,7 @@ export default function UserDetailModal({
     >
       {/* Header */}
       <Modal.Header>
-        <Modal.Title>회원 상세 정보</Modal.Title>
+        <Modal.Title id="user-title">회원 상세 정보</Modal.Title>
       </Modal.Header>
       <div className="border-b border-gray-200" />
       {/* Body */}
