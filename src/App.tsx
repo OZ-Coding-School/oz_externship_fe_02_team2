@@ -1,5 +1,5 @@
-import TestRoutes from './routes/TestRoutes'
-// import MainApp from "./routes/main"; // 메인이 필요해지면 교체
+import TestRoutes from '@/routes/TestRoutes'
+// import MainApp from "@/routes/AppRoutes"; // 메인이 필요해지면 교체
 
 export default function App() {
   return <TestRoutes />
