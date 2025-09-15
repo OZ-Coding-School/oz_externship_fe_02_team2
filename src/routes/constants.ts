@@ -1,22 +1,22 @@
-export const PATHS = {
-  TEST: '/test-hub',
-  APP: '/app',
+export const PATHS: Record<string, string> = {
+  TEST: 'test-hub',
+  APP: 'app',
 
-  LOGIN: '/login',
+  LOGIN: 'login',
 
-  USER: '/user',
-  WITHDRAWAL: '/withdrawal',
-  DASHBOARD: '/dashboard',
+  USER: 'user',
+  WITHDRAWAL: 'withdrawal',
+  DASHBOARD: 'dashboard',
 
-  LECTURE: '/lecture',
-  STUDYGROUP: '/studygroup',
-  REVIEW: '/review',
+  LECTURE: 'lecture',
+  STUDYGROUP: 'studygroup',
+  REVIEW: 'review',
 
-  POST: '/post',
-  APPLICATION: '/application',
+  POST: 'post',
+  APPLICATION: 'application',
 }
 
-export const PAGE_TITLE = {
+export const PAGE_TITLE: Record<string, string> = {
   USER: '회원 관리',
   WITHDRAWAL: '회원 탈퇴 관리',
   DASHBOARD: '대시보드',
