@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import type { NavKey } from '../nav'
 
 export type SidebarProps = {
   mobileDrawerOpen?: boolean
@@ -29,7 +28,7 @@ export type MobileDrawerProps = {
 
 export type SidebarNavProps = {
   expanded: boolean
-  active: NavKey | null
-  setActive: (k: NavKey) => void
+  active: string
+  setActive: (k: string) => void
   rail?: boolean
 }
