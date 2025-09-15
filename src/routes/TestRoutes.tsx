@@ -6,7 +6,6 @@ import { testPages } from '../test-hub/registry'
 export default function TestRoutes() {
   return (
     <Routes>
-      {/* 로그인 x: 무조건 /login && 로그인 o: 루트는 /dashboard */}
       <Route path="/" element={<Navigate to="/test-hub" replace />} />
       <Route path="/test-hub/*" element={<TestHub />}>
         {testPages.map((p) => {
