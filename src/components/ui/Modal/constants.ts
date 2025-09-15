@@ -10,6 +10,7 @@ export const SIZE_CLASS: Record<ModalSize, string> = {
   '2xl': 'max-w-2xl',
   '3xl': 'max-w-3xl',
   full: 'w-screen h-screen max-w-none',
+  none: '',
 }
 
 export const PLACEMENT_CLASS: Record<ModalPlacement, string> = {
