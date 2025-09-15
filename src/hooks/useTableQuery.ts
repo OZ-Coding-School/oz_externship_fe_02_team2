@@ -176,6 +176,9 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const reset = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
