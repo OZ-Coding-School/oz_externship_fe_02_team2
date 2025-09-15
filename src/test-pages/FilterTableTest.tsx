@@ -105,6 +105,7 @@ export default function TestTablePage() {
         config={CONFIG}
         searchFields={['name', 'email']}
         renderTable={(tableData) => <BasicTable {...tableData} />}
+        clientFilterKeys={{ status: 'status', role: 'role' }}
       />
     </div>
   )
