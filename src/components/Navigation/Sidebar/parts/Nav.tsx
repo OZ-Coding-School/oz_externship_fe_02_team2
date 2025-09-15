@@ -1,4 +1,4 @@
-import { Accordion } from '@components/ui/Accordion'
+import { Accordion } from '@/components/Navigation/Accordion'
 import type { SidebarNavProps } from '../Sidebar.types'
 import { NAV_SECTIONS, toAccordionItems } from '../../nav'
 

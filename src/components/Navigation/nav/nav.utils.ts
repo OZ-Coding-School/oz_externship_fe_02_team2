@@ -1,6 +1,6 @@
 // Acoordion용 아이템으로 변환
 import type { NavItemDef } from './nav.types'
-import type { AccordionItem } from '@/components/ui/Accordion/Accordion.types'
+import type { AccordionItem } from '@/components/Navigation/Accordion/Accordion.types'
 
 export function toAccordionItems(
   defs: NavItemDef[],
