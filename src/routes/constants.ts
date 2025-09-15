@@ -18,7 +18,7 @@ export const PATHS = {
 
 export type PathValue = (typeof PATHS)[keyof typeof PATHS]
 
-export const PAGE_TITLE = {
+export const PAGE_TITLE: Record<string, string> = {
   USER: '회원 관리',
   WITHDRAWAL: '회원 탈퇴 관리',
   DASHBOARD: '대시보드',

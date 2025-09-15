@@ -1,7 +1,7 @@
 import Navigaiton from '@/components/Navigation/Navigation'
 import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
-import { getPageTitle } from './main.utils'
+import { getPageTitle } from '../../lib/getPageTitle'
 
 /** 메인 레이아웃 기능 수행 */
 export default function MainPage() {
