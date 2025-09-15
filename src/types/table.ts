@@ -30,6 +30,7 @@ export type TableState = {
 }
 
 export type TableMeta<T> = {
+  totalPages: number
   rowKey: (row: T, index: number) => string | number
   total?: number // 서버 페이지네이션일 때 전체 개수
   loading?: boolean
