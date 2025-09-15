@@ -2,8 +2,9 @@ import Modal from '../../Modal'
 import { Button } from '../../../Button'
 import { useFormHandlers } from '@/hooks/useFormHandlers'
 import type { WithdrawalDetail } from './Withdrawal.types'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import WithdrawalDetailView from './WithdrawalDetailView'
+import WithdrawalRestore from './WithdrawalRestore'
 
 type WithdrawalProps = {
   open: boolean
@@ -27,6 +28,8 @@ export default function WithdrawalModal({
       (data as WithdrawalDetail) || ({} as WithdrawalDetail),
       { onRestore: onRequestRestore }
     )
+
+  const [restoreOpen, setRestoreOpen] = useState<boolean>(false)
 
   // 외부 data 변경 시 동기화
   useEffect(() => {
@@ -65,12 +68,24 @@ export default function WithdrawalModal({
           <Button
             btnStyle="success"
             btnText={restoring ? '복구 중...' : '회원 복구하기'}
-            onClick={handleRestore}
+            onClick={() => setRestoreOpen(true)}
             disabled={!form || restoring}
             aria-disabled={!form || restoring}
           />
         </Modal.Actions>
       </Modal.Footer>
+
+      <WithdrawalRestore
+        open={restoreOpen}
+        onClose={() => setRestoreOpen(false)}
+        loading={restoring}
+        error={errorText /* 혹은 훅의 error를 노출한다면 error */}
+        onConfirm={async () => {
+          await handleRestore()
+          setRestoreOpen(false)
+          onClose() // 복구 후 닫기(필요시)
+        }}
+      />
     </Modal>
   )
 }
