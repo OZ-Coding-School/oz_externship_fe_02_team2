@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { TableFilterBar } from './feature/TableFilterBar'
 import type { TableFilterConfig, TableData, TableQuery } from '@/types/table'
-import { useTableQuery } from '@/hooks/useTablequery'
+import { useTableQuery } from '@/hooks/useTableQuery'
 
 export type TableWithFiltersProps<T = Record<string, any>> = {
   /** 테이블 데이터 (client mode) 또는 현재 페이지 데이터 (server mode) */
