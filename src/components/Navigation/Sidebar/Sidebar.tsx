@@ -19,7 +19,7 @@ export default function Sidebar({
   const setDrawerOpen = onMobileDrawerOpenChange ?? setInternalOpen
 
   // TODO: 경로에 따라 하위 메뉴 active 상태 결정
-  const [activeMenu, setActiveMenu] = useState<NavKey | null>('users')
+  const [activeMenu, setActiveMenu] = useState<NavKey | null>('user')
 
   // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
   useEffect(() => {

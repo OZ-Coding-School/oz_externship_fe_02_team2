@@ -1,13 +1,13 @@
 // 하위 메뉴
 export type NavKey =
-  | 'users'
-  | 'withdrawals'
+  | 'user'
+  | 'withdrawal'
   | 'dashboard'
-  | 'lectures'
-  | 'studygroups'
-  | 'reviews'
-  | 'posts'
-  | 'applications'
+  | 'lecture'
+  | 'studygroup'
+  | 'review'
+  | 'post'
+  | 'application'
 
 export type NavItemDef = {
   key: NavKey
