@@ -3,12 +3,13 @@ import { Routes, Route } from 'react-router-dom'
 import TestHub from '../pages/test/TestHub'
 import { testPages } from '../test-hub/registry'
 import TestRoot from '@/pages/test/TestRoot'
+import MainPage from '@/pages/MainPage'
 
 export default function TestRoutes() {
   return (
     <Routes>
       <Route element={<TestRoot />}>
-        <Route element={}></Route>
+        <Route element={<MainPage />}></Route>
         <Route element={<TestHub />}>
           {testPages.map((p) => {
             const Page = lazy(p.loader)
