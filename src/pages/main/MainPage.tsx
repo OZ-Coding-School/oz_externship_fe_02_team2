@@ -15,21 +15,22 @@ export default function MainPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <main className="flex">
-      <aside className="relative h-screen flex-1 md:flex">
+    <div className="w-vw flex">
+      <div className="relative h-screen flex-1 md:flex">
         <Navigaiton
           actionbarTitle={getPageTitle(pathname)}
           mobileDrawerOpen={drawerOpen}
           onActionbarMenuClick={() => setDrawerOpen(true)}
           onMobileDrawerOpenChange={() => setDrawerOpen(false)}
         />
-      </aside>
-      <main className="flex-1 space-y-4 p-6">
-        {/* TODO: BasicSkeleton으로 로딩 화면 대체 */}
-        <Suspense fallback={<div className="p-6">Loading…</div>}>
-          <Outlet />
-        </Suspense>
-      </main>
-    </main>
+
+        <main className="w-full flex-1 space-y-4 p-6">
+          {/* TODO: BasicSkeleton으로 로딩 화면 대체 */}
+          <Suspense fallback={<div>Loading…</div>}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
+    </div>
   )
 }
