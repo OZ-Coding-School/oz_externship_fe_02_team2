@@ -55,13 +55,13 @@ const CONFIG: TableFilterConfig = {
   rolePlaceholder: '권한 선택',
   debounceMs: 200,
   statusOptions: [
-    { value: 'active', label: '활성' },
-    { value: 'inactive', label: '비활성' },
+    { value: '활성', label: '활성' },
+    { value: '비활성', label: '비활성' },
   ],
   roleOptions: [
-    { value: 'admin', label: '관리자' },
-    { value: 'member', label: '회원' },
-    { value: 'guest', label: '게스트' },
+    { value: '관리자', label: '관리자' },
+    { value: '회원', label: '회원' },
+    { value: '게스트', label: '게스트' },
   ],
 }
 
