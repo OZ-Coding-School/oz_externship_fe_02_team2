@@ -1,6 +1,6 @@
 export const TEST_PATHS = {
   TEST: '/test-hub',
-  WEB: '/app',
+  APP: '/app',
 
   LOGIN: '/login',
 
