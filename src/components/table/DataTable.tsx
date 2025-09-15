@@ -2,12 +2,13 @@
 import React from 'react'
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
 import { cls } from '@/lib/table'
+import Pagination from '../ui/Pagination/Pagination'
 
 type MobileKeep =
   | 'all' // 모바일에서도 전부 보이게(기본)
   | number // 앞에서부터 N개만 보이기(원하면 숫자로)
 
-type Props<T> = {
+type TableProps<T> = {
   columns?: Column<T>[]
   data?: T[]
   state: TableState
@@ -33,7 +34,7 @@ export function DataTable<T>({
   stickyHeader = true,
   nowrapCells = true,
   wrapCells = false,
-}: Props<T>) {
+}: TableProps<T>) {
   const safeCols = Array.isArray(columns) ? columns : []
   const safeData = Array.isArray(data) ? data : []
   const visibleCols = safeCols.filter((c) => !c.hidden)
@@ -43,6 +44,14 @@ export function DataTable<T>({
     pageSize: 10,
     sort: null,
   }
+
+  // API 에서 내려주는 총 페이지
+  const totalPages = Math.max(1, Number(meta?.totalPages ?? 1))
+
+  // page 가 totalPages를 넘억면 안전하게 클램프
+  React.useEffect(() => {
+    if (page > totalPages) onStateChange?.({ page: totalPages })
+  }, [page, totalPages, onStateChange])
 
   const handleSort = (col: Column<T>) => {
     if (!col.sortable || !onStateChange) return
@@ -160,12 +169,18 @@ export function DataTable<T>({
       </div>
 
       {/* 푸터 */}
-      <div className="border-base-300 flex items-center justify-between gap-2 border-t p-3">
-        <div className="text-base-content/60 text-xs">
-          페이지 {page} · 페이지당 {pageSize}
-          {typeof meta?.total === 'number' && <> · 총 {meta.total}건</>}
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="border-base-300 flex flex-col gap-3 border-t p-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* 공용 Pagination 으로 교체 (총 페이지는 API 제공값) */}
+        {totalPages > 1 && (
+          <div className="flex w-full justify-center">
+            <Pagination
+              totalPages={totalPages}
+              currentPage={page}
+              onChange={(page) => onStateChange?.({ page })}
+            />
+          </div>
+        )}
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
           <label htmlFor="page-size" className="sr-only">
             페이지당 항목 수
           </label>
@@ -181,28 +196,11 @@ export function DataTable<T>({
           >
             {[5, 10, 20, 50].map((n) => (
               <option key={n} value={n}>
-                {n} / 페이지
+                {n}개
               </option>
             ))}
           </select>
 
-          <div className="join">
-            <button
-              type="button"
-              className="btn btn-xs join-item"
-              disabled={page <= 1}
-              onClick={() => onStateChange?.({ page: page - 1 })}
-            >
-              이전
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs join-item"
-              onClick={() => onStateChange?.({ page: page + 1 })}
-            >
-              다음
-            </button>
-          </div>
           {footerExtra}
         </div>
       </div>
