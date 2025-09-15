@@ -1,13 +1,18 @@
-// 하위 메뉴
-export type NavKey =
-  | 'user'
-  | 'withdrawal'
-  | 'dashboard'
-  | 'lecture'
-  | 'studygroup'
-  | 'review'
-  | 'post'
-  | 'application'
+import { PATHS } from '@/routes/constants'
+
+/** 네비에 쓸 하위 메뉴 키만 모아둔 배열 */
+export const NAV_KEYS = [
+  PATHS.USER,
+  PATHS.WITHDRAWAL,
+  PATHS.DASHBOARD,
+  PATHS.LECTURE,
+  PATHS.STUDYGROUP,
+  PATHS.REVIEW,
+  PATHS.POST,
+  PATHS.APPLICATION,
+] as const
+
+export type NavKey = (typeof NAV_KEYS)[number]
 
 export type NavItemDef = {
   key: NavKey
