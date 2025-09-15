@@ -4,12 +4,12 @@ import { DesktopAside, MobileDrawer, Nav } from './parts'
 import type { NavKey } from '../nav'
 
 // import { useNavigate } from 'react-router'
-// TODO: 현재 경로에 따라 active 상태 매핑 + 그냥 메인으로 들어왔을 경우 최상단 /users로
+// TODO: 현재 경로에 따라 active 상태 매핑 (getPageTitle 써서 주소에서 매핑하면 될 거 같음)
+// 또, 클릭했을 때 경로로 가게
 
 export default function Sidebar({
   mobileDrawerOpen,
   onMobileDrawerOpenChange,
-  scope = 'container',
 }: SidebarProps) {
   // const navigate = useNavigate()
 
@@ -23,13 +23,13 @@ export default function Sidebar({
 
   // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
   useEffect(() => {
-    if (!drawerOpen || scope !== 'viewport') return
+    if (!drawerOpen) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prev
     }
-  }, [drawerOpen, scope])
+  }, [drawerOpen])
 
   return (
     <>
@@ -45,11 +45,7 @@ export default function Sidebar({
         />
       </DesktopAside>
 
-      <MobileDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        scope={scope}
-      >
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Nav
           expanded
           active={activeMenu}
