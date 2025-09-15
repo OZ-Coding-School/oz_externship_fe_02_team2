@@ -22,16 +22,22 @@ export type TableWithFiltersProps<T = Record<string, any>> = {
   /** 추가 필터 컴포넌트 */
   children?: React.ReactNode
   className?: string
+  onQueryChange?: (query: TableQuery) => void | Promise<void>
+  clientFilterKeys?: {
+    status?: keyof T
+    role?: keyof T
+  }
 }
 
 function filterTableData<T extends Record<string, unknown>>(
   raw: T[],
   q: TableQuery,
-  fields: (keyof T)[]
+  fields: (keyof T)[],
+  filterKeys: { status?: keyof T; role?: keyof T } = {}
 ): TableData<T> {
   let items = raw
 
-  // 검색
+  // 1) 검색
   if (q.q.trim() && fields.length) {
     const kw = q.q.trim().toLowerCase()
     items = items.filter((row) =>
@@ -43,23 +49,28 @@ function filterTableData<T extends Record<string, unknown>>(
     )
   }
 
-  // 상태/권한 필터
-  if (q.status)
+  // 2) 상태/권한 필터 (지정된 키로만)
+  const { status: statusKey, role: roleKey } = filterKeys
+  if (q.status && statusKey) {
+    const want = String(q.status).toLowerCase()
     items = items.filter(
-      (r: any) => String(r.status ?? '').toLowerCase() === q.status
+      (row) => String(row[statusKey] ?? '').toLowerCase() === want
     )
-  if (q.role)
+  }
+  if (q.role && roleKey) {
+    const want = String(q.role).toLowerCase()
     items = items.filter(
-      (r: any) => String(r.role ?? '').toLowerCase() === q.role
+      (row) => String(row[roleKey] ?? '').toLowerCase() === want
     )
+  }
 
-  // 정렬
+  // 3) 정렬
   if (q.sortBy && q.sortDir) {
     const dir = q.sortDir === 'desc' ? -1 : 1
     const key = q.sortBy as keyof T
     items = [...items].sort((a, b) => {
-      const av: any = a[key]
-      const bv: any = b[key]
+      const av = a[key] as any
+      const bv = b[key] as any
       if (av == null && bv == null) return 0
       if (av == null) return -1 * dir
       if (bv == null) return 1 * dir
@@ -69,6 +80,7 @@ function filterTableData<T extends Record<string, unknown>>(
     })
   }
 
+  // 4) 페이징 (필터/정렬 끝난 뒤)
   const total = items.length
   const start = (q.page - 1) * q.pageSize
   const paged = items.slice(start, start + q.pageSize)
@@ -91,14 +103,12 @@ export function TableWithFilters<T extends Record<string, any>>({
   loading = false,
   children,
   className,
+  onQueryChange,
+  clientFilterKeys,
 }: TableWithFiltersProps<T>) {
   const queryActions = useTableQuery({
-    onQueryChange: async (query) => {
-      if (config.mode === 'server') {
-        // 서버 모드에서는 부모 컴포넌트가 onQueryChange를 통해 API 호출
-        console.log('Query changed:', query)
-      }
-    },
+    // 서버 모드일 때만 훅에 전달
+    onQueryChange: config.mode === 'server' ? onQueryChange : undefined,
   })
 
   // 데이터 처리
@@ -119,9 +129,14 @@ export function TableWithFilters<T extends Record<string, any>>({
     } else {
       // 클라이언트 모드: 필터링/정렬/페이지네이션 처리
       const rawData = Array.isArray(data) ? data : data.items
-      return filterTableData(rawData, queryActions.query, searchFields)
+      return filterTableData(
+        rawData,
+        queryActions.query,
+        searchFields,
+        clientFilterKeys ?? {}
+      )
     }
-  }, [data, queryActions.query, config.mode, searchFields])
+  }, [data, queryActions.query, config.mode, searchFields, clientFilterKeys])
 
   return (
     <div className={className}>

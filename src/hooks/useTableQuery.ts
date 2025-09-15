@@ -73,7 +73,9 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         params.delete(k)
       )
 
-      if (newQuery.q) params.set('q', newQuery.q)
+      const qTrim = newQuery.q.trim()
+
+      if (qTrim) params.set('q', qTrim)
       if (newQuery.status) params.set('status', newQuery.status)
       if (newQuery.role) params.set('role', newQuery.role)
       if (newQuery.sortBy && newQuery.sortDir) {
@@ -83,8 +85,6 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       if (newQuery.pageSize !== DEFAULT_QUERY.pageSize) {
         params.set('size', newQuery.pageSize.toString())
       }
-
-      // router.replace 대신 setSearchParams를 사용합니다.
       setSearchParams(params, { replace: true })
     },
     [setSearchParams, searchParams, syncUrl]
@@ -92,37 +92,51 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   // 쿼리 업데이트 (디바운스 포함)
   const updateQuery = useCallback(
+    // `query` 의존성을 제거하기 위해 함수형 업데이트 사용
     (updates: Partial<TableQuery>, immediate = false) => {
-      const newQuery = { ...query, ...updates }
-
-      // 페이지 리셋 조건
-      if ('q' in updates || 'status' in updates || 'role' in updates) {
-        newQuery.page = 1
-      }
-
-      setQuery(newQuery)
-
+      // 디바운스 타이머가 있다면 즉시 클리어
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
 
-      const executeUpdate = () => {
-        updateUrl(newQuery)
-        onQueryChange?.(newQuery)
+      const performUpdate = () => {
+        setQuery((prevQuery) => {
+          const newQuery = { ...prevQuery, ...updates }
+          // 페이지 리셋 조건
+          if ('q' in updates || 'status' in updates || 'role' in updates) {
+            newQuery.page = 1
+          }
+
+          // 실제 업데이트 실행 (URL 동기화, 콜백 호출)
+          updateUrl(newQuery)
+          onQueryChange?.(newQuery)
+
+          return newQuery
+        })
       }
 
-      if (immediate || !('q' in updates)) {
-        executeUpdate()
+      // `q`가 업데이트되고, 즉시 실행이 아니며, 비어있지 않은 경우에만 디바운스 적용
+      if (
+        'q' in updates &&
+        !immediate &&
+        updates.q &&
+        updates.q.trim() !== ''
+      ) {
+        debounceRef.current = setTimeout(performUpdate, debounceMs)
       } else {
-        debounceRef.current = setTimeout(executeUpdate, debounceMs)
+        // 그 외 모든 경우는 즉시 실행
+        performUpdate()
       }
     },
-    [query, updateUrl, onQueryChange, debounceMs]
+    [updateUrl, onQueryChange, debounceMs] // `query` 의존성 제거로 함수 안정성 확보
   )
 
   // 개별 액션들
   const setSearch = useCallback(
-    (q: string) => updateQuery({ q }),
+    (q: string, immediate = false) => {
+      // `immediate` 플래그를 updateQuery로 전달
+      updateQuery({ q }, immediate)
+    },
     [updateQuery]
   )
 

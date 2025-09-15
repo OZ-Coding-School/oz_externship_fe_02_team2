@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { TableFilterConfig, TableQuery } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
@@ -9,7 +9,7 @@ import Dropdown from '@/components/ui/Dropdown/Dropdown'
 export type TableFilterBarProps = {
   query: TableQuery
   onQueryChange: {
-    setSearch: (q: string) => void
+    setSearch: (q: string, immediate?: boolean) => void
     setStatus: (status: string | null) => void
     setRole: (role: string | null) => void
     reset: () => void
@@ -26,6 +26,9 @@ export function TableFilterBar({
   className,
   children,
 }: TableFilterBarProps) {
+  const [inputValue, setInputValue] = useState(query.q)
+  const isComposing = useRef(false)
+  const debounceMs = config.debounceMs ?? 300
   const [mobileOpen, setMobileOpen] = useState(false)
   const {
     searchPlaceholder = '검색어를 입력하세요',
@@ -34,6 +37,27 @@ export function TableFilterBar({
     statusOptions = [],
     roleOptions = [],
   } = config
+
+  // 외부 `query.q`가 변경되면(예: 초기화 버튼, URL 변경) 로컬 상태에 반영
+  useEffect(() => {
+    if (query.q !== inputValue) {
+      setInputValue(query.q)
+    }
+  }, [query.q])
+
+  // 로컬 입력값(inputValue)이 변경될 때 디바운스 적용
+  useEffect(() => {
+    // 이전 디바운스 타이머 클리어
+    if (isComposing.current) return // ★ IME 조합 중에는 발화 금지
+    if (query.q === inputValue) return // 불필요 호출 방지
+    const handler = setTimeout(() => {
+      // ★ 훅의 내부 디바운스를 우회하기 위해 immediate=true로 '한 번만' 디바운스
+      onQueryChange.setSearch(inputValue, true)
+    }, debounceMs)
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [inputValue, debounceMs, query.q])
 
   const statusDropdownOptions = useMemo(() => {
     if (statusOptions.length === 0) return []
@@ -61,6 +85,20 @@ export function TableFilterBar({
     onQueryChange.setRole(value || null)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // IME 조합 중이 아닐 때 Enter 키를 누르면 즉시 검색 실행
+    if (e.key === 'Enter' && !isComposing.current) {
+      e.preventDefault()
+      // 디바운스를 무시하고 즉시 업데이트
+      onQueryChange.setSearch(e.currentTarget.value, true)
+    }
+  }
+
+  const handleClearSearch = () => {
+    setInputValue('')
+    onQueryChange.setSearch('', true) // 즉시 초기화
+  }
+
   return (
     <section
       className={cn(
@@ -74,10 +112,29 @@ export function TableFilterBar({
         <div className="min-w-0 flex-1">
           <Input
             type="text"
-            value={query.q}
-            onChange={(e) => onQueryChange.setSearch(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown} // Enter 키 이벤트 핸들러 추가
+            onCompositionStart={() => (isComposing.current = true)}
+            onCompositionEnd={(e) => {
+              isComposing.current = false
+              // 조합 완료 후 수동으로 onChange와 동일한 로직 수행
+              setInputValue(e.currentTarget.value)
+            }}
             placeholder={searchPlaceholder}
             leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
+            rightIcon={
+              inputValue ? (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="text-gray-500 hover:text-gray-800"
+                  aria-label="검색어 지우기"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              ) : null
+            }
             size="md"
             className="w-full"
             aria-label="검색어 입력"
