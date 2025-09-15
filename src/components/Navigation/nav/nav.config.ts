@@ -31,13 +31,13 @@ export const NAV_SECTIONS: readonly NavSectionDef[] = [
     icon: Members,
     items: [
       {
-        key: 'users',
+        key: 'user',
         label: '유저 관리',
         defaultIcon: UsersD,
         activeIcon: UsersA,
       },
       {
-        key: 'withdrawals',
+        key: 'withdrawal',
         label: '탈퇴 관리',
         defaultIcon: WithdrawalsD,
         activeIcon: WithdrawalsA,
@@ -56,19 +56,19 @@ export const NAV_SECTIONS: readonly NavSectionDef[] = [
     icon: Studies,
     items: [
       {
-        key: 'lectures',
+        key: 'lecture',
         label: '강의 관리',
         defaultIcon: LecturesD,
         activeIcon: LecturesA,
       },
       {
-        key: 'studygroups',
+        key: 'studygroup',
         label: '스터디 그룹 관리',
         defaultIcon: StudyGroupsD,
         activeIcon: StudyGroupsA,
       },
       {
-        key: 'reviews',
+        key: 'review',
         label: '리뷰 관리',
         defaultIcon: ReviewsD,
         activeIcon: ReviewsA,
@@ -81,13 +81,13 @@ export const NAV_SECTIONS: readonly NavSectionDef[] = [
     icon: Recruits,
     items: [
       {
-        key: 'posts',
+        key: 'post',
         label: '공고 관리',
         defaultIcon: PostsD,
         activeIcon: PostsA,
       },
       {
-        key: 'applications',
+        key: 'application',
         label: '지원 내역 관리',
         defaultIcon: ApplicationsD,
         activeIcon: ApplicationsA,
