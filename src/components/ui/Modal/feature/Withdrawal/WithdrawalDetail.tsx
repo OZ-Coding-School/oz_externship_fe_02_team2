@@ -49,7 +49,7 @@ export default function WithdrawalModal({
       <div className="border-b border-gray-200" />
 
       {/* Body: 상세 뷰 조립 */}
-      <Modal.Body className="p-0">
+      <Modal.Body className="max-h-[65vh] p-0">
         <WithdrawalDetailView
           form={form}
           loading={loading}
