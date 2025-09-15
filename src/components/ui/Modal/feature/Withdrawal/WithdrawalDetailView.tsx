@@ -1,7 +1,7 @@
-import Skeleton from '@/components/ui/Skeleton'
 import WithdrawalUserView from './WithdrawalUserView'
 import WithdrawalInfoView from './WithdrawalInfoView'
 import type { WithdrawalDetail } from './Withdrawal.types'
+import ModalSkeleton from '@/components/ui/Skeleton/ModalSkeleton'
 
 type Props = {
   form?: WithdrawalDetail | null
@@ -17,7 +17,7 @@ export default function WithdrawalDetailView({
   if (loading) {
     return (
       <div className="px-6">
-        <Skeleton />
+        <ModalSkeleton />
       </div>
     )
   }
