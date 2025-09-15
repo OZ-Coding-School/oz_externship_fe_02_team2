@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { TableFilterConfig, TableQuery } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
@@ -37,6 +37,7 @@ export function TableFilterBar({
     statusOptions = [],
     roleOptions = [],
   } = config
+  const panelId = useId()
 
   // 외부 `query.q`가 변경되면(예: 초기화 버튼, URL 변경) 로컬 상태에 반영
   useEffect(() => {
@@ -145,7 +146,7 @@ export function TableFilterBar({
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
-            aria-controls="filter-panel"
+            aria-controls={panelId}
             className={cn(
               'body-sm inline-flex items-center gap-2 rounded-md border px-3 py-2',
               'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -257,9 +258,9 @@ export function TableFilterBar({
           : '모든 필터가 해제되었습니다.'}
         {query.q && ` 검색어: ${query.q}`}
         {query.status &&
-          ` 상태: ${statusOptions.find((opt) => opt.value === query.status)?.label}`}
+          ` 상태: ${statusOptions.find((opt) => opt.value === query.status)?.label ?? query.status}`}
         {query.role &&
-          ` 권한: ${roleOptions.find((opt) => opt.value === query.role)?.label}`}
+          ` 권한: ${roleOptions.find((opt) => opt.value === query.role)?.label ?? query.role}`}
       </div>
     </section>
   )

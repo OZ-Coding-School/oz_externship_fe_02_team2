@@ -1,6 +1,11 @@
 import React, { useMemo } from 'react'
 import { TableFilterBar } from './feature/TableFilterBar'
-import type { TableFilterConfig, TableData, TableQuery } from '@/types/table'
+import type {
+  TableFilterConfig,
+  TableData,
+  TableQuery,
+  UseTableQueryOptions,
+} from '@/types/table'
 import { useTableQuery } from '@/hooks/useTableQuery'
 
 export type TableWithFiltersProps<T = Record<string, any>> = {
@@ -27,6 +32,11 @@ export type TableWithFiltersProps<T = Record<string, any>> = {
     status?: keyof T
     role?: keyof T
   }
+  /** 쿼리 훅 동작 제어(초기값/URL동기화/디바운스) */
+  queryOptions?: Pick<
+    UseTableQueryOptions,
+    'initialQuery' | 'syncUrl' | 'debounceMs'
+  >
 }
 
 function filterTableData<T extends Record<string, unknown>>(
@@ -105,10 +115,12 @@ export function TableWithFilters<T extends Record<string, any>>({
   className,
   onQueryChange,
   clientFilterKeys,
+  queryOptions,
 }: TableWithFiltersProps<T>) {
   const queryActions = useTableQuery({
     // 서버 모드일 때만 훅에 전달
     onQueryChange: config.mode === 'server' ? onQueryChange : undefined,
+    ...(queryOptions ?? {}),
   })
 
   // 데이터 처리
