@@ -1,16 +1,32 @@
 import { Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import TestHub from '../pages/test/TestHub'
 import { testPages } from '../test-hub/registry'
 import TestRoot from '@/pages/test/TestRoot'
 import MainPage from '@/pages/MainPage'
+import { PATHS } from './constants'
+import PlaceHolderPage from '@/pages/PlaceHolderPage'
 
+// * 수정 시 직관적으로 보이고자 일부러 map 사용 안 했습니다
 export default function TestRoutes() {
   return (
     <Routes>
-      <Route element={<TestRoot />}>
-        <Route element={<MainPage />}></Route>
-        <Route element={<TestHub />}>
+      <Route path="/" element={<TestRoot />}>
+        <Route path={PATHS.APP} element={<MainPage />}>
+          {/* /app 진입 시 대시보드 페이지로 */}
+          <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
+          <Route path={PATHS.USER} element={<PlaceHolderPage />} />
+          <Route path={PATHS.WITHDRAWAL} element={<PlaceHolderPage />} />
+          <Route path={PATHS.DASHBOARD} element={<PlaceHolderPage />} />
+
+          <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
+          <Route path={PATHS.STUDYGROUP} element={<PlaceHolderPage />} />
+          <Route path={PATHS.REVIEW} element={<PlaceHolderPage />} />
+
+          <Route path={PATHS.POST} element={<PlaceHolderPage />} />
+          <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
+        </Route>
+        <Route path={PATHS.TEST} element={<TestHub />}>
           {testPages.map((p) => {
             const Page = lazy(p.loader)
             return (
