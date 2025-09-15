@@ -1,12 +1,7 @@
 import Navigaiton from '@/components/Navigation/Navigation'
-import { PAGE_TITLE } from '@/routes/constants'
 import { Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
-
-const getPageTitle = (pathname: string): string => {
-  const segment = pathname.split('/').filter(Boolean).pop() || ''
-  return PAGE_TITLE[segment.toUpperCase()] ?? ''
-}
+import { getPageTitle } from './main.utils'
 
 /** 메인 레이아웃 기능 수행 */
 export default function MainPage() {
