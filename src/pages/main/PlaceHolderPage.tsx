@@ -7,7 +7,7 @@ export default function PlaceHolderPage() {
 
   return (
     <section>
-      <h2 className="hidden md:block">{`${getPageTitle(pathname)} 페이지`}</h2>
+      <h2 className="hidden md:block">{getPageTitle(pathname)}</h2>
     </section>
   )
 }
