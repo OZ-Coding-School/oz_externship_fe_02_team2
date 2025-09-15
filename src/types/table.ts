@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Align = 'left' | 'center' | 'right'
 
 export type SortState = { id: string; desc: boolean } | null

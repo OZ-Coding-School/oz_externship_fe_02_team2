@@ -60,7 +60,7 @@ const CONFIG: TableFilterConfig = {
   ],
   roleOptions: [
     { value: 'admin', label: '관리자' },
-    { value: 'member', label: '멤버' },
+    { value: 'member', label: '회원' },
     { value: 'guest', label: '게스트' },
   ],
 }
@@ -76,7 +76,6 @@ function BasicTable({ items }: TableData<UserRow>) {
             <th className="w-64 border-b p-2">이메일</th>
             <th className="w-28 border-b p-2">상태</th>
             <th className="w-28 border-b p-2">권한</th>
-            <th className="w-20 border-b p-2">나이</th>
           </tr>
         </thead>
         <tbody>
