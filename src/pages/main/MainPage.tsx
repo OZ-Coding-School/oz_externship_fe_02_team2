@@ -27,7 +27,7 @@ export default function MainPage() {
       <main className="flex-1 space-y-4 p-6">
         {/* TODO: BasicSkeleton으로 로딩 화면 대체 */}
         <Suspense fallback={<div className="p-6">Loading…</div>}>
-          <Outlet key={pathname} />
+          <Outlet />
         </Suspense>
       </main>
     </main>

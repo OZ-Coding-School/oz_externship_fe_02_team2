@@ -3,9 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import TestHub from '../pages/test/TestHub'
 import { testPages } from '../test-hub/registry'
 import TestRoot from '@/pages/test/TestRoot'
-import MainPage from '@/pages/MainPage'
+import MainPage from '@/pages/main/MainPage'
 import { PATHS } from './constants'
-import PlaceHolderPage from '@/pages/PlaceHolderPage'
+import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
+
+// TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
 // * 수정 시 직관적으로 보이고자 일부러 map 사용 안 했습니다
 export default function TestRoutes() {
@@ -25,6 +27,7 @@ export default function TestRoutes() {
 
           <Route path={PATHS.POST} element={<PlaceHolderPage />} />
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
+          <Route path="*" element={<div className="p-6">Not Found</div>} />
         </Route>
         <Route path={PATHS.TEST} element={<TestHub />}>
           {testPages.map((p) => {
