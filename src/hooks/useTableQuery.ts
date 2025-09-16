@@ -103,7 +103,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         setQuery((prevQuery) => {
           const newQuery = { ...prevQuery, ...updates }
           // 페이지 리셋 조건
-          if ('q' in updates || 'status' in updates || 'role' in updates) {
+          if ('q' in updates && !immediate && (updates.q ?? '').trim() !== '') {
             newQuery.page = 1
           }
 
