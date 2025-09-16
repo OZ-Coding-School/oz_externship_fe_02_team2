@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import type { TableQuery, UseTableQueryOptions } from '@/types/table'
-import { useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 
 const DEFAULT_QUERY: TableQuery = {
   q: '',
