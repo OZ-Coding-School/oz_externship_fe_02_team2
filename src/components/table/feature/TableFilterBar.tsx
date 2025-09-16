@@ -29,7 +29,6 @@ export function TableFilterBar({
   const [inputValue, setInputValue] = useState(query.q)
   const inputRef = useRef<HTMLInputElement>(null)
   const isComposing = useRef(false)
-  const skipNextQuerySyncRef = useRef(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const {
     searchPlaceholder = '검색어를 입력하세요',
@@ -42,12 +41,7 @@ export function TableFilterBar({
 
   // 외부 `query.q`가 변경되면(예: 초기화 버튼, URL 변경) 로컬 상태에 반영
   useEffect(() => {
-    if (skipNextQuerySyncRef.current) {
-      // 내가 방금 setSearch로 만든 변경 → 한 번은 역동기화 무시
-      skipNextQuerySyncRef.current = false
-      return
-    }
-    if (query.q !== inputValue) setInputValue(query.q)
+    setInputValue(query.q)
   }, [query.q])
 
   const statusDropdownOptions = useMemo(() => {
@@ -62,8 +56,8 @@ export function TableFilterBar({
     setInputValue(newValue)
     // 조합 중이 아닐 때만 디바운스된 검색을 호출 (핵심)
     if (!isComposing.current) {
-      skipNextQuerySyncRef.current = true
-      onQueryChange.setSearch(newValue)
+      // 입력 중엔 훅 쪽 디바운스 사용(즉시 아님)
+      onQueryChange.setSearch(newValue /* immediate? */)
     }
   }
 
@@ -94,14 +88,12 @@ export function TableFilterBar({
     if (e.key === 'Enter' && !composing) {
       e.preventDefault()
       // `immediate: true`를 전달하여 훅의 디바운스를 건너뛰고 즉시 검색을 실행
-      skipNextQuerySyncRef.current = true
       onQueryChange.setSearch(e.currentTarget.value, true)
     }
   }
 
   const handleClearSearch = () => {
     setInputValue('')
-    skipNextQuerySyncRef.current = true
     onQueryChange.setSearch('', true) // 즉시 초기화
     inputRef.current?.focus()
   }
@@ -127,9 +119,8 @@ export function TableFilterBar({
               isComposing.current = true
             }}
             onCompositionEnd={() => {
-              // 여기서는 최종값 한 번만 검색 반영
+              // 조합 종료 시 현재 값으로 디바운스 검색 1회
               isComposing.current = false
-              skipNextQuerySyncRef.current = true
               onQueryChange.setSearch(inputRef.current?.value ?? '')
             }}
             placeholder={searchPlaceholder}
