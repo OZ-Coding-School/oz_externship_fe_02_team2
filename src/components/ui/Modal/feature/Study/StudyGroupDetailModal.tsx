@@ -3,6 +3,7 @@ import Modal from '../../Modal'
 import type { StudyGroupDetail } from './Study.types'
 import StudyGroupDetailLeft from './StudyGroupDetailLeft'
 import StudyGroupDetailRight from './StudyGroupDetailRight'
+import ModalSkeleton from '@/components/ui/Skeleton/ModalSkeleton'
 
 type StudyGroupDetailModalProps = {
   open: boolean
@@ -34,17 +35,22 @@ export default function StudyGroupDetailModal({
       </Modal.Header>
       <div className="border-b border-gray-200" />
 
-      <Modal.Body className={`grid gap-6 ${columnsClassName} max-h-[65vh] p-6`}>
-        <StudyGroupDetailLeft
-          data={data}
-          loading={loading}
-          errorText={errorText}
-        />
-        <StudyGroupDetailRight
-          members={data?.members}
-          courses={data?.courses}
-          loading={loading}
-        />
+      <Modal.Body className={`max-h-[65vh] p-6`}>
+        {loading ? (
+          <ModalSkeleton rows={8} />
+        ) : errorText ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {errorText}
+          </div>
+        ) : (
+          <div className={`grid gap-6 ${columnsClassName}`}>
+            <StudyGroupDetailLeft data={data} />
+            <StudyGroupDetailRight
+              members={data?.members}
+              courses={data?.courses}
+            />
+          </div>
+        )}
       </Modal.Body>
       <div className="border-b border-gray-200" />
       {/* Footer */}
