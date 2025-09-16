@@ -1,4 +1,4 @@
-export type StudyStatus = '대기중' | '진행중' | '종료'
+export type StudyStatus = '대기중' | '진행중' | '종료됨'
 
 export type Member = {
   id: string
