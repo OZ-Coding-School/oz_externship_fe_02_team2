@@ -49,15 +49,11 @@ export function TableFilterBar({
   // 로컬 입력값(inputValue)이 변경될 때 디바운스 적용
   useEffect(() => {
     // 이전 디바운스 타이머 클리어
-    if (isComposing.current) return // ★ IME 조합 중에는 발화 금지
-    if (query.q === inputValue) return // 불필요 호출 방지
+    if (query.q === inputValue) return
     const handler = setTimeout(() => {
-      // ★ 훅의 내부 디바운스를 우회하기 위해 immediate=true로 '한 번만' 디바운스
       onQueryChange.setSearch(inputValue, true)
     }, debounceMs)
-    return () => {
-      clearTimeout(handler)
-    }
+    return () => clearTimeout(handler)
   }, [inputValue, debounceMs, query.q])
 
   const statusDropdownOptions = useMemo(() => {
@@ -123,6 +119,7 @@ export function TableFilterBar({
               setInputValue(e.currentTarget.value)
             }}
             placeholder={searchPlaceholder}
+            enterKeyHint="search"
             leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
             rightIcon={
               inputValue ? (

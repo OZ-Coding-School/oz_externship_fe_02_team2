@@ -48,17 +48,28 @@ function filterTableData<T extends Record<string, unknown>>(
   let items = raw
 
   // 1) 검색
-  if (q.q.trim() && fields.length) {
-    const kw = q.q.trim().toLowerCase()
-    items = items.filter((row) =>
-      fields.some((f) =>
-        String(row[f] ?? '')
-          .toLowerCase()
-          .includes(kw)
-      )
-    )
+  if (fields.length) {
+    const rawKw = q.q.trim().toLowerCase()
+    if (rawKw) {
+      const at = rawKw.indexOf('@')
+      const startsWithAt = at === 0 // '@...' 형태
+      const normKw = at >= 0 ? rawKw.slice(0, at).trim() : rawKw
+      if (startsWithAt) {
+        // '@'로 시작하는 입력은 도메인 검색 의도로 보고 결과 없음
+        items = []
+      } else if (normKw) {
+        const norm = (v: unknown): string => {
+          const s = String(v ?? '').toLowerCase()
+          // 셀 값도 로컬파트만 비교
+          return s.includes('@') ? s.split('@')[0] : s
+        }
+        items = items.filter((row) =>
+          fields.some((f) => norm(row[f as keyof T]).includes(normKw))
+        )
+      }
+      // normKw가 빈 문자열이면(공백만 입력 등) 검색 필터 미적용
+    }
   }
-
   // 2) 상태/권한 필터 (지정된 키로만)
   const { status: statusKey, role: roleKey } = filterKeys
   if (q.status && statusKey) {
