@@ -27,6 +27,7 @@ export function TableFilterBar({
   children,
 }: TableFilterBarProps) {
   const [inputValue, setInputValue] = useState(query.q)
+  const inputRef = useRef<HTMLInputElement>(null)
   const isComposing = useRef(false)
   const debounceMs = config.debounceMs ?? 300
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -94,6 +95,7 @@ export function TableFilterBar({
   const handleClearSearch = () => {
     setInputValue('')
     onQueryChange.setSearch('', true) // 즉시 초기화
+    inputRef.current?.focus()
   }
 
   return (
@@ -106,8 +108,9 @@ export function TableFilterBar({
       aria-label="테이블 필터"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1">
           <Input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -121,22 +124,23 @@ export function TableFilterBar({
             placeholder={searchPlaceholder}
             enterKeyHint="search"
             leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
-            rightIcon={
-              inputValue ? (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="text-gray-500 hover:text-gray-800"
-                  aria-label="검색어 지우기"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              ) : null
-            }
             size="md"
-            className="w-full"
+            className="w-full pr-10" // 오른쪽 X 자리 확보하는 css
             aria-label="검색어 입력"
           />
+          {inputValue && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              aria-label="검색어 지우기"
+              className={cn(
+                'absolute inset-y-0 right-2 flex items-center',
+                'text-gray-500 hover:text-gray-800'
+              )}
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between gap-2 sm:hidden">
           <button
@@ -215,7 +219,7 @@ export function TableFilterBar({
       </div>
       {/* 모바일 접이식 패널 */}
       <div
-        id="filter-panel"
+        id={panelId}
         className={cn(
           'mt-2 grid grid-cols-1 gap-2 sm:hidden',
           mobileOpen ? 'block' : 'hidden'
