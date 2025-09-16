@@ -2,28 +2,15 @@ import CourseCard from './CourseCard'
 import MemberList from './MemberList'
 import type { Course, Member } from './Study.types'
 
-type Props = {
+type StudyGroupDetailRightProps = {
   members?: Member[]
   courses?: Course[]
-  loading?: boolean
 }
 
 export default function StudyGroupDetailRight({
   members,
   courses,
-  loading,
-}: Props) {
-  if (loading) {
-    return (
-      <aside className="space-y-5">
-        <div className="h-6 w-28 animate-pulse rounded bg-gray-200" />
-        <div className="h-64 animate-pulse rounded-xl bg-gray-200" />
-        <div className="h-6 w-28 animate-pulse rounded bg-gray-200" />
-        <div className="h-24 animate-pulse rounded-xl bg-gray-200" />
-      </aside>
-    )
-  }
-
+}: StudyGroupDetailRightProps) {
   return (
     <aside className="space-y-5">
       <div className="space-y-2">
