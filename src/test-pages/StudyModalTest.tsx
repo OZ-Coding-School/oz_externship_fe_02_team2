@@ -23,6 +23,11 @@ export default function TestStudyModalPage() {
       { id: 'm2', name: 'APIDeveloper' },
       { id: 'm3', name: 'BackEndDev' },
       { id: 'm4', name: 'DBMaster' },
+      { id: 'm5', name: '병원간 서연님' },
+      { id: 'm6', name: '예비군간 민제님' },
+      { id: 'm7', name: '집가고픈 명우님' },
+      { id: 'm8', name: '필터정렬지옥 민창님' },
+      { id: 'm9', name: '면접생각에 신난 여진님' },
     ],
     courses: [
       {
