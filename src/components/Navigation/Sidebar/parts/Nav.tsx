@@ -1,6 +1,7 @@
 import { Accordion } from '@/components/Navigation/Accordion'
 import type { SidebarNavProps } from '../Sidebar.types'
 import { NAV_SECTIONS, toAccordionItems } from '../../nav'
+import { useNavigate } from 'react-router'
 
 export default function Nav({
   expanded,
@@ -8,6 +9,8 @@ export default function Nav({
   setActive,
   rail,
 }: SidebarNavProps) {
+  const navigate = useNavigate()
+
   return (
     <>
       {NAV_SECTIONS.map((section) => (
@@ -16,7 +19,7 @@ export default function Nav({
           icon={section.icon}
           label={section.label}
           rail={rail ?? !expanded}
-          items={toAccordionItems(section.items, active, setActive)}
+          items={toAccordionItems(section.items, active, setActive, navigate)}
         />
       ))}
     </>

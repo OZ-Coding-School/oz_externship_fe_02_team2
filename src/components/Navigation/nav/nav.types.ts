@@ -1,5 +1,7 @@
+import type { PathValue } from '@/routes/constants'
+
 export type NavItemDef = {
-  key: string
+  key: PathValue
   label: string
   defaultIcon: string
   activeIcon: string
