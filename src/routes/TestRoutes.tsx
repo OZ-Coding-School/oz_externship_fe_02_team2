@@ -6,6 +6,7 @@ import TestRoot from '@/pages/test/TestRoot'
 import MainPage from '@/pages/main/MainPage'
 import { PATHS } from './constants'
 import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
+import LoginPage from '@/pages/auth/LoginPage'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -14,6 +15,7 @@ export default function TestRoutes() {
   return (
     <Routes>
       <Route path="/" element={<TestRoot />}>
+        <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.APP} element={<MainPage />}>
           {/* /app 진입 시 대시보드 페이지로 */}
           <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
