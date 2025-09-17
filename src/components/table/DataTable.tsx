@@ -1,7 +1,7 @@
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
 import { cls } from '@/lib/table'
 import Pagination from '../ui/Pagination/Pagination'
-import { useCallback, useEffect, useMemo } from 'react'
+import { isValidElement, useCallback, useEffect, useMemo } from 'react'
 import { makeComparer, type Getter } from './sort'
 import SortIcon from './SortIcon'
 
@@ -20,6 +20,35 @@ type TableProps<T> = {
   stickyHeader?: boolean
   nowrapCells?: boolean
   wrapCells?: boolean
+}
+
+function toNode(v: unknown): React.ReactNode {
+  if (v == null) return null
+
+  // 이미 React 엘리먼트면 그대로
+  if (isValidElement(v)) return v
+
+  // 원시 타입
+  if (
+    typeof v === 'string' ||
+    typeof v === 'number' ||
+    typeof v === 'bigint' ||
+    typeof v === 'boolean'
+  ) {
+    return String(v)
+  }
+
+  // 배열(Iterable) → 각 요소를 재귀 변환
+  if (Array.isArray(v)) {
+    return v.map(toNode)
+  }
+
+  // 함수/Promise 등 ReactNode 불가 타입은 문자열 등으로 안전 변환
+  if (typeof v === 'function') return String(v)
+  if (v instanceof Promise) return null // 또는 '...'
+
+  // 그 외 객체(Date 등)
+  return String(v)
 }
 
 export function DataTable<T>({
@@ -222,9 +251,14 @@ export function DataTable<T>({
                           ? row[col.accessor as keyof T]
                           : undefined
 
-                    const content =
-                      col.cell?.({ value: raw, row, rowIndex: i }) ??
-                      String(raw ?? '')
+                    const cellValue = col.cell?.({
+                      value: raw,
+                      row,
+                      rowIndex: i,
+                    })
+
+                    const content: React.ReactNode =
+                      cellValue !== undefined ? cellValue : toNode(raw)
 
                     return (
                       <td
