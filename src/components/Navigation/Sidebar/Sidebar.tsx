@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer, Nav } from './parts'
-
-import { useLocation } from 'react-router'
 import { getPage } from '@/lib'
 import { PATHS } from '@/routes/constants'
+import { useLocation } from 'react-router'
 
 // 로컬 스토리지에 사이드바 확장 상태 저장
 const LS_KEY = 'sidebar:expanded'
@@ -14,7 +13,6 @@ export default function Sidebar({
   mobileDrawerOpen,
   onMobileDrawerOpenChange,
 }: SidebarProps) {
-  // const navigate = useNavigate()
   const { pathname } = useLocation()
 
   // ≥md: Expanded↔Rail (md 이상일 때에만 로컬스토리지에 저장된 값 복원)
