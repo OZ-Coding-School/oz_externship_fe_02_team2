@@ -6,6 +6,12 @@ type FormProps = {
   setEmail: (email: string) => void
 }
 
+const INPUT_STYLE =
+  'placeholder:body-sm h-13 rounded-sm placeholder:tracking-tighter placeholder:text-[#BDBDBD]'
+
+const BUTTON_STYLE =
+  'body-base h-13 w-full rounded-sm bg-[#F6A818] font-normal text-white'
+
 export default function Form({ email, setEmail }: FormProps) {
   return (
     <form className="flex w-full flex-col items-center gap-3">
@@ -21,7 +27,7 @@ export default function Form({ email, setEmail }: FormProps) {
             : '이메일 형식이 올바르지 않습니다.'
         }
         size="lg"
-        className="placeholder:body-sm h-13 rounded-sm placeholder:tracking-tighter placeholder:text-[#BDBDBD]"
+        className={INPUT_STYLE}
         containerClassName="w-full"
       />
 
@@ -31,7 +37,7 @@ export default function Form({ email, setEmail }: FormProps) {
         showPasswordToggle={false}
         required
         size="lg"
-        className="placeholder:body-sm h-13 rounded-sm placeholder:tracking-tighter placeholder:text-[#BDBDBD]"
+        className={INPUT_STYLE}
         containerClassName="w-full"
       />
 
@@ -40,7 +46,7 @@ export default function Form({ email, setEmail }: FormProps) {
         type="submit"
         btnSize="large"
         btnText="로그인"
-        className="body-base h-13 w-full rounded-sm bg-[#F6A818] font-normal text-white"
+        className={BUTTON_STYLE}
       />
     </form>
   )
