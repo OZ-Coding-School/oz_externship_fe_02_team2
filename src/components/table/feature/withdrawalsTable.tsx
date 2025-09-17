@@ -16,7 +16,13 @@ const columns: Column<WithdrawalRow>[] = [
     sortable: true,
   },
   { id: 'email', header: '이메일', accessor: 'email', width: '220px' },
-  { id: 'name', header: '이름', accessor: 'name', width: '100px' },
+  {
+    id: 'name',
+    header: '이름',
+    accessor: 'name',
+    width: '100px',
+    sortable: true,
+  },
   {
     id: 'role',
     header: '권한',
@@ -39,8 +45,9 @@ const columns: Column<WithdrawalRow>[] = [
   {
     id: 'withdrawnAt',
     header: '탈퇴일시',
-    accessor: (r) => fmtDate(r.withdrawnAt),
+    accessor: (r) => fmtDate(r.withdrawnAt, { withTime: true }),
     width: '170px',
+    sortable: true,
   },
 ]
 

@@ -11,7 +11,8 @@ const columns: Column<StudyGroupRow>[] = [
     id: 'cover',
     header: '대표 이미지',
     accessor: 'cover',
-    width: '72px',
+    width: '110px',
+    align: 'center',
     cell: ({ value }) =>
       value ? (
         <img className="h-10 w-16 rounded object-cover" src={value} alt="" />
@@ -19,13 +20,25 @@ const columns: Column<StudyGroupRow>[] = [
         '-'
       ),
   },
-  { id: 'title', header: '그룹명', accessor: 'title' },
+  {
+    id: 'title',
+    header: '그룹명',
+    accessor: 'title',
+    width: '200px',
+    sortable: true,
+  },
   {
     id: 'enroll',
     header: '인원 현황',
-    accessor: (r) => `${r.enrolled} / ${r.capacity}`,
+    accessor: (r) => (
+      <div className="leading-tight whitespace-pre-line">
+        <span className="font-medium">{r.enrolled}</span>
+        {'\n'}
+        <span className="font-normal">/ {r.capacity}명</span>
+      </div>
+    ),
     width: '120px',
-    align: 'center',
+    align: 'left',
   },
   {
     id: 'period',
@@ -51,13 +64,14 @@ const columns: Column<StudyGroupRow>[] = [
   {
     id: 'created',
     header: '생성일시',
-    accessor: (r) => fmtDate(r.createdAt),
+    accessor: (r) => fmtDate(r.createdAt, { withTime: true }),
     width: '160px',
+    sortable: true,
   },
   {
     id: 'updated',
     header: '수정일시',
-    accessor: (r) => fmtDate(r.updatedAt),
+    accessor: (r) => fmtDate(r.updatedAt, { withTime: true }),
     width: '160px',
   },
 ]
