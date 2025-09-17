@@ -1,9 +1,6 @@
-import { useState } from 'react'
 import { Description, Form, Header, RightYellowDiv } from './parts'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-
   return (
     <main className="flex h-screen w-screen bg-white px-4 md:px-0">
       {/* 로그인 섹션: md 이상 너비 840px 고정 */}
@@ -12,7 +9,7 @@ export default function LoginPage() {
         <div className="flex w-82 flex-col items-center">
           <Header />
           <Description />
-          <Form email={email} setEmail={setEmail} />
+          <Form />
         </div>
       </section>
 
