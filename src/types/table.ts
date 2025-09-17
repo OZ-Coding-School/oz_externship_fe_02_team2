@@ -11,7 +11,7 @@ export type Column<T> = {
     | string
     | ((c: { sort: SortState; onSort: () => void }) => React.ReactNode)
   /** 셀 값 접근자: key 문자열 or 함수 */
-  accessor?: keyof T | ((row: T) => unknown)
+  accessor?: keyof T | ((row: T) => React.ReactNode)
   /** 셀 렌더러(값, 행 단위 가공) */
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => React.ReactNode
   /** 정렬 가능 */
