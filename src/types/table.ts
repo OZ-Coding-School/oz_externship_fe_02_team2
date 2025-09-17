@@ -16,10 +16,12 @@ export type Column<T> = {
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => React.ReactNode
   /** 정렬 가능 */
   sortable?: boolean
+  sortAccessor?: (row: T) => unknown
   /** 폭/정렬/숨김 */
   width?: string
   align?: Align
   hidden?: boolean
+  className?: string
 }
 
 export type TableState = {
@@ -31,6 +33,7 @@ export type TableState = {
 
 export type TableMeta<T> = {
   totalPages?: number
+  clientPaging?: boolean // 클라 페이징(로컬 데이터 슬라이스) 사용 시 true
   rowKey: (row: T, index: number) => string | number
   total?: number // 서버 페이지네이션일 때 전체 개수
   loading?: boolean
