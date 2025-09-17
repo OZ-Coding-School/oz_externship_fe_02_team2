@@ -15,9 +15,11 @@ export default function TestRoutes() {
   return (
     <Routes>
       <Route path="/" element={<TestRoot />}>
+        {/* TODO: 로그인 안 한 경우 -> 어디로 접속하든 /login으로 라우팅 가드 */}
+        {/* 지금은 테스트용으로 루트경로/login으로 둠 */}
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.APP} element={<MainPage />}>
-          {/* /app 진입 시 대시보드 페이지로 */}
+          {/* /app 진입 시 + 로그인 한 경우 -> 대시보드 페이지로 */}
           <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
           <Route path={PATHS.USER} element={<PlaceHolderPage />} />
           <Route path={PATHS.WITHDRAWAL} element={<PlaceHolderPage />} />
