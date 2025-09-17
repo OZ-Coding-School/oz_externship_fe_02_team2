@@ -28,6 +28,9 @@ return <Button btnText={'기본 버튼'} onClick={handleClick} />
 
 - 모든 props는 optional(선택 입력 사항)
 
+- `type`: 버튼 타입 지정
+  - 'button' | 'submit' | 'reset'
+  - 기본값은 'button'
 - `btnStyle`: 버튼의 스타일 지정
   - 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'cancel' 중 택 1
   - 기본값은 'primary'
