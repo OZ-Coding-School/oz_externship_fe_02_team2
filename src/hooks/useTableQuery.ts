@@ -26,6 +26,12 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   } = options
   const [searchParams, setSearchParams] = useSearchParams()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearDebounce = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+  }, [])
 
   // URL에서 초기 상태 복원
   const getInitialQueryFromUrl = useCallback((): TableQuery => {
@@ -100,12 +106,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     // `query` 의존성을 제거하기 위해 함수형 업데이트 사용
     (updates: Partial<TableQuery>, immediate = false) => {
       // 디바운스 타이머가 있다면 즉시 클리어
-      if (debounceRef.current) {
-        dbg('debounce: cleared pending timer (new updates arrived)', {
-          updates,
-        })
-        clearTimeout(debounceRef.current)
-      }
+      clearDebounce()
 
       const isDebounced =
         'q' in updates &&
@@ -120,8 +121,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         })
         setQuery((prevQuery) => {
           const newQuery = { ...prevQuery, ...updates }
-          // 페이지 리셋 조건
-          if ('q' in updates && !immediate && (updates.q ?? '').trim() !== '') {
+          // q가 '변했으면' 즉시/디바운스 모두 1페이지로
+          if ('q' in updates && (updates.q ?? '') !== (prevQuery.q ?? '')) {
             newQuery.page = 1
           }
 
@@ -149,7 +150,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         performUpdate()
       }
     },
-    [updateUrl, onQueryChange, debounceMs] // `query` 의존성 제거로 함수 안정성 확보
+    [updateUrl, onQueryChange, debounceMs, clearDebounce] // `query` 의존성 제거로 함수 안정성 확보
   )
 
   // 개별 액션들
@@ -198,26 +199,21 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const reset = useCallback(() => {
-    if (debounceRef.current) {
-      dbg('reset(): clear pending debounce')
-      clearTimeout(debounceRef.current)
-    }
+    clearDebounce()
     dbg('reset(): restore to DEFAULT + initialQuery')
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
     onQueryChange?.(resetQuery)
-  }, [initialQuery, updateUrl, onQueryChange])
+  }, [initialQuery, updateUrl, onQueryChange, clearDebounce])
 
   // 클린업
   useEffect(() => {
     return () => {
-      if (debounceRef.current) {
-        dbg('cleanup: component unmount -> clear pending debounce')
-        clearTimeout(debounceRef.current)
-      }
+      dbg('cleanup: component unmount -> clear pending debounce')
+      clearDebounce()
     }
-  }, [])
+  }, [clearDebounce])
 
   const setPageSize = useCallback(
     (pageSize: number) => updateQuery({ pageSize, page: 1 }, true),
