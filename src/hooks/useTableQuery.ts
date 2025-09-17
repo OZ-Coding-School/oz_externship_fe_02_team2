@@ -13,6 +13,11 @@ const DEFAULT_QUERY: TableQuery = {
 }
 
 export function useTableQuery(options: UseTableQueryOptions = {}) {
+  const DEBUG = true
+  const dbg = (...args: any[]) => {
+    if (DEBUG) console.log('[useTableQuery]', ...args)
+  }
+
   const {
     initialQuery = {},
     onQueryChange,
@@ -96,10 +101,23 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     (updates: Partial<TableQuery>, immediate = false) => {
       // 디바운스 타이머가 있다면 즉시 클리어
       if (debounceRef.current) {
+        dbg('debounce: cleared pending timer (new updates arrived)', {
+          updates,
+        })
         clearTimeout(debounceRef.current)
       }
 
+      const isDebounced =
+        'q' in updates &&
+        !immediate &&
+        typeof updates.q === 'string' &&
+        updates.q.trim() !== ''
+
       const performUpdate = () => {
+        dbg('apply updates', {
+          updates,
+          source: isDebounced ? 'debounced' : 'immediate',
+        })
         setQuery((prevQuery) => {
           const newQuery = { ...prevQuery, ...updates }
           // 페이지 리셋 조건
@@ -114,17 +132,20 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
           return newQuery
         })
       }
-
-      // `q`가 업데이트되고, 즉시 실행이 아니며, 비어있지 않은 경우에만 디바운스 적용
-      if (
-        'q' in updates &&
-        !immediate &&
-        updates.q &&
-        updates.q.trim() !== ''
-      ) {
-        debounceRef.current = setTimeout(performUpdate, debounceMs)
+      if (isDebounced) {
+        const scheduledAt = Date.now()
+        dbg('debounce: scheduled', {
+          q: (updates as any).q,
+          wait: debounceMs,
+        })
+        debounceRef.current = setTimeout(() => {
+          const waited = Date.now() - scheduledAt
+          dbg('debounce: fired', { waited })
+          performUpdate()
+        }, debounceMs)
       } else {
         // 그 외 모든 경우는 즉시 실행
+        dbg('update: immediate', { updates })
         performUpdate()
       }
     },
@@ -134,6 +155,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   // 개별 액션들
   const setSearch = useCallback(
     (q: string, immediate = false) => {
+      dbg('setSearch()', { q, immediate })
       // `immediate` 플래그를 updateQuery로 전달
       updateQuery({ q }, immediate)
     },
@@ -177,8 +199,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const reset = useCallback(() => {
     if (debounceRef.current) {
+      dbg('reset(): clear pending debounce')
       clearTimeout(debounceRef.current)
     }
+    dbg('reset(): restore to DEFAULT + initialQuery')
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
@@ -189,6 +213,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   useEffect(() => {
     return () => {
       if (debounceRef.current) {
+        dbg('cleanup: component unmount -> clear pending debounce')
         clearTimeout(debounceRef.current)
       }
     }
@@ -205,6 +230,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     setQuery((prev) =>
       JSON.stringify(prev) === JSON.stringify(fromUrl) ? prev : fromUrl
     )
+    dbg('url sync check', { fromUrl })
   }, [searchParams, getInitialQueryFromUrl, syncUrl])
 
   return {
