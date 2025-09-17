@@ -12,7 +12,6 @@ const columns: Column<UserRow>[] = [
     id: 'memberId',
     header: '회원 ID',
     accessor: 'memberId',
-    sortable: true,
     width: '90px',
   },
   { id: 'email', header: '이메일', accessor: 'email', width: '220px' },
