@@ -105,6 +105,32 @@ export function TableFilterBar({
     }
   }
 
+  const handleCompositionStart = useCallback(() => {
+    composingRef.current = true
+  }, [])
+
+  const handleCompositionEnd = (
+    e: React.CompositionEvent<HTMLInputElement>
+  ) => {
+    composingRef.current = false
+    const v = (e.currentTarget as HTMLInputElement).value
+
+    // 조합 종료 후 즉시 검색 실행할지 결정
+    const shouldCommitImmediately =
+      v.trim() !== '' && // 빈 문자열이 아닐 때
+      v !== (query.q ?? '') // 현재 쿼리와 다를 때
+
+    if (shouldCommitImmediately) {
+      // 약간의 지연 후 즉시 커밋 (브라우저 렌더링 사이클 고려)
+      setTimeout(() => {
+        commitNow(v)
+      }, 10)
+    } else {
+      // 일반적인 디바운스 경로
+      onQueryChange.setSearch(v)
+    }
+  }
+
   const handleClearSearch = () => {
     setDraft('')
     commitNow('') // 즉시 초기화
@@ -138,15 +164,8 @@ export function TableFilterBar({
             value={draft}
             onChange={onChange}
             onKeyDown={handleKeyDown} // Enter 키 이벤트 핸들러 추가
-            onCompositionStart={() => {
-              composingRef.current = true
-            }}
-            onCompositionEnd={(e) => {
-              composingRef.current = false
-              const finalValue = (e.currentTarget as HTMLInputElement).value
-              // 일부 환경에서 compositionend가 value 반영보다 먼저 올 수 있음 → 다음 틱에 즉시 커밋
-              setTimeout(() => commitNow(finalValue), 0)
-            }}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             onBlur={(e) => {
               // 블러: 마지막 값 즉시 커밋
               const v = (e.currentTarget as HTMLInputElement).value

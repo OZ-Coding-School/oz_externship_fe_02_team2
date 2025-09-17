@@ -139,6 +139,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
             newQuery.page = 1
           }
 
+          // 다음 업데이트에서 참조할 이전 q를 즉시 동기화
+          prevQRef.current = newQuery.q ?? ''
           // 실제 업데이트 실행 (URL 동기화, 콜백 호출)
           updateUrl(newQuery)
           onQueryChange?.(newQuery)
