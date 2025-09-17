@@ -30,7 +30,13 @@ const columns: Column<StudyGroupRow>[] = [
   {
     id: 'enroll',
     header: '인원 현황',
-    accessor: (r) => `${r.enrolled}\n  / ${r.capacity}명`,
+    accessor: (r) => (
+      <div className="leading-tight whitespace-pre-line">
+        <span className="font-medium">{r.enrolled}</span>
+        {'\n'}
+        <span className="font-normal">/ {r.capacity}명</span>
+      </div>
+    ),
     width: '120px',
     align: 'left',
   },
