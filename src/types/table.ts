@@ -32,10 +32,17 @@ export type TableState = {
 }
 
 export type TableMeta<T> = {
-  totalPages?: number
-  clientPaging?: boolean // 클라 페이징(로컬 데이터 슬라이스) 사용 시 true
-  rowKey: (row: T, index: number) => string | number
-  total?: number // 서버 페이지네이션일 때 전체 개수
+  // --- 페이지네이션 ---
+  totalPages?: number // 서버가 내려주는 총 페이지 (서버 페이징)
+  clientPaging?: boolean // true면 클라에서 pageSize로 나눔
+  alwaysShowPagination?: boolean
+
+  // --- 정렬 ---
+  enableClientSort?: boolean // 기본 true → 정렬 수행
+  // (false면 DataTable은 sort 아이콘만 표시하고 데이터 순서는 건드리지 않음)
+
+  total?: number
   loading?: boolean
   emptyText?: string
+  rowKey?: (row: T, index: number) => React.Key
 }
