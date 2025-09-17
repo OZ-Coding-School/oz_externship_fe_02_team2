@@ -1,4 +1,11 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import type { TableFilterConfig, TableQuery } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
@@ -26,9 +33,10 @@ export function TableFilterBar({
   className,
   children,
 }: TableFilterBarProps) {
-  const [inputValue, setInputValue] = useState(query.q)
+  const panelId = useId()
+  const [draft, setDraft] = useState<string>(query.q ?? '')
+  const composingRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const isComposing = useRef(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const {
     searchPlaceholder = '검색어를 입력하세요',
@@ -37,29 +45,28 @@ export function TableFilterBar({
     statusOptions = [],
     roleOptions = [],
   } = config
-  const panelId = useId()
 
-  // 외부 `query.q`가 변경되면(예: 초기화 버튼, URL 변경) 로컬 상태에 반영
-  useEffect(() => {
-    setInputValue(query.q)
-  }, [query.q])
+  const commitNow = useCallback(
+    (value: string) => {
+      onQueryChange.setSearch(value, true) // 즉시 커밋(디바운스 우회)
+    },
+    [onQueryChange]
+  )
+  // 입력 변화: draft만 갱신, 상위 쿼리는 건드리지 않음
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value
+    setDraft(v)
+    const isComposing =
+      (e.nativeEvent as any).isComposing || composingRef.current
+    // 조합 중에는 상위로 커밋하지 않음
+    // 조합이 아니면 '디바운스 경로'로만 반영 (즉시 커밋 금지)
+    if (!isComposing) onQueryChange.setSearch(v)
+  }
 
   const statusDropdownOptions = useMemo(() => {
     if (statusOptions.length === 0) return []
     return [{ value: '', label: '전체 상태' }, ...statusOptions]
   }, [statusOptions])
-
-  // 입력값 변경 핸들러
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    // UI 피드백을 위해 로컬 상태는 항상 즉시 업데이트
-    setInputValue(newValue)
-    // 조합 중이 아닐 때만 디바운스된 검색을 호출 (핵심)
-    if (!isComposing.current) {
-      // 입력 중엔 훅 쪽 디바운스 사용(즉시 아님)
-      onQueryChange.setSearch(newValue /* immediate? */)
-    }
-  }
 
   const roleDropdownOptions = useMemo(() => {
     if (roleOptions.length === 0) return []
@@ -68,7 +75,7 @@ export function TableFilterBar({
 
   const activeFilterCount = useMemo(() => {
     let count = 0
-    if (query.q.trim()) count++
+    if ((query.q ?? '').trim()) count++
     if (query.status) count++
     if (query.role) count++
     return count
@@ -84,19 +91,29 @@ export function TableFilterBar({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // IME 조합 중이 아닐 때 Enter 키를 누르면 즉시 검색 실행
-    const composing = (e.nativeEvent as any).isComposing || isComposing.current
+    const composing = (e.nativeEvent as any).isComposing || composingRef.current
     if (e.key === 'Enter' && !composing) {
       e.preventDefault()
       // `immediate: true`를 전달하여 훅의 디바운스를 건너뛰고 즉시 검색을 실행
-      onQueryChange.setSearch(e.currentTarget.value, true)
+      commitNow((e.currentTarget as HTMLInputElement).value)
     }
   }
 
   const handleClearSearch = () => {
-    setInputValue('')
-    onQueryChange.setSearch('', true) // 즉시 초기화
+    setDraft('')
+    commitNow('') // 즉시 초기화
     inputRef.current?.focus()
   }
+
+  // 외부 `query.q`가 변경되면(예: 초기화 버튼, URL 변경) 로컬 상태에 반영
+  useEffect(() => {
+    // 외부 쿼리 변경을 입력창에 반영하되,
+    // 조합 중이거나 포커스 중이면 건드리지 않는다(리셋 방지).
+    if (composingRef.current) return
+    const isFocused = inputRef.current === document.activeElement
+    if (isFocused) return
+    setDraft(query.q ?? '')
+  }, [query.q])
 
   return (
     <section
@@ -112,16 +129,22 @@ export function TableFilterBar({
           <Input
             ref={inputRef}
             type="text"
-            value={inputValue}
-            onChange={handleInputChange}
+            value={draft}
+            onChange={onChange}
             onKeyDown={handleKeyDown} // Enter 키 이벤트 핸들러 추가
             onCompositionStart={() => {
-              isComposing.current = true
+              composingRef.current = true
             }}
-            onCompositionEnd={() => {
-              // 조합 종료 시 현재 값으로 디바운스 검색 1회
-              isComposing.current = false
-              onQueryChange.setSearch(inputRef.current?.value ?? '')
+            onCompositionEnd={(e) => {
+              composingRef.current = false
+              const finalValue = (e.currentTarget as HTMLInputElement).value
+              // 일부 환경에서 compositionend 타이밍 보정
+              setTimeout(() => commitNow(finalValue), 0)
+            }}
+            onBlur={(e) => {
+              // 블러: 마지막 값 즉시 커밋
+              const v = (e.currentTarget as HTMLInputElement).value
+              if (v !== (query.q ?? '')) commitNow(v)
             }}
             placeholder={searchPlaceholder}
             enterKeyHint="search"
@@ -130,7 +153,7 @@ export function TableFilterBar({
             className="w-full pr-10" // 오른쪽 X 자리 확보하는 css
             aria-label="검색어 입력"
           />
-          {inputValue && (
+          {draft && (
             <button
               type="button"
               onClick={handleClearSearch}
