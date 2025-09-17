@@ -131,7 +131,7 @@ export function DataTable<T>({
 
       {/* 테이블 */}
       <div className="overflow-x-auto">
-        <table className="min-w-max text-xs sm:text-sm">
+        <table className="body-xs sm:body-sm w-full max-w-full min-w-max table-auto">
           <thead
             className={cls(
               'bg-base-200/60',
@@ -153,9 +153,9 @@ export function DataTable<T>({
                     className={cls(
                       'px-3 py-2 text-left font-medium whitespace-nowrap',
                       col.align === 'center' && 'text-center',
+                      col.align === 'left' && 'text-left',
                       col.align === 'right' && 'text-right'
                     )}
-                    style={{ width: col.width }}
                     scope="col"
                   >
                     {col.sortable ? (
@@ -230,7 +230,8 @@ export function DataTable<T>({
                       <td
                         key={col.id}
                         className={cls(
-                          'px-3 py-2 align-middle',
+                          'px-3 py-2 align-middle whitespace-pre-wrap',
+                          col.align === 'left' && 'text-left',
                           col.align === 'center' && 'text-center',
                           col.align === 'right' && 'text-right',
                           nowrapCells && 'whitespace-nowrap',
