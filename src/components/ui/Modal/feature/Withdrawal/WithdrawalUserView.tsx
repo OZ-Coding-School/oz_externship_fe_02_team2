@@ -12,7 +12,7 @@ function WithdrawalUserViewBase({ form }: Props) {
   return (
     <>
       {/* Header */}
-      <Modal.Header className="pb-0">
+      <Modal.Header className="pb-2">
         <Modal.Title>회원 정보</Modal.Title>
       </Modal.Header>
 
