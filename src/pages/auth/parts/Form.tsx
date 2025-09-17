@@ -36,6 +36,7 @@ export default function Form({ email, setEmail }: FormProps) {
         placeholder="비밀번호 (6~15자의 영문 대소문자, 숫자, 특수문자 포함)"
         showPasswordToggle={false}
         required
+        error={}
         size="lg"
         className={INPUT_STYLE}
         containerClassName="w-full"
