@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router'
-import { getPageTitle } from './main.utils'
+import { getPageTitle } from '../../lib/getPageString'
 
 /** 라우팅 테스트용 임시 페이지 */
 export default function PlaceHolderPage() {

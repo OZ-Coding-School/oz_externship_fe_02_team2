@@ -10,6 +10,7 @@ export type AccordionItem = {
   label: string
   onClick: () => void
   active?: boolean
+  navigate?: (to: string) => void // 컴포넌트에서 react-router의 navigate 주입
 }
 
 /** 아이콘+라벨 공통 비주얼 베이스 */

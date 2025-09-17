@@ -1,4 +1,4 @@
-export const PATHS: Record<string, string> = {
+export const PATHS = {
   TEST: 'test-hub',
   APP: 'app',
 
@@ -14,7 +14,9 @@ export const PATHS: Record<string, string> = {
 
   POST: 'post',
   APPLICATION: 'application',
-}
+} as const
+
+export type PathValue = (typeof PATHS)[keyof typeof PATHS]
 
 export const PAGE_TITLE: Record<string, string> = {
   USER: '회원 관리',
@@ -27,4 +29,4 @@ export const PAGE_TITLE: Record<string, string> = {
 
   POST: '스터디 구인 공고 관리',
   APPLICATION: '지원 내역 관리',
-}
+} as const

@@ -1,16 +1,7 @@
-// 하위 메뉴
-export type NavKey =
-  | 'user'
-  | 'withdrawal'
-  | 'dashboard'
-  | 'lecture'
-  | 'studygroup'
-  | 'review'
-  | 'post'
-  | 'application'
+import type { PathValue } from '@/routes/constants'
 
 export type NavItemDef = {
-  key: NavKey
+  key: PathValue
   label: string
   defaultIcon: string
   activeIcon: string
@@ -23,5 +14,5 @@ export type NavSectionDef = {
   id: NavSectionId
   label: string
   icon: string
-  items: readonly NavItemDef[]
+  items: NavItemDef[]
 }

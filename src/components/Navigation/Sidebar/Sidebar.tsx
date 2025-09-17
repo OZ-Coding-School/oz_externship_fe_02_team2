@@ -1,35 +1,42 @@
 import { useEffect, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer, Nav } from './parts'
-import type { NavKey } from '../nav'
 
-// import { useNavigate } from 'react-router'
-// TODO: 현재 경로에 따라 active 상태 매핑 + 그냥 메인으로 들어왔을 경우 최상단 /users로
+import { useLocation } from 'react-router'
+import { getPage } from '@/lib'
+import { PATHS } from '@/routes/constants'
+
+// TODO: 메뉴 클릭했을 때 경로로 가게
 
 export default function Sidebar({
   mobileDrawerOpen,
   onMobileDrawerOpenChange,
-  scope = 'container',
 }: SidebarProps) {
   // const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   const [expanded, setExpanded] = useState(true) // ≥md: Expanded↔Rail
   const [internalOpen, setInternalOpen] = useState(false) // <md: Drawer
   const drawerOpen = mobileDrawerOpen ?? internalOpen
   const setDrawerOpen = onMobileDrawerOpenChange ?? setInternalOpen
 
-  // TODO: 경로에 따라 하위 메뉴 active 상태 결정
-  const [activeMenu, setActiveMenu] = useState<NavKey | null>('user')
+  const [activeMenu, setActiveMenu] = useState<string>(PATHS.DASHBOARD)
 
-  // 드로어 오버레이 열린 경우 바디 스크롤 잠금 (viewport 스코프일 때만)
+  // 경로(페이지)에 맞게 메뉴 활성화
   useEffect(() => {
-    if (!drawerOpen || scope !== 'viewport') return
+    const currentPage = getPage(pathname)
+    setActiveMenu(currentPage)
+  }, [pathname])
+
+  // 드로어 오버레이 열린 경우 바디 스크롤 잠금
+  useEffect(() => {
+    if (!drawerOpen) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prev
     }
-  }, [drawerOpen, scope])
+  }, [drawerOpen])
 
   return (
     <>
@@ -45,11 +52,7 @@ export default function Sidebar({
         />
       </DesktopAside>
 
-      <MobileDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        scope={scope}
-      >
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Nav
           expanded
           active={activeMenu}
