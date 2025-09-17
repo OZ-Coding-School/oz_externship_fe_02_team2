@@ -1,4 +1,4 @@
-import Symbol from 'public/symbol.svg'
+import Symbol from '@assets/icons/symbol.svg'
 
 /** 사이트 심볼&로고와 페이지 제목(관리자 로그인) */
 export default function Header() {
