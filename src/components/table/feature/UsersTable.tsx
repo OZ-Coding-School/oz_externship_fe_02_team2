@@ -131,6 +131,7 @@ export default function UsersTable({
       meta={{
         rowKey: (r) => r.memberId,
         total: total ?? totalCountFallback,
+        enableClientSort: true,
         loading,
         emptyText: '회원이 없습니다.',
         totalPages: finalTotalPages, //  API 또는 폴백 총페이지
