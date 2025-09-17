@@ -1,4 +1,4 @@
-import type { UserRow } from '@/components/table/Table.types'
+import type { StudyGroupRow, UserRow } from '@/components/table/Table.types'
 
 export type Tone = 'purple' | 'blue' | 'green' | 'red' | 'yellow' | 'gray'
 export type Variant =
@@ -31,4 +31,10 @@ export const statusToTone: Record<UserRow['status'], Tone> = {
   정지: 'red',
   탈퇴요청: 'yellow',
   비활성: 'gray',
+}
+
+export const studyToTone: Record<StudyGroupRow['status'], Tone> = {
+  대기중: 'blue',
+  진행중: 'green',
+  종료됨: 'gray',
 }
