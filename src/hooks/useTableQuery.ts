@@ -73,6 +73,11 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   }, [searchParams, syncUrl, initialQuery])
 
   const [query, setQuery] = useState<TableQuery>(getInitialQueryFromUrl)
+  const prevQRef = useRef<string>(DEFAULT_QUERY.q)
+
+  useEffect(() => {
+    prevQRef.current = query.q ?? ''
+  }, [query.q])
 
   // URL 동기화
   const updateUrl = useCallback(
@@ -105,14 +110,21 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   const updateQuery = useCallback(
     // `query` 의존성을 제거하기 위해 함수형 업데이트 사용
     (updates: Partial<TableQuery>, immediate = false) => {
-      // 디바운스 타이머가 있다면 즉시 클리어
       clearDebounce()
 
-      const isDebounced =
-        'q' in updates &&
+      const nextQ = typeof updates.q === 'string' ? updates.q : undefined
+      const prevQ = prevQRef.current ?? ''
+      // 첫 글자: 빈 -> 비어있지 않음  => 즉시
+      const firstCharImmediate =
+        nextQ !== undefined &&
         !immediate &&
-        typeof updates.q === 'string' &&
-        updates.q.trim() !== ''
+        prevQ.trim() === '' &&
+        nextQ.trim() !== ''
+      // 지우기(공백 포함) => 즉시
+      const clearImmediate =
+        nextQ !== undefined && !immediate && nextQ.trim() === ''
+      const isDebounced =
+        'q' in updates && !immediate && !firstCharImmediate && !clearImmediate
 
       const performUpdate = () => {
         dbg('apply updates', {
@@ -121,7 +133,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
         })
         setQuery((prevQuery) => {
           const newQuery = { ...prevQuery, ...updates }
-          // q가 '변했으면' 즉시/디바운스 모두 1페이지로
+          // 페이지 리셋 조건
+          // q가 바뀌면 언제나 1페이지로
           if ('q' in updates && (updates.q ?? '') !== (prevQuery.q ?? '')) {
             newQuery.page = 1
           }
@@ -199,7 +212,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const reset = useCallback(() => {
-    clearDebounce()
+    if (debounceRef.current) {
+      dbg('reset(): clear pending debounce')
+      clearTimeout(debounceRef.current)
+    }
     dbg('reset(): restore to DEFAULT + initialQuery')
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
