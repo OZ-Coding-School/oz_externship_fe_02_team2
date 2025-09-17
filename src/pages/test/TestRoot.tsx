@@ -21,6 +21,12 @@ export default function TestRoot() {
                   className="flex-1"
                 />
                 <Button
+                  onClick={() => navigate(`/${PATHS.LOGIN}`)}
+                  btnText="로그인 페이지로"
+                  btnStyle="cancel"
+                  className="flex-1"
+                />
+                <Button
                   onClick={() => navigate(`/${PATHS.TEST}`)}
                   btnText="테스트 페이지로"
                   btnStyle="secondary"
