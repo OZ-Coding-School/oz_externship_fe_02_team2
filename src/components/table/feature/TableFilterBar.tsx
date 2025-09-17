@@ -60,7 +60,9 @@ export function TableFilterBar({
       (e.nativeEvent as any).isComposing || composingRef.current
     // 조합 중에는 상위로 커밋하지 않음
     // 조합이 아니면 '디바운스 경로'로만 반영 (즉시 커밋 금지)
-    if (!isComposing) onQueryChange.setSearch(v)
+    if (!isComposing) {
+      onQueryChange.setSearch(v)
+    }
   }
 
   const statusDropdownOptions = useMemo(() => {
@@ -90,11 +92,15 @@ export function TableFilterBar({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // IME 조합 중이 아닐 때 Enter 키를 누르면 즉시 검색 실행
+    // 일부 환경에서 첫 onChange가 compositionstart보다 먼저 발생하는 이슈 대응
+    // key === 'Process' 또는 keyCode === 229면 IME 조합 시작 신호로 간주
+    const anyEvt = e as any
+    if (e.key === 'Process' || anyEvt.keyCode === 229) {
+      composingRef.current = true
+    }
     const composing = (e.nativeEvent as any).isComposing || composingRef.current
     if (e.key === 'Enter' && !composing) {
       e.preventDefault()
-      // `immediate: true`를 전달하여 훅의 디바운스를 건너뛰고 즉시 검색을 실행
       commitNow((e.currentTarget as HTMLInputElement).value)
     }
   }
@@ -138,7 +144,7 @@ export function TableFilterBar({
             onCompositionEnd={(e) => {
               composingRef.current = false
               const finalValue = (e.currentTarget as HTMLInputElement).value
-              // 일부 환경에서 compositionend 타이밍 보정
+              // 일부 환경에서 compositionend가 value 반영보다 먼저 올 수 있음 → 다음 틱에 즉시 커밋
               setTimeout(() => commitNow(finalValue), 0)
             }}
             onBlur={(e) => {
