@@ -1,13 +1,11 @@
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
 import { cls } from '@/lib/table'
 import Pagination from '../ui/Pagination/Pagination'
-import { makeComparer, type Getter } from './sort'
 import { useCallback, useEffect, useMemo } from 'react'
+import { makeComparer, type Getter } from './sort'
 import SortIcon from './SortIcon'
 
-type MobileKeep =
-  | 'all' // 모바일에서도 전부 보이게(기본)
-  | number // 앞에서부터 N개만 보이기(원하면 숫자로)
+type MobileKeep = 'all' | number
 
 type TableProps<T> = {
   columns?: Column<T>[]
@@ -18,10 +16,10 @@ type TableProps<T> = {
   toolbar?: React.ReactNode
   footerExtra?: React.ReactNode
 
-  mobileKeepCols?: MobileKeep // ← 기본 "all"
-  stickyHeader?: boolean // ← 기본 true
-  nowrapCells?: boolean // ← 기본 true (말줄임)
-  wrapCells?: boolean // ← true면 셀 줄바꿈(break-words)
+  mobileKeepCols?: MobileKeep
+  stickyHeader?: boolean
+  nowrapCells?: boolean
+  wrapCells?: boolean
 }
 
 export function DataTable<T>({
@@ -40,21 +38,23 @@ export function DataTable<T>({
     () => (Array.isArray(columns) ? columns : []),
     [columns]
   )
-
   const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data])
-
-  // 파생: 숨김 제거한 컬럼 목록도 메모이즈
   const visibleCols = useMemo(
     () => safeCols.filter((c) => !c.hidden),
     [safeCols]
   )
+
   const { page, pageSize, sort } = state ?? {
     page: 1,
     pageSize: 10,
     sort: null,
   }
 
-  // --- 정렬용 getter 추출 ----------------------------------------------------
+  const isClientSort = meta?.enableClientSort !== false
+  const isClientPaging = meta?.clientPaging === true
+  const alwaysShowPagination = meta?.alwaysShowPagination === true
+
+  // --- 정렬 파이프라인 (asc/desc) ---
   const getSortGetter = useCallback(
     (col: Column<T> | undefined): Getter<T> | null => {
       if (!col) return null
@@ -69,9 +69,8 @@ export function DataTable<T>({
     []
   )
 
-  // --- 정렬 데이터 (안정 정렬) ------------------------------------------------
   const sortedData = useMemo(() => {
-    if (!sort) return safeData
+    if (!isClientSort || !sort) return safeData
     const col = safeCols.find((c) => c.id === sort.id && c.sortable)
     if (!col) return safeData
 
@@ -81,45 +80,31 @@ export function DataTable<T>({
     const withIdx = safeData.map((row, i) => ({ row, i }))
     withIdx.sort(makeComparer(getter, Boolean(sort.desc)))
     return withIdx.map((x) => x.row)
-  }, [safeData, safeCols, sort, getSortGetter])
+  }, [isClientSort, sort, safeCols, safeData, getSortGetter])
 
-  // --- 페이징 모드 ------------------------------------------------------------
-  const isClientPaging = meta?.clientPaging === true
+  // --- 페이지네이션 파이프라인 ---
   const start = (page - 1) * pageSize
   const end = start + pageSize
 
-  // 서버 모드: 부모가 내려준 페이지 분량을 그대로 사용
-  // 클라 모드: 정렬된 전체에서 슬라이스
-  const renderData: T[] = useMemo(() => {
+  const renderData = useMemo(() => {
     if (isClientPaging) return sortedData.slice(start, end)
-    // 서버 모드에서 헤더 아이콘과 "표시" 일관성을 맞추려면 sortedData를 써도 되지만,
-    // 서버가 정렬 책임을 지는 경우 safeData로 렌더해도 무방함.
-    return safeData
-  }, [isClientPaging, sortedData, safeData, start, end])
+    return sortedData
+  }, [isClientPaging, sortedData, start, end])
 
-  // 총 페이지 계산
   const computedTotalPages = useMemo(() => {
     if (isClientPaging) {
-      const total = Math.ceil((sortedData.length ?? 0) / Math.max(1, pageSize))
-      return Math.max(1, total)
+      return Math.max(1, Math.ceil(sortedData.length / pageSize))
     }
     return Math.max(1, Number(meta?.totalPages ?? 1))
   }, [isClientPaging, sortedData.length, pageSize, meta?.totalPages])
 
-  // page 가 총 페이지를 넘으면 안전하게 클램프
   useEffect(() => {
     if (page > computedTotalPages) onStateChange?.({ page: computedTotalPages })
   }, [page, computedTotalPages, onStateChange])
 
-  // 행 key
-  const rowKey =
-    meta?.rowKey ??
-    ((_: T, i: number) => {
-      // fallback index key
-      return i
-    })
+  const rowKey = meta?.rowKey ?? ((_: T, i: number) => i)
 
-  // --- 정렬 핸들러 (3단계: none → asc → desc → none) -------------------------
+  // --- 정렬 핸들러 (asc/desc toggle) ---
   const handleSort = (col: Column<T>) => {
     if (!col.sortable || !onStateChange) return
     let next: SortState = null
@@ -131,8 +116,10 @@ export function DataTable<T>({
     } else {
       next = null // 초기화
     }
-    onStateChange({ sort: next, page: 1 })
+    onStateChange({ sort: next })
   }
+
+  const showPagination = alwaysShowPagination || computedTotalPages > 1
 
   return (
     <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
@@ -142,7 +129,7 @@ export function DataTable<T>({
         <div className="flex items-center gap-2">{toolbar}</div>
       </div>
 
-      {/* 가로 스크롤 */}
+      {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="min-w-max text-xs sm:text-sm">
           <thead
@@ -263,7 +250,7 @@ export function DataTable<T>({
 
       {/* 푸터 */}
       <div className="border-base-300 flex flex-col gap-3 border-t p-3 sm:flex-row sm:items-center sm:justify-between">
-        {computedTotalPages > 1 && (
+        {showPagination && (
           <div className="flex w-full justify-center">
             <Pagination
               totalPages={computedTotalPages}
@@ -273,7 +260,7 @@ export function DataTable<T>({
           </div>
         )}
 
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start gap-2 sm:ml-auto sm:flex-row sm:items-center">
           <label htmlFor="page-size" className="sr-only">
             페이지당 항목 수
           </label>
@@ -293,7 +280,6 @@ export function DataTable<T>({
               </option>
             ))}
           </select>
-
           {footerExtra}
         </div>
       </div>
