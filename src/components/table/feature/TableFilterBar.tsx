@@ -108,7 +108,10 @@ export function TableFilterBar({
             onChange={onChange}
             onKeyDown={handleKeyDown}
             onCompositionEnd={(e) =>
-              commitNow((e.currentTarget as HTMLInputElement).value)
+              onQueryChange.setSearch(
+                (e.currentTarget as HTMLInputElement).value,
+                false // ← 즉시 커밋 금지, 트레일링 디바운스만
+              )
             }
             onBlur={(e) =>
               commitNow((e.currentTarget as HTMLInputElement).value)
