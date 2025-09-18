@@ -20,11 +20,6 @@ const DEFAULT_QUERY: TableQuery = {
 }
 
 export function useTableQuery(options: UseTableQueryOptions = {}) {
-  const DEBUG = true
-  const dbg = (...args: any[]) => {
-    if (DEBUG) console.log('[useTableQuery]', ...args)
-  }
-
   const {
     initialQuery = {},
     onQueryChange,
@@ -118,7 +113,6 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const updateQuery = useCallback(
     (updates: Partial<TableQuery>) => {
-      dbg('update: immediate', { updates })
       setQuery((prevQuery) => {
         const nextDraft = { ...prevQuery, ...updates }
         // 변경 없음이면 스킵 → 불필요 렌더/URL 동기화 방지(깜빡임 감소)
@@ -141,8 +135,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   // 개별 액션들
   const setSearch = useCallback(
-    (q: string, immediate = false) => {
-      dbg('setSearch()', { q, immediate })
+    (q: string, immediate: boolean = false) => {
       // 즉시 커밋 요청(Enter/Blur 등) → 대기 중 디바운스를 취소하고 바로 반영
       if (immediate) {
         clearDebounce()
@@ -204,11 +197,9 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const reset = useCallback(() => {
     if (debounceRef.current) {
-      dbg('reset(): clear pending debounce')
       clearTimeout(debounceRef.current)
     }
     clearDebounce()
-    dbg('reset(): restore to DEFAULT initialQuery')
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
@@ -229,7 +220,6 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     setQuery((prev) =>
       JSON.stringify(prev) === JSON.stringify(fromUrl) ? prev : fromUrl
     )
-    dbg('url sync check', { fromUrl })
   }, [searchParams, getInitialQueryFromUrl, syncUrl])
 
   useEffect(
