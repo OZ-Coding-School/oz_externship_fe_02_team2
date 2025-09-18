@@ -19,7 +19,7 @@ export default function MainPage() {
           onMobileDrawerOpenChange={() => setDrawerOpen(false)}
         />
 
-        <main className="w-full flex-1 space-y-4 p-6">
+        <main className="w-full flex-1 bg-gray-50 p-8">
           {/* TODO: BasicSkeleton으로 로딩 화면 대체 */}
           <Suspense fallback={<div>Loading…</div>}>
             <Outlet />
