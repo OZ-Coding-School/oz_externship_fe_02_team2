@@ -14,7 +14,7 @@ export default function Accordion({
   storageKey,
 }: AccordionProps) {
   /** 로컬스토리지 접힘/펼침 정보 불러오기 */
-  const readLS = () => {
+  const readLS = (): boolean => {
     if (!storageKey || typeof window === 'undefined') return true // 정보 x -> default true(펼침)
     try {
       const raw = localStorage.getItem(storageKey)
