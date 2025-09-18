@@ -34,6 +34,8 @@ export type AccordionProps = BaseVisual & {
   items: readonly AccordionItem[]
   rail?: boolean
   children?: ReactNode
+  /** 로컬 스토리지 키 */
+  storageKey?: string
 }
 
 /** 상단 헤더 메뉴(접기-펼치기 트리거) */

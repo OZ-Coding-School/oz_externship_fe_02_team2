@@ -1,21 +1,39 @@
 import { useEffect, useState } from 'react'
 import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer, Nav } from './parts'
-
-import { useLocation } from 'react-router'
 import { getPage } from '@/lib'
 import { PATHS } from '@/routes/constants'
+import { useLocation } from 'react-router'
 
-// TODO: 메뉴 클릭했을 때 경로로 가게
+// 로컬 스토리지에 사이드바 확장 상태 저장
+const LS_KEY = 'sidebar:expanded'
+const isDesktop = () => window.matchMedia('(min-width: 768px)').matches
 
 export default function Sidebar({
   mobileDrawerOpen,
   onMobileDrawerOpenChange,
 }: SidebarProps) {
-  // const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const [expanded, setExpanded] = useState(true) // ≥md: Expanded↔Rail
+  // ≥md: Expanded↔Rail (md 이상일 때에만 로컬스토리지에 저장된 값 복원)
+  const [expanded, setExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true
+    if (!isDesktop()) return true // md 미만에서는 토글 없음(항상 닫힘)
+    try {
+      const raw = localStorage.getItem(LS_KEY)
+      return raw === null ? true : JSON.parse(raw)
+    } catch {
+      return true
+    }
+  })
+
+  useEffect(() => {
+    if (!isDesktop()) return
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(expanded))
+    } catch {}
+  }, [expanded])
+
   const [internalOpen, setInternalOpen] = useState(false) // <md: Drawer
   const drawerOpen = mobileDrawerOpen ?? internalOpen
   const setDrawerOpen = onMobileDrawerOpenChange ?? setInternalOpen
