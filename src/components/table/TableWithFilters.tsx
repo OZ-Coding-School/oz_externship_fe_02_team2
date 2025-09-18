@@ -7,6 +7,7 @@ import type {
   UseTableQueryOptions,
 } from '@/types/table'
 import { useTableQuery } from '@/hooks/useTableQuery'
+import { filterTableData } from '@/lib/tableFiltering'
 
 export type TableWithFiltersProps<T = Record<string, any>> = {
   /** 테이블 데이터 (client mode) 또는 현재 페이지 데이터 (server mode) */
@@ -37,132 +38,6 @@ export type TableWithFiltersProps<T = Record<string, any>> = {
     UseTableQueryOptions,
     'initialQuery' | 'syncUrl' | 'debounceMs'
   >
-}
-
-// ===================== 초성 매칭 유틸 =====================
-// 초성(ㄱㄴㄷ...)만 입력해도 한글 완성형 문자열과 매칭되도록 하기.
-// 완성형 한글(U+AC00~U+D7A3)을 초성 인덱스로 분해하여 초성열로 변환 후 질의와 비교.
-const PRONUNCIATION_LIST = [
-  'ㄱ',
-  'ㄲ',
-  'ㄴ',
-  'ㄷ',
-  'ㄸ',
-  'ㄹ',
-  'ㅁ',
-  'ㅂ',
-  'ㅃ',
-  'ㅅ',
-  'ㅆ',
-  'ㅇ',
-  'ㅈ',
-  'ㅉ',
-  'ㅊ',
-  'ㅋ',
-  'ㅌ',
-  'ㅍ',
-  'ㅎ',
-]
-const HANGUL_BASE = 0xac00 // '가'
-const HANGUL_END = 0xd7a3 // '힣'
-const isHangulSyllable = (ch: string) => {
-  const c = ch.charCodeAt(0)
-  return c >= HANGUL_BASE && c <= HANGUL_END
-}
-const toPronunciation = (text: unknown) => {
-  const s = String(text ?? '')
-  let out = ''
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i]
-    if (isHangulSyllable(ch)) {
-      const code = ch.charCodeAt(0) - HANGUL_BASE
-      const choIndex = Math.floor(code / (21 * 28))
-      out += PRONUNCIATION_LIST[choIndex] ?? ch
-    } else {
-      out += ch
-    }
-  }
-  return out
-}
-// 초성만으로 이루어진 질의인지 (호환 자모 및 현대 초성)
-const isPronunciationQuery = (q: string) =>
-  /^[\u3131-\u314E\u1100-\u1112]+$/.test(q)
-// ==========================================================
-
-function filterTableData<T extends Record<string, unknown>>(
-  raw: T[],
-  q: TableQuery,
-  fields: (keyof T)[],
-  filterKeys: { status?: keyof T; role?: keyof T } = {}
-): TableData<T> {
-  let items = raw
-
-  // 1) 검색
-  if (fields.length) {
-    const rawQ = (q.q ?? '').trim()
-    if (rawQ) {
-      if (isPronunciationQuery(rawQ)) {
-        // 초성 질의: 대상 값을 초성열로 변환 후 포함 검사
-        items = items.filter((row) =>
-          fields.some((f) => toPronunciation(row[f]).includes(rawQ))
-        )
-      } else {
-        // 기존 완성형/영문 검색: 이메일은 로컬파트만 비교 (도메인 제외)
-        const normKw = rawQ.toLowerCase()
-        const norm = (v: unknown): string => {
-          const s = String(v ?? '').toLowerCase()
-          return s.includes('@') ? s.split('@')[0] : s
-        }
-        items = items.filter((row) =>
-          fields.some((f) => norm(row[f as keyof T]).includes(normKw))
-        )
-      }
-    }
-  }
-  // 2) 상태/권한 필터 (지정된 키로만)
-  const { status: statusKey, role: roleKey } = filterKeys
-  if (q.status && statusKey) {
-    const want = String(q.status).toLowerCase()
-    items = items.filter(
-      (row) => String(row[statusKey] ?? '').toLowerCase() === want
-    )
-  }
-  if (q.role && roleKey) {
-    const want = String(q.role).toLowerCase()
-    items = items.filter(
-      (row) => String(row[roleKey] ?? '').toLowerCase() === want
-    )
-  }
-
-  // 3) 정렬
-  if (q.sortBy && q.sortDir) {
-    const dir = q.sortDir === 'desc' ? -1 : 1
-    const key = q.sortBy as keyof T
-    items = [...items].sort((a, b) => {
-      const av = a[key] as any
-      const bv = b[key] as any
-      // null/undefined 우선순위: 현재는 "비어있음이 항상 작다". 필요시 옵션화 가능.
-      if (av == null && bv == null) return 0
-      if (av == null) return -1 * dir
-      if (bv == null) return 1 * dir
-      if (av < bv) return -1 * dir
-      if (av > bv) return 1 * dir
-      return 0
-    })
-  }
-
-  // 4) 페이징 (필터/정렬 끝난 뒤)
-  const total = items.length
-  const start = (q.page - 1) * q.pageSize
-  const paged = items.slice(start, start + q.pageSize)
-
-  return {
-    items: paged,
-    total,
-    page: q.page,
-    pageSize: q.pageSize,
-    totalPages: Math.max(1, Math.ceil(total / q.pageSize)),
-  }
 }
 
 export function TableWithFilters<T extends Record<string, any>>({
@@ -201,7 +76,7 @@ export function TableWithFilters<T extends Record<string, any>>({
       }
       return data as TableData<T>
     } else {
-      // 클라이언트 모드: 필터링/정렬/페이지네이션 클라 측 처리
+      // 클라이언트 모드: 필터링/정렬/페이지네이션 처리 (lib로 분리)
       const rawData = Array.isArray(data) ? data : data.items
       return filterTableData(
         rawData,
