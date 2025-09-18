@@ -10,8 +10,8 @@ export default function MainPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className="w-vw flex">
-      <div className="relative h-screen flex-1 md:flex">
+    <div className="flex h-dvh w-screen overflow-hidden">
+      <div className="relative flex h-full min-h-0 flex-1 flex-col md:flex-row">
         <Navigaiton
           actionbarTitle={getPageTitle(pathname)}
           mobileDrawerOpen={drawerOpen}
@@ -19,7 +19,7 @@ export default function MainPage() {
           onMobileDrawerOpenChange={() => setDrawerOpen(false)}
         />
 
-        <main className="w-full flex-1 bg-gray-50 p-8">
+        <main className="w-full flex-1 overflow-auto bg-gray-50 p-8">
           {/* TODO: BasicSkeleton으로 로딩 화면 대체 */}
           <Suspense fallback={<div>Loading…</div>}>
             <Outlet />
