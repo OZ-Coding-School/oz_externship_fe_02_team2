@@ -16,7 +16,7 @@ export default function DashboardPage() {
         onValueChange={(v) => setTab(v as DashboardTabKey)}
         className="w-full"
       >
-        <TabsList className="grid w-[358px] grid-cols-3">
+        <TabsList>
           <TabsTrigger value="join">회원가입 추세</TabsTrigger>
           <TabsTrigger value="leave">회원탈퇴 추세</TabsTrigger>
           <TabsTrigger value="reason">탈퇴 사유 분석</TabsTrigger>
