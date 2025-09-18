@@ -13,9 +13,9 @@ export const BUTTON_STYLES: Record<ButtonStyle, string> = {
 }
 
 export const BUTTON_SIZES: Record<ButtonSize, string> = {
-  small: 'rounded-sm px-2 py-1 body-xs font-medium',
-  medium: 'rounded-lg px-4 py-2 body-sm font-medium',
-  large: 'rounded-lg px-6 py-3 body-base font-medium',
+  small: 'rounded-sm px-2 py-1 body-xs font-normal',
+  medium: 'rounded-lg px-4 py-2 body-sm font-normal',
+  large: 'rounded-lg px-6 py-3 body-base font-normal',
 }
 
 export const ICON_ONLY_BUTTON_STYLES: Record<ButtonStyle, string> = {
