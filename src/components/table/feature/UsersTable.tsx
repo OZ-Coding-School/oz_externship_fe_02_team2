@@ -12,7 +12,6 @@ const columns: Column<UserRow>[] = [
     id: 'memberId',
     header: '회원 ID',
     accessor: 'memberId',
-    sortable: true,
     width: '90px',
   },
   { id: 'email', header: '이메일', accessor: 'email', width: '220px' },
@@ -131,6 +130,7 @@ export default function UsersTable({
       meta={{
         rowKey: (r) => r.memberId,
         total: total ?? totalCountFallback,
+        enableClientSort: true,
         loading,
         emptyText: '회원이 없습니다.',
         totalPages: finalTotalPages, //  API 또는 폴백 총페이지

@@ -13,7 +13,6 @@ const columns: Column<CourseRow>[] = [
     accessor: 'id',
     width: '70px',
     align: 'center',
-    sortable: true,
   },
   {
     id: 'thumb',
