@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PAGE_TITLE } from '@/routes/constants'
 import { useState } from 'react'
+import { Join, Leave, Reason } from './sub-pages'
 
 type DashboardTabKey = 'join' | 'leave' | 'reason'
 
@@ -8,7 +9,7 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<DashboardTabKey>('join')
 
   return (
-    <section className="flex w-full flex-col gap-13">
+    <div className="flex w-full flex-col gap-13">
       <h3 className="hidden text-gray-800 md:block">{PAGE_TITLE.DASHBOARD}</h3>
 
       <Tabs
@@ -22,12 +23,18 @@ export default function DashboardPage() {
           <TabsTrigger value="reason">탈퇴 사유 분석</TabsTrigger>
         </TabsList>
 
-        <article className="mt-3">
-          <TabsContent value="join"></TabsContent>
-          <TabsContent value="leave"></TabsContent>
-          <TabsContent value="reason"></TabsContent>
-        </article>
+        <div className="mt-3">
+          <TabsContent value="join">
+            <Join />
+          </TabsContent>
+          <TabsContent value="leave">
+            <Leave />
+          </TabsContent>
+          <TabsContent value="reason">
+            <Reason />
+          </TabsContent>
+        </div>
       </Tabs>
-    </section>
+    </div>
   )
 }
