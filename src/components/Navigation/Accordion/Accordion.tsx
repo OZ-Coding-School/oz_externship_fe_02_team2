@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/lib'
 import type { AccordionProps } from './Accordion.types'
 import { Header, List } from './parts'
+import { readAccordionLS } from './Accordion.utils'
 
 const ACCORDION_EVENT = 'studyhub-accordion-change'
 
@@ -13,37 +14,29 @@ export default function Accordion({
   children,
   storageKey,
 }: AccordionProps) {
-  /** 로컬스토리지 접힘/펼침 정보 불러오기 */
-  const readLS = (key: string | undefined): boolean => {
-    if (!key || typeof window === 'undefined') return true // 정보 x -> default true(펼침)
-    try {
-      const raw = localStorage.getItem(key)
-      return raw === null ? true : JSON.parse(raw)
-    } catch {
-      return true
-    }
-  }
-
-  const [open, setOpen] = useState<boolean>(() => readLS(storageKey))
+  const [open, setOpen] = useState<boolean>(() => readAccordionLS(storageKey))
 
   // storageKey가 바뀌면 로컬스토리지 값 다시 읽어서 업데이트
   useEffect(() => {
-    setOpen(readLS(storageKey))
+    setOpen(readAccordionLS(storageKey))
   }, [storageKey])
 
   useEffect(() => {
     if (!storageKey) return
 
-    /**  같은 탭 내 두 아코디언 인스턴스(데스크톱/모바일) 상태 동기화 */
-    const onCustomSync = (e: Event) => {
+    /** 같은 탭 내 두 아코디언 인스턴스(데스크톱/모바일) 상태 동기화 */
+    const onAccordionCustomSync = (e: Event) => {
       const { key, value } =
         (e as CustomEvent<{ key: string; value: boolean }>).detail || {}
       if (key === storageKey) setOpen(value)
     }
-    window.addEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
+    window.addEventListener(
+      ACCORDION_EVENT,
+      onAccordionCustomSync as EventListener
+    )
 
     /** 다른 탭/창 아코디언 상태 동기화 (storage 이벤트) */
-    const onStorage = (e: StorageEvent) => {
+    const onAccordionStorage = (e: StorageEvent) => {
       if (e.key === storageKey && e.newValue != null) {
         try {
           const parsed = JSON.parse(e.newValue) as boolean
@@ -53,16 +46,19 @@ export default function Accordion({
         }
       }
     }
-    window.addEventListener('storage', onStorage)
+    window.addEventListener('storage', onAccordionStorage)
 
     return () => {
-      window.removeEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
-      window.removeEventListener('storage', onStorage)
+      window.removeEventListener(
+        ACCORDION_EVENT,
+        onAccordionCustomSync as EventListener
+      )
+      window.removeEventListener('storage', onAccordionStorage)
     }
   }, [storageKey])
 
   /** 아코디언 토글 + 저장 + 브로드캐스트  */
-  const toggle = () => {
+  const toggleAccordion = () => {
     setOpen((prev) => {
       const next = !prev
       if (storageKey) {
@@ -129,7 +125,7 @@ export default function Accordion({
         rail={rail}
         open={open}
         iconOnly={iconOnly}
-        onClick={toggle}
+        onClick={toggleAccordion}
       />
 
       {/* 하위 메뉴 */}
