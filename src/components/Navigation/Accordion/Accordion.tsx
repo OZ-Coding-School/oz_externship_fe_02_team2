@@ -44,12 +44,47 @@ export default function Accordion({
     setOpen((prev) => {
       const next = !prev
       if (storageKey) {
-        localStorage.setItem(storageKey, JSON.stringify(next))
-        window.dispatchEvent(
-          new CustomEvent(ACCORDION_EVENT, {
-            detail: { key: storageKey, value: next },
-          })
-        )
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next))
+        } catch (e: unknown) {
+          if (e instanceof DOMException) {
+            // 1) 용량 초과 || 사파리 시크릿 모드 등
+            if (
+              e.name === 'QuotaExceededError' ||
+              e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+            ) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                '[Accordion] localStorage full; state not persisted:',
+                storageKey
+              )
+            } else if (e.name === 'SecurityError') {
+              // 2) 보안 정책/프라이버시 설정으로 차단
+              // eslint-disable-next-line no-console
+              console.warn(
+                '[Accordion] localStorage blocked by browser settings:',
+                storageKey
+              )
+            } else {
+              // eslint-disable-next-line no-console
+              console.warn('[Accordion] localStorage failed:', storageKey, e)
+            }
+          } else {
+            // 3) 그 외 알 수 없는 실패
+            // eslint-disable-next-line no-console
+            console.warn(
+              '[Accordion] Unknown error saving localStorage:',
+              storageKey,
+              e
+            )
+          }
+        } finally {
+          window.dispatchEvent(
+            new CustomEvent(ACCORDION_EVENT, {
+              detail: { key: storageKey, value: next },
+            })
+          )
+        }
       }
       return next
     })
