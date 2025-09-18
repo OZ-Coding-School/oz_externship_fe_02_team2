@@ -5,6 +5,13 @@ import { cn } from '@/lib/cn'
 import { Input } from '@/components/ui/input/Input'
 import { FilterIcon, SearchIcon } from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
+import {
+  DEFAULT_ROLE_PLACEHOLDER,
+  DEFAULT_SEARCH_PLACEHOLDER,
+  DEFAULT_STATUS_PLACEHOLDER,
+} from '@/constants/table/ui'
+import { withAllOption } from './filterOption'
+import { countActiveFilters } from '../filterHelpers'
 
 /**
  * TableFilterBar
@@ -39,9 +46,9 @@ export function TableFilterBar({
   const inputRef = useRef<HTMLInputElement>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const {
-    searchPlaceholder = '검색어를 입력하세요',
-    statusPlaceholder = '상태 선택',
-    rolePlaceholder = '권한 선택',
+    searchPlaceholder = DEFAULT_SEARCH_PLACEHOLDER,
+    statusPlaceholder = DEFAULT_STATUS_PLACEHOLDER,
+    rolePlaceholder = DEFAULT_ROLE_PLACEHOLDER,
     statusOptions = [],
     roleOptions = [],
   } = config
@@ -61,23 +68,17 @@ export function TableFilterBar({
     onQueryChange.setSearch(v, false)
   }
 
-  const statusDropdownOptions = useMemo(() => {
-    if (statusOptions.length === 0) return []
-    return [{ value: '', label: '전체 상태' }, ...statusOptions]
-  }, [statusOptions])
+  const statusDropdownOptions = useMemo(
+    () => withAllOption(statusOptions, '전체 상태'),
+    [statusOptions]
+  )
 
-  const roleDropdownOptions = useMemo(() => {
-    if (roleOptions.length === 0) return []
-    return [{ value: '', label: '전체 권한' }, ...roleOptions]
-  }, [roleOptions])
+  const roleDropdownOptions = useMemo(
+    () => withAllOption(roleOptions, '전체 권한'),
+    [roleOptions]
+  )
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0
-    if ((query.q ?? '').trim()) count++
-    if (query.status) count++
-    if (query.role) count++
-    return count
-  }, [query.q, query.status, query.role])
+  const activeFilterCount = useMemo(() => countActiveFilters(query), [query])
 
   const handleStatusChange = (value: string) => {
     onQueryChange.setStatus(value || null)

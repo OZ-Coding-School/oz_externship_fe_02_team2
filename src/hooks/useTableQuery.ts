@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { TableQuery, UseTableQueryOptions } from '@/types/table'
 import { useSearchParams } from 'react-router-dom'
+import { DEFAULT_DEBOUNCE_MS, DEFAULT_QUERY } from '@/constants/table/table'
+import { useDebounceTimer } from './useDebounceTimer'
+import {
+  buildSearchParamsFromQuery,
+  parseSearchParamsToQuery,
+} from '@/components/table/queryString'
 
 /**
  * 설계 개요
@@ -9,73 +15,28 @@ import { useSearchParams } from 'react-router-dom'
  * - URL 동기화는 변경점이 실제로 있을 때만 replace → 불필요한 히스토리/리렌더 최소화.
  */
 
-const DEFAULT_QUERY: TableQuery = {
-  q: '',
-  status: null,
-  role: null,
-  sortBy: null,
-  sortDir: null,
-  page: 1,
-  pageSize: 20,
-}
-
 export function useTableQuery(options: UseTableQueryOptions = {}) {
   const {
     initialQuery = {},
     onQueryChange,
     syncUrl = true,
-    debounceMs = 300,
+    debounceMs = DEFAULT_DEBOUNCE_MS,
   } = options
 
-  // q 전용 trailing 디바운스 타이머
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const clearDebounce = useCallback(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-      debounceRef.current = null
-    }
-  }, [])
+  // q 전용 trailing 디바운스 타이머를 훅으로 분리
+  const { schedule: scheduleDebounce, cancel: cancelDebounce } =
+    useDebounceTimer(debounceMs)
 
   const [searchParams, setSearchParams] = useSearchParams()
 
   // URL에서 초기 상태 복원
-  const getInitialQueryFromUrl = useCallback((): TableQuery => {
-    if (!syncUrl || !searchParams) return { ...DEFAULT_QUERY, ...initialQuery }
-
-    const urlQuery: Partial<TableQuery> = {}
-
-    const q = searchParams.get('q')
-    if (q) urlQuery.q = q
-
-    const status = searchParams.get('status')
-    if (status && status !== 'all') urlQuery.status = status
-
-    const role = searchParams.get('role')
-    if (role && role !== 'all') urlQuery.role = role
-
-    const sort = searchParams.get('sort')
-    if (sort) {
-      const [sortBy, sortDir] = sort.split('.')
-      urlQuery.sortBy = sortBy
-      urlQuery.sortDir = sortDir === 'desc' ? 'desc' : 'asc'
-    }
-
-    const page = searchParams.get('page')
-    if (page) {
-      const pageNum = parseInt(page, 10)
-      if (!isNaN(pageNum) && pageNum > 0) {
-        urlQuery.page = pageNum
-      }
-    }
-
-    const size = searchParams.get('size')
-    if (size) {
-      const s = parseInt(size, 10)
-      if (!isNaN(s) && s > 0) urlQuery.pageSize = s
-    }
-
-    return { ...DEFAULT_QUERY, ...initialQuery, ...urlQuery }
-  }, [searchParams, syncUrl, initialQuery])
+  const getInitialQueryFromUrl = useCallback(
+    (): TableQuery =>
+      !syncUrl || !searchParams
+        ? { ...DEFAULT_QUERY, ...initialQuery }
+        : parseSearchParamsToQuery(searchParams, initialQuery),
+    [searchParams, syncUrl, initialQuery]
+  )
 
   const [query, setQuery] = useState<TableQuery>(getInitialQueryFromUrl)
 
@@ -83,30 +44,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   const updateUrl = useCallback(
     (newQuery: TableQuery) => {
       if (!syncUrl) return
-
-      const params = new URLSearchParams(searchParams)
-      ;['q', 'status', 'role', 'sort', 'page', 'size'].forEach((k) =>
-        params.delete(k)
-      )
-
-      const qTrim = newQuery.q.trim()
-
-      if (qTrim) params.set('q', qTrim)
-      if (newQuery.status) params.set('status', newQuery.status)
-      if (newQuery.role) params.set('role', newQuery.role)
-      if (newQuery.sortBy && newQuery.sortDir) {
-        params.set('sort', `${newQuery.sortBy}.${newQuery.sortDir}`)
-      }
-      if (newQuery.page > 1) params.set('page', newQuery.page.toString())
-      if (newQuery.pageSize !== DEFAULT_QUERY.pageSize) {
-        params.set('size', newQuery.pageSize.toString())
-      }
-      // 실제로 변경점이 없으면 건너뜀(불필요한 리렌더/깜빡임 방지)
+      const params = buildSearchParamsFromQuery(searchParams, newQuery)
       const next = params.toString()
       const curr = searchParams.toString()
-      if (next !== curr) {
-        setSearchParams(params, { replace: true })
-      }
+      if (next !== curr) setSearchParams(params, { replace: true })
     },
     [setSearchParams, searchParams, syncUrl]
   )
@@ -138,41 +79,38 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     (q: string, immediate: boolean = false) => {
       // 즉시 커밋 요청(Enter/Blur 등) → 대기 중 디바운스를 취소하고 바로 반영
       if (immediate) {
-        clearDebounce()
+        cancelDebounce()
         updateQuery({ q })
         return
       }
       // trailing 디바운스: 입력이 멈춘 뒤 한 번만 반영
-      clearDebounce()
-      debounceRef.current = setTimeout(() => {
-        updateQuery({ q })
-      }, debounceMs)
+      scheduleDebounce(() => updateQuery({ q }))
     },
-    [updateQuery, debounceMs, clearDebounce]
+    [updateQuery, debounceMs, cancelDebounce]
   )
 
   const setStatus = useCallback(
     (status: string | null) => {
-      clearDebounce() // ← 대기 중 q 디바운스 취소: 뒤늦은 검색 커밋으로 URL/상태 흔들림 방지
+      cancelDebounce() // ← 대기 중 q 디바운스 취소
       updateQuery({ status })
     },
-    [updateQuery, clearDebounce]
+    [updateQuery, cancelDebounce]
   )
 
   const setRole = useCallback(
     (role: string | null) => {
-      clearDebounce()
+      cancelDebounce()
       updateQuery({ role })
     },
-    [updateQuery, clearDebounce]
+    [updateQuery, cancelDebounce]
   )
 
   const setSort = useCallback(
     (sortBy: string | null, sortDir: TableQuery['sortDir'] = null) => {
-      clearDebounce() // 정렬 변경도 즉시 반영. q 디바운스가 남아있으면 뒤늦게 덮어쓸 수 있음
+      cancelDebounce // 정렬 변경도 즉시 반영. q 디바운스가 남아있으면 뒤늦게 덮어쓸 수 있음
       updateQuery({ sortBy, sortDir })
     },
-    [updateQuery, clearDebounce]
+    [updateQuery, cancelDebounce]
   )
 
   const toggleSort = useCallback(
@@ -196,22 +134,19 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const reset = useCallback(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-    }
-    clearDebounce()
+    cancelDebounce()
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
     onQueryChange?.(resetQuery)
-  }, [initialQuery, updateUrl, onQueryChange, clearDebounce])
+  }, [initialQuery, updateUrl, onQueryChange, cancelDebounce])
 
   const setPageSize = useCallback(
     (pageSize: number) => {
-      clearDebounce()
+      cancelDebounce()
       updateQuery({ pageSize, page: 1 })
     },
-    [updateQuery, clearDebounce]
+    [updateQuery, cancelDebounce]
   )
 
   useEffect(() => {
@@ -225,9 +160,9 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   useEffect(
     () => () => {
       // 언마운트 시 디바운스 타이머 정리
-      clearDebounce()
+      cancelDebounce()
     },
-    [clearDebounce]
+    [cancelDebounce]
   )
 
   return {
