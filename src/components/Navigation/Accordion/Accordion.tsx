@@ -25,18 +25,15 @@ export default function Accordion({
     if (!storageKey) return
 
     /** 같은 탭 내 두 아코디언 인스턴스(데스크톱/모바일) 상태 동기화 */
-    const onAccordionCustomSync = (e: Event) => {
+    const onCustomSync = (e: Event) => {
       const { key, value } =
         (e as CustomEvent<{ key: string; value: boolean }>).detail || {}
       if (key === storageKey) setOpen(value)
     }
-    window.addEventListener(
-      ACCORDION_EVENT,
-      onAccordionCustomSync as EventListener
-    )
+    window.addEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
 
     /** 다른 탭/창 아코디언 상태 동기화 (storage 이벤트) */
-    const onAccordionStorage = (e: StorageEvent) => {
+    const onStorage = (e: StorageEvent) => {
       if (e.key === storageKey && e.newValue != null) {
         try {
           const parsed = JSON.parse(e.newValue) as boolean
@@ -46,14 +43,11 @@ export default function Accordion({
         }
       }
     }
-    window.addEventListener('storage', onAccordionStorage)
+    window.addEventListener('storage', onStorage)
 
     return () => {
-      window.removeEventListener(
-        ACCORDION_EVENT,
-        onAccordionCustomSync as EventListener
-      )
-      window.removeEventListener('storage', onAccordionStorage)
+      window.removeEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
+      window.removeEventListener('storage', onStorage)
     }
   }, [storageKey])
 
