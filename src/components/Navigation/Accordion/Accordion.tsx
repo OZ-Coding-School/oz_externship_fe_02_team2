@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib'
 import type { AccordionProps } from './Accordion.types'
 import { Header, List } from './parts'
+
+const ACCORDION_EVENT = 'studyhub-accordion'
 
 export default function Accordion({
   icon,
@@ -9,8 +11,49 @@ export default function Accordion({
   rail = false,
   items,
   children,
+  storageKey,
 }: AccordionProps) {
-  const [open, setOpen] = useState(true) // 상위 메뉴 접기 펼치기
+  /** 로컬스토리지 접힘/펼침 정보 불러오기 */
+  const readLS = () => {
+    if (!storageKey || typeof window === 'undefined') return true // 정보 x -> default true(펼침)
+    try {
+      const raw = localStorage.getItem(storageKey)
+      return raw === null ? true : JSON.parse(raw)
+    } catch {
+      return true
+    }
+  }
+
+  const [open, setOpen] = useState<boolean>(readLS)
+
+  // 같은 탭 안의 두 아코디언 인스턴스(데스크톱/모바일) 상태 맞추기
+  useEffect(() => {
+    if (!storageKey) return
+    const onSync = (e: Event) => {
+      const { key, value } =
+        (e as CustomEvent<{ key: string; value: boolean }>).detail || {}
+      if (key === storageKey) setOpen(value)
+    }
+    window.addEventListener(ACCORDION_EVENT, onSync as EventListener)
+    return () =>
+      window.removeEventListener(ACCORDION_EVENT, onSync as EventListener)
+  }, [storageKey])
+
+  /** 아코디언 토글 + 저장 + 브로드캐스트  */
+  const toggle = () => {
+    setOpen((prev) => {
+      const next = !prev
+      if (storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(next))
+        window.dispatchEvent(
+          new CustomEvent(ACCORDION_EVENT, {
+            detail: { key: storageKey, value: next },
+          })
+        )
+      }
+      return next
+    })
+  }
 
   /** rail일 때만, 아이콘만 보임. 이외 아이콘+레이블 */
   const iconOnly = rail
@@ -29,7 +72,7 @@ export default function Accordion({
         rail={rail}
         open={open}
         iconOnly={iconOnly}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={toggle}
       />
 
       {/* 하위 메뉴 */}

@@ -20,6 +20,7 @@ export default function Nav({
           label={section.label}
           rail={rail ?? !expanded}
           items={toAccordionItems(section.items, active, setActive, navigate)}
+          storageKey={`accordion:${section.id}`}
         />
       ))}
     </>
