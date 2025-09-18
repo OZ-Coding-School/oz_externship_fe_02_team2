@@ -24,7 +24,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     syncUrl = true,
     debounceMs = 300,
   } = options
-  const [searchParams, setSearchParams] = useSearchParams()
+
+  // q 전용 trailing 디바운스 타이머
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clearDebounce = useCallback(() => {
     if (debounceRef.current) {
@@ -32,6 +33,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       debounceRef.current = null
     }
   }, [])
+
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // URL에서 초기 상태 복원
   const getInitialQueryFromUrl = useCallback((): TableQuery => {
@@ -73,11 +76,6 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   }, [searchParams, syncUrl, initialQuery])
 
   const [query, setQuery] = useState<TableQuery>(getInitialQueryFromUrl)
-  const prevQRef = useRef<string>(DEFAULT_QUERY.q)
-
-  useEffect(() => {
-    prevQRef.current = query.q ?? ''
-  }, [query.q])
 
   // URL 동기화
   const updateUrl = useCallback(
@@ -101,96 +99,74 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       if (newQuery.pageSize !== DEFAULT_QUERY.pageSize) {
         params.set('size', newQuery.pageSize.toString())
       }
-      setSearchParams(params, { replace: true })
+      // 실제로 변경점이 없으면 건너뜀(불필요한 리렌더/깜빡임 방지)
+      const next = params.toString()
+      const curr = searchParams.toString()
+      if (next !== curr) {
+        setSearchParams(params, { replace: true })
+      }
     },
     [setSearchParams, searchParams, syncUrl]
   )
 
-  // 쿼리 업데이트 (디바운스 포함)
   const updateQuery = useCallback(
-    // `query` 의존성을 제거하기 위해 함수형 업데이트 사용
-    (updates: Partial<TableQuery>, immediate = false) => {
-      clearDebounce()
-
-      const nextQ = typeof updates.q === 'string' ? updates.q : undefined
-      const prevQ = prevQRef.current ?? ''
-      // 첫 글자: 빈 -> 비어있지 않음  => 즉시
-      const firstCharImmediate =
-        nextQ !== undefined &&
-        !immediate &&
-        prevQ.trim() === '' &&
-        nextQ.trim() !== ''
-      // 지우기(공백 포함) => 즉시
-      const clearImmediate =
-        nextQ !== undefined && !immediate && nextQ.trim() === ''
-      const isDebounced =
-        'q' in updates && !immediate && !firstCharImmediate && !clearImmediate
-
-      const performUpdate = () => {
-        dbg('apply updates', {
-          updates,
-          source: isDebounced ? 'debounced' : 'immediate',
-        })
-        setQuery((prevQuery) => {
-          const newQuery = { ...prevQuery, ...updates }
-          // 페이지 리셋 조건
-          // q가 바뀌면 언제나 1페이지로
-          if ('q' in updates && (updates.q ?? '') !== (prevQuery.q ?? '')) {
-            newQuery.page = 1
-          }
-
-          // 다음 업데이트에서 참조할 이전 q를 즉시 동기화
-          prevQRef.current = newQuery.q ?? ''
-          // 실제 업데이트 실행 (URL 동기화, 콜백 호출)
-          updateUrl(newQuery)
-          onQueryChange?.(newQuery)
-
-          return newQuery
-        })
-      }
-      if (isDebounced) {
-        const scheduledAt = Date.now()
-        dbg('debounce: scheduled', {
-          q: (updates as any).q,
-          wait: debounceMs,
-        })
-        debounceRef.current = setTimeout(() => {
-          const waited = Date.now() - scheduledAt
-          dbg('debounce: fired', { waited })
-          performUpdate()
-        }, debounceMs)
-      } else {
-        // 그 외 모든 경우는 즉시 실행
-        dbg('update: immediate', { updates })
-        performUpdate()
-      }
+    (updates: Partial<TableQuery>) => {
+      dbg('update: immediate', { updates })
+      setQuery((prevQuery) => {
+        const nextDraft = { ...prevQuery, ...updates }
+        // 변경 없음이면 스킵 → 불필요 렌더/URL 동기화 방지(깜빡임 감소)
+        if (JSON.stringify(nextDraft) === JSON.stringify(prevQuery)) {
+          return prevQuery
+        }
+        const newQuery = nextDraft
+        // 검색어가 바뀌면 1페이지로
+        if ('q' in updates && (updates.q ?? '') !== (prevQuery.q ?? '')) {
+          newQuery.page = 1
+        }
+        updateUrl(newQuery)
+        onQueryChange?.(newQuery)
+        return newQuery
+      })
     },
-    [updateUrl, onQueryChange, debounceMs, clearDebounce] // `query` 의존성 제거로 함수 안정성 확보
+    [updateUrl, onQueryChange]
   )
 
   // 개별 액션들
   const setSearch = useCallback(
     (q: string, immediate = false) => {
       dbg('setSearch()', { q, immediate })
-      // `immediate` 플래그를 updateQuery로 전달
-      updateQuery({ q }, immediate)
+      // 즉시 커밋 요청(Enter/Blur/조합 종료 등) => 대기 중 디바운스 취소 후 즉시 반영
+      if (immediate) {
+        clearDebounce()
+        updateQuery({ q })
+        return
+      }
+      // trailing 디바운스 (타자 멈춘 뒤 한 번만)
+      clearDebounce()
+      debounceRef.current = setTimeout(() => {
+        updateQuery({ q })
+      }, debounceMs)
+    },
+    [updateQuery, debounceMs, clearDebounce]
+  )
+
+  const setStatus = useCallback(
+    (status: string | null) => {
+      updateQuery({ status })
     },
     [updateQuery]
   )
 
-  const setStatus = useCallback(
-    (status: string | null) => updateQuery({ status }, true),
-    [updateQuery]
-  )
-
   const setRole = useCallback(
-    (role: string | null) => updateQuery({ role }, true),
+    (role: string | null) => {
+      updateQuery({ role })
+    },
     [updateQuery]
   )
 
   const setSort = useCallback(
     (sortBy: string | null, sortDir: TableQuery['sortDir'] = null) => {
-      updateQuery({ sortBy, sortDir }, true)
+      updateQuery({ sortBy, sortDir })
     },
     [updateQuery]
   )
@@ -209,7 +185,9 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const setPage = useCallback(
-    (page: number) => updateQuery({ page }, true),
+    (page: number) => {
+      updateQuery({ page })
+    },
     [updateQuery]
   )
 
@@ -218,23 +196,18 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       dbg('reset(): clear pending debounce')
       clearTimeout(debounceRef.current)
     }
-    dbg('reset(): restore to DEFAULT + initialQuery')
+    clearDebounce()
+    dbg('reset(): restore to DEFAULT initialQuery')
     const resetQuery = { ...DEFAULT_QUERY, ...initialQuery }
     setQuery(resetQuery)
     updateUrl(resetQuery)
     onQueryChange?.(resetQuery)
   }, [initialQuery, updateUrl, onQueryChange, clearDebounce])
 
-  // 클린업
-  useEffect(() => {
-    return () => {
-      dbg('cleanup: component unmount -> clear pending debounce')
-      clearDebounce()
-    }
-  }, [clearDebounce])
-
   const setPageSize = useCallback(
-    (pageSize: number) => updateQuery({ pageSize, page: 1 }, true),
+    (pageSize: number) => {
+      updateQuery({ pageSize, page: 1 })
+    },
     [updateQuery]
   )
 
@@ -246,6 +219,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     )
     dbg('url sync check', { fromUrl })
   }, [searchParams, getInitialQueryFromUrl, syncUrl])
+
+  useEffect(() => () => clearDebounce(), [clearDebounce])
 
   return {
     query,
