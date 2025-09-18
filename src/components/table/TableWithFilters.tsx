@@ -39,6 +39,54 @@ export type TableWithFiltersProps<T = Record<string, any>> = {
   >
 }
 
+// ===================== 초성 매칭 유틸 =====================
+const PRONUNCIATION_LIST = [
+  'ㄱ',
+  'ㄲ',
+  'ㄴ',
+  'ㄷ',
+  'ㄸ',
+  'ㄹ',
+  'ㅁ',
+  'ㅂ',
+  'ㅃ',
+  'ㅅ',
+  'ㅆ',
+  'ㅇ',
+  'ㅈ',
+  'ㅉ',
+  'ㅊ',
+  'ㅋ',
+  'ㅌ',
+  'ㅍ',
+  'ㅎ',
+]
+const HANGUL_BASE = 0xac00 // '가'
+const HANGUL_END = 0xd7a3 // '힣'
+const isHangulSyllable = (ch: string) => {
+  const c = ch.charCodeAt(0)
+  return c >= HANGUL_BASE && c <= HANGUL_END
+}
+const toPronunciation = (text: unknown) => {
+  const s = String(text ?? '')
+  let out = ''
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]
+    if (isHangulSyllable(ch)) {
+      const code = ch.charCodeAt(0) - HANGUL_BASE
+      const choIndex = Math.floor(code / (21 * 28))
+      out += PRONUNCIATION_LIST[choIndex] ?? ch
+    } else {
+      out += ch
+    }
+  }
+  return out
+}
+// 초성만으로 이루어진 질의인지 (호환 자모 및 현대 초성)
+const isPronunciationQuery = (q: string) =>
+  /^[\u3131-\u314E\u1100-\u1112]+$/.test(q)
+// ==========================================================
+
 function filterTableData<T extends Record<string, unknown>>(
   raw: T[],
   q: TableQuery,
@@ -49,25 +97,24 @@ function filterTableData<T extends Record<string, unknown>>(
 
   // 1) 검색
   if (fields.length) {
-    const rawKw = q.q.trim().toLowerCase()
-    if (rawKw) {
-      const at = rawKw.indexOf('@')
-      const startsWithAt = at === 0 // '@...' 형태
-      const normKw = at >= 0 ? rawKw.slice(0, at).trim() : rawKw
-      if (startsWithAt) {
-        // '@'로 시작하는 입력은 도메인 검색 의도로 보고 결과 없음
-        items = []
-      } else if (normKw) {
+    const rawQ = (q.q ?? '').trim()
+    if (rawQ) {
+      if (isPronunciationQuery(rawQ)) {
+        // 초성 질의: 대상 값을 초성열로 변환 후 포함 검사
+        items = items.filter((row) =>
+          fields.some((f) => toPronunciation(row[f]).includes(rawQ))
+        )
+      } else {
+        // 기존 완성형/영문 검색: 이메일은 로컬파트만 비교
+        const normKw = rawQ.toLowerCase()
         const norm = (v: unknown): string => {
           const s = String(v ?? '').toLowerCase()
-          // 셀 값도 로컬파트만 비교
           return s.includes('@') ? s.split('@')[0] : s
         }
         items = items.filter((row) =>
           fields.some((f) => norm(row[f as keyof T]).includes(normKw))
         )
       }
-      // normKw가 빈 문자열이면(공백만 입력 등) 검색 필터 미적용
     }
   }
   // 2) 상태/권한 필터 (지정된 키로만)
