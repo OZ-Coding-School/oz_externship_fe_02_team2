@@ -1,12 +1,15 @@
-import { http, HttpResponse, delay } from 'msw'
+import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
 import { ADMIN, like, paginate, sortByKey, toInt } from '../../utils'
 import { db } from '../../db'
 import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
 
 export const usersHandlers = [
   // GET /api/admin/users
-  http.get(`${ADMIN}/users`, async ({ request }) => {
-    await delay(150)
+  mswHttp.get(`${ADMIN}/users`, async ({ request }) => {
+    // (중요) 바이패스 헤더가 있으면 실서버로 통과
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+
+    await delay(120)
     const url = new URL(request.url)
     const page = toInt(url.searchParams.get('page'), 1)
     const pageSize = toInt(url.searchParams.get('pageSize'), 20)
@@ -15,7 +18,7 @@ export const usersHandlers = [
       | 'asc'
       | 'desc'
     const q = url.searchParams.get('q') ?? ''
-    const role = url.searchParams.get('role') // e.g., '일반회원' | '관리자' | '스태프'
+    const role = url.searchParams.get('role')
     const status = url.searchParams.get('status') // '활성' | '비활성'
 
     let rows = [...db.users]
@@ -36,17 +39,21 @@ export const usersHandlers = [
   }),
 
   // GET /api/admin/users/:id
-  http.get(`${ADMIN}/users/:id`, async ({ params }) => {
-    await delay(120)
+  mswHttp.get(`${ADMIN}/users/:id`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+
+    await delay(100)
     const found = db.users.find((u) => u.id === params.id)
     if (!found)
       return HttpResponse.json({ message: 'Not found' }, { status: 404 })
     return HttpResponse.json(found)
   }),
 
-  // PATCH /api/admin/users/:id (partial update)
-  http.patch(`${ADMIN}/users/:id`, async ({ params, request }) => {
-    await delay(180)
+  // PATCH /api/admin/users/:id
+  mswHttp.patch(`${ADMIN}/users/:id`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+
+    await delay(140)
     const body = (await request.json()) as Partial<UserDetail>
     const idx = db.users.findIndex((u) => u.id === params.id)
     if (idx < 0)
