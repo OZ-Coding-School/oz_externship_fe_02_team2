@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/Button'
 import { PATHS } from '@/routes/constants'
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 export default function TestRoot() {
   const navigate = useNavigate()

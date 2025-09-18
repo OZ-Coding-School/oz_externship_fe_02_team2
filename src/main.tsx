@@ -1,10 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { BrowserRouter } from 'react-router'
+import { BrowserRouter } from 'react-router-dom'
 import { ToastContainer } from './components/ui/Toast/ToastContainer.tsx'
 
-if (import.meta.env.DEV) {
+if (import.meta.env.VITE_USE_MSW === 'true') {
   const { worker } = await import('./mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 }
