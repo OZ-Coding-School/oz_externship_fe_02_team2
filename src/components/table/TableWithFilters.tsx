@@ -40,6 +40,8 @@ export type TableWithFiltersProps<T = Record<string, any>> = {
 }
 
 // ===================== 초성 매칭 유틸 =====================
+// 초성(ㄱㄴㄷ...)만 입력해도 한글 완성형 문자열과 매칭되도록 하기.
+// 완성형 한글(U+AC00~U+D7A3)을 초성 인덱스로 분해하여 초성열로 변환 후 질의와 비교.
 const PRONUNCIATION_LIST = [
   'ㄱ',
   'ㄲ',
@@ -105,7 +107,7 @@ function filterTableData<T extends Record<string, unknown>>(
           fields.some((f) => toPronunciation(row[f]).includes(rawQ))
         )
       } else {
-        // 기존 완성형/영문 검색: 이메일은 로컬파트만 비교
+        // 기존 완성형/영문 검색: 이메일은 로컬파트만 비교 (도메인 제외)
         const normKw = rawQ.toLowerCase()
         const norm = (v: unknown): string => {
           const s = String(v ?? '').toLowerCase()
@@ -139,6 +141,7 @@ function filterTableData<T extends Record<string, unknown>>(
     items = [...items].sort((a, b) => {
       const av = a[key] as any
       const bv = b[key] as any
+      // null/undefined 우선순위: 현재는 "비어있음이 항상 작다". 필요시 옵션화 가능.
       if (av == null && bv == null) return 0
       if (av == null) return -1 * dir
       if (bv == null) return 1 * dir
@@ -184,7 +187,8 @@ export function TableWithFilters<T extends Record<string, any>>({
   // 데이터 처리
   const tableData = useMemo((): TableData<T> => {
     if (config.mode === 'server') {
-      // 서버 모드: 이미 처리된 데이터를 받음
+      // 서버 모드: 이미 처리된 페이지 데이터를 받는 경우.
+      // 서버 페치 시엔 useTableQuery의 디바운스/URL 동기화 전략만 공유하고, 목록 가공은 서버가 담당.
       if (Array.isArray(data)) {
         // 단순 배열이면 기본 구조로 변환
         return {
@@ -197,7 +201,7 @@ export function TableWithFilters<T extends Record<string, any>>({
       }
       return data as TableData<T>
     } else {
-      // 클라이언트 모드: 필터링/정렬/페이지네이션 처리
+      // 클라이언트 모드: 필터링/정렬/페이지네이션 클라 측 처리
       const rawData = Array.isArray(data) ? data : data.items
       return filterTableData(
         rawData,

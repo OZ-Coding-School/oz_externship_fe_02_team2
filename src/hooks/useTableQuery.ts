@@ -2,6 +2,13 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import type { TableQuery, UseTableQueryOptions } from '@/types/table'
 import { useSearchParams } from 'react-router-dom'
 
+/**
+ * 설계 개요
+ * - q(검색어)만 트레일링 디바운스(기본 300ms). Enter/blur 등의 즉시 커밋은 immediate=true로 처리.
+ * - status/role/sort/page 등은 즉시 반영. 이때 대기 중 q-디바운스는 모두 취소(clearDebounce)해 레이스/깜빡임 방지.
+ * - URL 동기화는 변경점이 실제로 있을 때만 replace → 불필요한 히스토리/리렌더 최소화.
+ */
+
 const DEFAULT_QUERY: TableQuery = {
   q: '',
   status: null,
@@ -115,6 +122,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       setQuery((prevQuery) => {
         const nextDraft = { ...prevQuery, ...updates }
         // 변경 없음이면 스킵 → 불필요 렌더/URL 동기화 방지(깜빡임 감소)
+        // 얕은 비교 대신 JSON 문자열 비교를 쓰는 이유는 간결성 때문.
         if (JSON.stringify(nextDraft) === JSON.stringify(prevQuery)) {
           return prevQuery
         }
@@ -135,13 +143,13 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   const setSearch = useCallback(
     (q: string, immediate = false) => {
       dbg('setSearch()', { q, immediate })
-      // 즉시 커밋 요청(Enter/Blur/조합 종료 등) => 대기 중 디바운스 취소 후 즉시 반영
+      // 즉시 커밋 요청(Enter/Blur 등) → 대기 중 디바운스를 취소하고 바로 반영
       if (immediate) {
         clearDebounce()
         updateQuery({ q })
         return
       }
-      // trailing 디바운스 (타자 멈춘 뒤 한 번만)
+      // trailing 디바운스: 입력이 멈춘 뒤 한 번만 반영
       clearDebounce()
       debounceRef.current = setTimeout(() => {
         updateQuery({ q })
@@ -152,7 +160,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const setStatus = useCallback(
     (status: string | null) => {
-      clearDebounce() // ← 대기 중 q 디바운스 취소
+      clearDebounce() // ← 대기 중 q 디바운스 취소: 뒤늦은 검색 커밋으로 URL/상태 흔들림 방지
       updateQuery({ status })
     },
     [updateQuery, clearDebounce]
@@ -168,7 +176,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const setSort = useCallback(
     (sortBy: string | null, sortDir: TableQuery['sortDir'] = null) => {
-      clearDebounce()
+      clearDebounce() // 정렬 변경도 즉시 반영. q 디바운스가 남아있으면 뒤늦게 덮어쓸 수 있음
       updateQuery({ sortBy, sortDir })
     },
     [updateQuery, clearDebounce]
@@ -224,7 +232,13 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
     dbg('url sync check', { fromUrl })
   }, [searchParams, getInitialQueryFromUrl, syncUrl])
 
-  useEffect(() => () => clearDebounce(), [clearDebounce])
+  useEffect(
+    () => () => {
+      // 언마운트 시 디바운스 타이머 정리
+      clearDebounce()
+    },
+    [clearDebounce]
+  )
 
   return {
     query,
