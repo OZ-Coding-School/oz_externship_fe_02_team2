@@ -7,6 +7,7 @@ import MainPage from '@/pages/main/MainPage'
 import { PATHS } from './constants'
 import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
 import LoginPage from '@/pages/auth/LoginPage'
+import DashboardPage from '@/pages/dashboard/DashboardPage'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -23,7 +24,7 @@ export default function TestRoutes() {
           <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
           <Route path={PATHS.USER} element={<PlaceHolderPage />} />
           <Route path={PATHS.WITHDRAWAL} element={<PlaceHolderPage />} />
-          <Route path={PATHS.DASHBOARD} element={<PlaceHolderPage />} />
+          <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
 
           <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
           <Route path={PATHS.STUDYGROUP} element={<PlaceHolderPage />} />
