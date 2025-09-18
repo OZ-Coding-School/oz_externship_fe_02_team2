@@ -152,23 +152,26 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const setStatus = useCallback(
     (status: string | null) => {
+      clearDebounce() // ← 대기 중 q 디바운스 취소
       updateQuery({ status })
     },
-    [updateQuery]
+    [updateQuery, clearDebounce]
   )
 
   const setRole = useCallback(
     (role: string | null) => {
+      clearDebounce()
       updateQuery({ role })
     },
-    [updateQuery]
+    [updateQuery, clearDebounce]
   )
 
   const setSort = useCallback(
     (sortBy: string | null, sortDir: TableQuery['sortDir'] = null) => {
+      clearDebounce()
       updateQuery({ sortBy, sortDir })
     },
-    [updateQuery]
+    [updateQuery, clearDebounce]
   )
 
   const toggleSort = useCallback(
@@ -206,9 +209,10 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
 
   const setPageSize = useCallback(
     (pageSize: number) => {
+      clearDebounce()
       updateQuery({ pageSize, page: 1 })
     },
-    [updateQuery]
+    [updateQuery, clearDebounce]
   )
 
   useEffect(() => {
