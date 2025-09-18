@@ -48,8 +48,8 @@ export function TableFilterBar({
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setDraft(v)
-    // 클라/서버 모두 즉시 반영 (자음 단위 포함)
-    onQueryChange.setSearch(v, true)
+    // 타이핑 중: 트레일링 디바운스(300ms)
+    onQueryChange.setSearch(v, false)
   }
 
   const statusDropdownOptions = useMemo(() => {
@@ -78,8 +78,10 @@ export function TableFilterBar({
     onQueryChange.setRole(value || null)
   }
 
-  const handleKeyDown = () => {
-    /* no-op: 항상 즉시 반영 */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      commitNow((e.currentTarget as HTMLInputElement).value)
+    }
   }
 
   const handleClearSearch = () => {
@@ -105,6 +107,12 @@ export function TableFilterBar({
             value={draft}
             onChange={onChange}
             onKeyDown={handleKeyDown}
+            onCompositionEnd={(e) =>
+              commitNow((e.currentTarget as HTMLInputElement).value)
+            }
+            onBlur={(e) =>
+              commitNow((e.currentTarget as HTMLInputElement).value)
+            }
             placeholder={searchPlaceholder}
             enterKeyHint="search"
             leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
@@ -139,26 +147,28 @@ export function TableFilterBar({
           >
             <FilterIcon className="h-4 w-4" />
             필터
-            {activeFilterCount > 0 && (
-              <span className="bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={onQueryChange.reset}
+            <span
               className={cn(
-                'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
-                'border-gray-300 text-gray-700 hover:bg-gray-50'
+                'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
+                activeFilterCount === 0 && 'invisible'
               )}
-              aria-label={`${activeFilterCount}개 필터 초기화`}
             >
-              <XIcon className="h-4 w-4" />
-              초기화
-            </button>
-          )}
+              {activeFilterCount || 0}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onQueryChange.reset}
+            className={cn(
+              'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
+              'border-gray-300 text-gray-700 hover:bg-gray-50',
+              activeFilterCount === 0 && 'invisible'
+            )}
+            aria-label={`${activeFilterCount}개 필터 초기화`}
+          >
+            <XIcon className="h-4 w-4" />
+            초기화
+          </button>
         </div>
         {/* 데스크탑: 필터 즉시 노출 */}
         <div className="hidden shrink-0 items-center gap-2 sm:flex">
@@ -182,23 +192,26 @@ export function TableFilterBar({
               aria-label="권한 필터"
             />
           )}
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={onQueryChange.reset}
+          <button
+            type="button"
+            onClick={onQueryChange.reset}
+            className={cn(
+              'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
+              'border-gray-300 text-gray-700 hover:bg-gray-50'
+            )}
+            aria-label={`${activeFilterCount}개 필터 초기화`}
+          >
+            <XIcon className="h-4 w-4" />
+            초기화
+            <span
               className={cn(
-                'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
-                'border-gray-300 text-gray-700 hover:bg-gray-50'
+                'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
+                activeFilterCount === 0 && 'invisible'
               )}
-              aria-label={`${activeFilterCount}개 필터 초기화`}
             >
-              <XIcon className="h-4 w-4" />
-              초기화
-              <span className="bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5">
-                {activeFilterCount}
-              </span>
-            </button>
-          )}
+              {activeFilterCount || 0}
+            </span>
+          </button>
         </div>
       </div>
       {/* 모바일 접이식 패널 */}
