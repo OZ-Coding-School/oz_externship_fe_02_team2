@@ -14,17 +14,22 @@ export default function Accordion({
   storageKey,
 }: AccordionProps) {
   /** 로컬스토리지 접힘/펼침 정보 불러오기 */
-  const readLS = (): boolean => {
-    if (!storageKey || typeof window === 'undefined') return true // 정보 x -> default true(펼침)
+  const readLS = (key: string | undefined): boolean => {
+    if (!key || typeof window === 'undefined') return true // 정보 x -> default true(펼침)
     try {
-      const raw = localStorage.getItem(storageKey)
+      const raw = localStorage.getItem(key)
       return raw === null ? true : JSON.parse(raw)
     } catch {
       return true
     }
   }
 
-  const [open, setOpen] = useState<boolean>(readLS)
+  const [open, setOpen] = useState<boolean>(() => readLS(storageKey))
+
+  // storageKey가 바뀌면 로컬스토리지 값 다시 읽어서 업데이트
+  useEffect(() => {
+    setOpen(readLS(storageKey))
+  }, [storageKey])
 
   useEffect(() => {
     if (!storageKey) return
