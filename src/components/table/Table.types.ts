@@ -2,13 +2,13 @@ export type UserRow = {
   /** 회원 관리 */
   memberId: string
   email: string
-  nickname: string
+  nickname?: string
   name: string
-  birth: string
-  role: '관리자' | '스태프' | '일반회원'
-  status: '활성' | '정지' | '탈퇴요청' | '비활성'
-  joinedAt: string
-  withdrawnAt?: string
+  birth?: string
+  role?: string
+  status: '활성' | '정지' | '탈퇴요청'
+  joinedAt?: string
+  withdrawnAt?: string | null
 }
 
 export type CourseRow = {
