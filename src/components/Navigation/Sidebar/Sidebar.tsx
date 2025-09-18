@@ -3,7 +3,7 @@ import type { SidebarProps } from './Sidebar.types'
 import { DesktopAside, MobileDrawer, Nav } from './parts'
 import { getPage } from '@/lib'
 import { PATHS } from '@/routes/constants'
-import { useLocation } from 'react-router'
+import { useLocation } from 'react-router-dom'
 
 // 로컬 스토리지에 사이드바 확장 상태 저장
 const LS_KEY = 'sidebar:expanded'
@@ -31,7 +31,9 @@ export default function Sidebar({
     if (!isDesktop()) return
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(expanded))
-    } catch {}
+    } catch {
+      // noop
+    }
   }, [expanded])
 
   const [internalOpen, setInternalOpen] = useState(false) // <md: Drawer

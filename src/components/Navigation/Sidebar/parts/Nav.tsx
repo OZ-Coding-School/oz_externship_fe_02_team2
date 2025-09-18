@@ -1,7 +1,7 @@
 import { Accordion } from '@/components/Navigation/Accordion'
 import type { SidebarNavProps } from '../Sidebar.types'
 import { NAV_SECTIONS, toAccordionItems } from '../../nav'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 
 export default function Nav({
   expanded,
