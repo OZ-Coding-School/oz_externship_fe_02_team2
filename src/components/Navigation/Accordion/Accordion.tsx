@@ -3,7 +3,7 @@ import { cn } from '@/lib'
 import type { AccordionProps } from './Accordion.types'
 import { Header, List } from './parts'
 
-const ACCORDION_EVENT = 'studyhub-accordion'
+const ACCORDION_EVENT = 'studyhub-accordion-change'
 
 export default function Accordion({
   icon,
@@ -26,17 +26,34 @@ export default function Accordion({
 
   const [open, setOpen] = useState<boolean>(readLS)
 
-  // 같은 탭 안의 두 아코디언 인스턴스(데스크톱/모바일) 상태 맞추기
   useEffect(() => {
     if (!storageKey) return
-    const onSync = (e: Event) => {
+
+    /**  같은 탭 내 두 아코디언 인스턴스(데스크톱/모바일) 상태 동기화 */
+    const onCustomSync = (e: Event) => {
       const { key, value } =
         (e as CustomEvent<{ key: string; value: boolean }>).detail || {}
       if (key === storageKey) setOpen(value)
     }
-    window.addEventListener(ACCORDION_EVENT, onSync as EventListener)
-    return () =>
-      window.removeEventListener(ACCORDION_EVENT, onSync as EventListener)
+    window.addEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
+
+    /** 다른 탭/창 아코디언 상태 동기화 (storage 이벤트) */
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === storageKey && e.newValue != null) {
+        try {
+          const parsed = JSON.parse(e.newValue) as boolean
+          setOpen(parsed)
+        } catch {
+          // noop: JSON 파싱 실패 시 무시
+        }
+      }
+    }
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      window.removeEventListener(ACCORDION_EVENT, onCustomSync as EventListener)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [storageKey])
 
   /** 아코디언 토글 + 저장 + 브로드캐스트  */
