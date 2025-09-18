@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input/Input'
 import { FilterIcon, SearchIcon } from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
 
+/**
+ * TableFilterBar
+ * - 입력 중에는 상위 쿼리를 즉시 올리지 않고, 트레일링 디바운스(훅에서 300ms)로만 커밋
+ * - Enter/blur 시에는 즉시 플러시(즉시 커밋)
+ * - 한글 IME: 음절이 완성될 때 compositionend가 발생하므로, 여기서는 '즉시 커밋 금지'로 두고
+ *   디바운스만 재스케줄
+ */
+
 export type TableFilterBarProps = {
   query: TableQuery
   onQueryChange: {
@@ -40,15 +48,16 @@ export function TableFilterBar({
 
   const commitNow = useCallback(
     (value: string) => {
+      // 즉시 커밋: 디바운스 큐를 비우고 바로 상위로 올리기(훅 내부에서 처리)
       onQueryChange.setSearch(value, true)
     },
     [onQueryChange]
   )
-  // 입력 변화: draft만 갱신, 상위 쿼리는 건드리지 않음
+
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setDraft(v)
-    // 타이핑 중: 트레일링 디바운스(300ms)
+    // 타이핑 중: 트레일링 디바운스(300ms). 입력마다 "재스케줄"만 하고, 실제 커밋은 멈출 때 1회.
     onQueryChange.setSearch(v, false)
   }
 
@@ -80,6 +89,7 @@ export function TableFilterBar({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      // 사용자가 명시적으로 Enter: 현재 값 즉시 반영
       commitNow((e.currentTarget as HTMLInputElement).value)
     }
   }
@@ -110,10 +120,11 @@ export function TableFilterBar({
             onCompositionEnd={(e) =>
               onQueryChange.setSearch(
                 (e.currentTarget as HTMLInputElement).value,
-                false // ← 즉시 커밋 금지, 트레일링 디바운스만
+                false // IME 음절 확정 시에도 즉시 커밋 금지 -> '멈춤 후 1회 커밋' UX 유지
               )
             }
             onBlur={(e) =>
+              // 포커스 아웃에서는 사용자가 타이핑을 끝낸 것으로 간주하고 즉시 커밋
               commitNow((e.currentTarget as HTMLInputElement).value)
             }
             placeholder={searchPlaceholder}
@@ -153,7 +164,7 @@ export function TableFilterBar({
             <span
               className={cn(
                 'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
-                activeFilterCount === 0 && 'invisible'
+                activeFilterCount === 0 && 'invisible' // 카운터 공간 유지 → 레이아웃 점프/깜빡임 방지
               )}
             >
               {activeFilterCount || 0}
