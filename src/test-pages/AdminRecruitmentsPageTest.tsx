@@ -13,7 +13,6 @@ export default function AdminRecruitmentsPage() {
       <Sidebar
         mobileDrawerOpen={mobileOpen}
         onMobileDrawerOpenChange={setMobileOpen}
-        scope="viewport"
       />
 
       {/* --- 메인 영역 --- */}
