@@ -194,7 +194,7 @@ export default function Dropdown({
                 className={cn(
                   OPTION_BASE,
                   selected && OPTION_SELECTED,
-                  active && OPTION_ACTIVE,
+                  active && !selected && OPTION_ACTIVE,
                   options.disabled && OPTION_DISABLED,
                   classes?.option
                 )}
