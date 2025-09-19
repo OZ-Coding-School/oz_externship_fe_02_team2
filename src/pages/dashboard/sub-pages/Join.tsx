@@ -1,7 +1,24 @@
+import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
 import Section from './Section'
+import { useState } from 'react'
+import { DROPDOWN_PERIOD_OPTIONS } from './constants'
 
 export default function Join() {
-  return <Section title="회원가입 추세" />
+  const [period, setPeriod] = useState('MONTHLY')
+
+  const dropdownProps: DropdownProps = {
+    options: DROPDOWN_PERIOD_OPTIONS,
+    value: period,
+    onChange: (value) => {
+      setPeriod(value)
+      // TODO: 드롭다운 변경 시 차트 데이터 바뀌게
+    },
+    classes: {
+      button: 'w-23',
+    },
+  }
+
+  return <Section title="회원가입 추세" dropdown={dropdownProps} />
 }
 
 Join.Section = Section
