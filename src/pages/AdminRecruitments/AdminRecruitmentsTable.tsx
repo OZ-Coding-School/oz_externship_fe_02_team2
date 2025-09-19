@@ -192,6 +192,12 @@ export default function RecruitmentsTable() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null) // 에러 상태 추가
 
+  // DataTable이 필요로 하는 totalPages 계산 (서버가 total만 줄 때)
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / state.pageSize)),
+    [total, state.pageSize]
+  )
+
   /**
    * 공용 필터 훅: q(디바운스), status(즉시), URL 동기화
    * - 역할(role)은 사용하지 않으므로 미사용
@@ -319,7 +325,12 @@ export default function RecruitmentsTable() {
         onStateChange={(n) => setState((s) => ({ ...s, ...n }))}
         meta={{
           rowKey: (r) => r.id,
-          total,
+          // 서버 페이징 모드에서 DataTable이 페이지 수를 알도록 totalPages를 제공
+          totalPages,
+          // 서버가 정렬/페이징을 담당 → 클라 정렬 비활성화
+          enableClientSort: false,
+          // 서버 페이징 사용(명시)
+          clientPaging: false,
           loading,
           emptyText: '구인 공고가 없습니다.',
         }}
