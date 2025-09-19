@@ -3,14 +3,14 @@ import { cn } from '@/lib'
 export const WRAPPER_BASE = cn('relative', 'inline-block')
 
 export const BUTTON_BASE = cn(
-  'flex w-48 items-center justify-between gap-2',
+  'flex w-48 h-9 items-center justify-between gap-2',
   'rounded-lg pl-[13px] pr-[5px] py-[9px] body-sm',
-  'shadow-[inset_0_0_0_1px_#D1D5DB] bg-white text-[#000000]',
+  'shadow-[inset_0_0_0_1px_#D1D5DB] bg-[#EFEFEF]text-[#000000]',
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue'
 )
 export const BUTTON_DISABLED = cn('opacity-60 cursor-not-allowed')
 export const BUTTON_PLACEHOLDER = cn('text-gray-400')
-export const CARET = cn('transition-transform duration-150')
+export const CARET = cn('transition-transform duration-200')
 
 export const MENU_BASE = cn(
   'absolute z-20 mt-1 w-full max-h-60 overflow-auto',
