@@ -5,6 +5,7 @@ import { Join, Leave, Reason } from './sub-pages'
 
 type DashboardTabKey = 'join' | 'leave' | 'reason'
 
+// TODO: 대시보드 탭 바뀌면(트리거) 쿼리 달라지게
 export default function DashboardPage() {
   const [tab, setTab] = useState<DashboardTabKey>('join')
 
