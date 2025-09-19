@@ -1,4 +1,9 @@
-import { type Column, type TableState, type SortState } from '@/types'
+import {
+  type Column,
+  type TableState,
+  type SortState,
+  type TableFilterConfig,
+} from '@/types'
 import type {
   RecruitmentItem,
   RecruitmentListRes,
@@ -10,7 +15,9 @@ import { listRecruitments, statusToKo } from './AdminRecruitments.mock'
 import Badge from '@/components/ui/Badge/Badge'
 import { useEffect, useMemo, useState } from 'react'
 import { DataTable } from '@/components/table/DataTable'
-import AdminRecruitmentsFilters from './AdminRecruitmentFilter'
+import { useTableQuery } from '@/hooks/useTableQuery'
+import { TableFilterBar } from '@/components/table/feature/TableFilterBar'
+import Dropdown from '@/components/ui/Dropdown/Dropdown'
 
 /** 태그 정규화 */
 function normalizeTags(value: unknown): Tag[] {
@@ -186,50 +193,61 @@ export default function RecruitmentsTable() {
   const [error, setError] = useState<Error | null>(null) // 에러 상태 추가
 
   /**
-   * 필터바 상태(검색어 + 상태 + 정렬)
-   * - 검색어(queryText)와 상태(status)는 API 쿼리에 바로 반영
-   * - sortKey는 테이블 헤더 정렬과 양방향 동기화
+   * 공용 필터 훅: q(디바운스), status(즉시), URL 동기화
+   * - 역할(role)은 사용하지 않으므로 미사용
    */
-  const [filters, setFilters] = useState<{
-    queryText: string
-    status: RecruitmentStatusFilter
-    sortKey: SortKey
-  }>({
-    queryText: '',
-    status: 'ALL',
-    sortKey: 'created_desc',
+  const queryActions = useTableQuery({
+    syncUrl: true,
+    debounceMs: 300,
   })
 
-  /**
-   * 필터 변경 핸들러(부분 업데이트 허용)
-   * - 정렬 드롭다운이 바뀌면: 테이블의 정렬 상태도 함께 갱신(mapApiSortToTable)
-   * - 검색어/상태가 바뀌면: 페이지는 1로 리셋(검색 조건 변경 시 첫 페이지부터)
-   */
-  const onChangeFilters = (next: Partial<typeof filters>) => {
-    setFilters((prev) => {
-      const merged = { ...prev, ...next }
-      if (next.sortKey) {
-        setState((s) => ({ ...s, sort: mapApiSortToTable(next.sortKey!) }))
-      }
-      if (next.queryText !== undefined || next.status !== undefined) {
-        setState((s) => ({ ...s, page: 1 }))
-      }
-      return merged
-    })
-  }
+  /** 공용 필터바 설정 */
+  const filterConfig: TableFilterConfig = useMemo(
+    () => ({
+      mode: 'server',
+      searchPlaceholder: '제목으로 검색',
+      statusPlaceholder: '상태 선택',
+      rolePlaceholder: '권한 선택',
+      // 공용 컴포넌트가 '전체'를 자동 추가(withAllOption)하므로 OPEN/CLOSED만 넘김
+      statusOptions: [
+        { value: 'OPEN', label: '모집중' },
+        { value: 'CLOSED', label: '마감' },
+      ],
+      roleOptions: [],
+    }),
+    []
+  )
+
+  /** 정렬 드롭다운 옵션 (children 슬롯에서 사용) */
+  const sortOptions: { value: SortKey; label: string }[] = useMemo(
+    () => [
+      { value: 'created_desc', label: '최신순' },
+      { value: 'created_asc', label: '오래된 순' },
+      { value: 'views_desc', label: '조회수 순' },
+      { value: 'bookmarks_desc', label: '북마크 순' },
+    ],
+    []
+  )
+
+  /** q/status 변경 시 페이지 1로 리셋 (검색 조건 변경) */
+  useEffect(() => {
+    setState((s) => ({ ...s, page: 1 }))
+  }, [queryActions.query.q, queryActions.query.status])
 
   // API 쿼리 객체를 useMemo로 메모이제이션
   const apiQuery = useMemo(() => {
+    const statusFilter: RecruitmentStatusFilter =
+      (queryActions.query.status as RecruitmentStatusFilter) ?? 'ALL'
     return {
-      q: filters.queryText,
-      status: filters.status,
+      q: queryActions.query.q ?? '',
+      status: statusFilter,
       page: state.page,
       size: state.pageSize,
       sort: mapTableSortToApi(state.sort as SortState),
     }
   }, [
-    filters.queryText,
-    filters.status,
+    queryActions.query.q,
+    queryActions.query.status,
     state.page,
     state.pageSize,
     state.sort,
@@ -257,17 +275,43 @@ export default function RecruitmentsTable() {
     return <div>데이터를 불러오는 중 오류가 발생했습니다: {error.message}</div>
   }
 
-  // 테이블 상태가 변경될 때 필터의 sortKey를 업데이트하는 useEffect
-  useEffect(() => {
-    const newSortKey = mapTableSortToApi(state.sort as SortState)
-    if (newSortKey !== filters.sortKey) {
-      setFilters((prev) => ({ ...prev, sortKey: newSortKey }))
-    }
-  }, [state.sort, filters.sortKey])
+  // 정렬 드롭다운은 테이블 정렬 상태를 단방향 제어(드롭다운 → 테이블)
+  const currentSortKey = useMemo<SortKey>(
+    () => mapTableSortToApi(state.sort as SortState),
+    [state.sort]
+  )
 
   return (
     <>
-      <AdminRecruitmentsFilters value={filters} onChange={onChangeFilters} />
+      <div className="mb-4">
+        <TableFilterBar
+          query={queryActions.query}
+          onQueryChange={{
+            setSearch: queryActions.setSearch,
+            setStatus: queryActions.setStatus,
+            setRole: () => {}, // 미사용
+            reset: queryActions.reset,
+          }}
+          config={filterConfig}
+        >
+          {/* 정렬 드롭다운: 공용 필터바의 children 슬롯 활용 */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+              정렬
+            </label>
+            <Dropdown
+              options={sortOptions}
+              value={currentSortKey}
+              onChange={(nextValue) =>
+                setState((s) => ({
+                  ...s,
+                  sort: mapApiSortToTable(nextValue as SortKey),
+                }))
+              }
+            />
+          </div>
+        </TableFilterBar>
+      </div>
       <DataTable<RecruitmentItem>
         columns={columns}
         data={rows}

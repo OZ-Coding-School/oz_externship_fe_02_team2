@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/Sidebar'
+import { Sidebar } from '@/components/Navigation/Sidebar'
 import { cn } from '@/lib'
 import RecruitmentsTable from '@/pages/AdminRecruitments/AdminRecruitmentsTable'
 import { useState } from 'react'
