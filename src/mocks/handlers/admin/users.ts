@@ -19,7 +19,8 @@ export const usersHandlers = [
       | 'desc'
     const q = url.searchParams.get('q') ?? ''
     const role = url.searchParams.get('role')
-    const status = url.searchParams.get('status') // '활성' | '비활성'
+    // 쿼리에 status가 없는 경우 기본값을 '활성'으로 → 삭제 후 바로 목록에서 빠짐
+    const status = url.searchParams.get('status') ?? '활성' // '활성' | '비활성'
 
     let rows = [...db.users]
     if (q)
@@ -59,6 +60,33 @@ export const usersHandlers = [
     if (idx < 0)
       return HttpResponse.json({ message: 'Not found' }, { status: 404 })
     db.users[idx] = { ...db.users[idx], ...body }
+    return HttpResponse.json(db.users[idx])
+  }),
+
+  // DELETE /api/admin/users/:id  (소프트 삭제: status → '비활성')
+  mswHttp.delete(`${ADMIN}/users/:id`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+
+    await delay(120)
+    const idx = db.users.findIndex((u) => u.id === params.id)
+    if (idx < 0)
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+
+    db.users[idx] = { ...db.users[idx], status: '비활성' }
+    // 일반적으로 DELETE는 본문 없이 204를 반환
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  // POST /api/admin/users/:id/restore  (복구: status → '활성')
+  mswHttp.post(`${ADMIN}/users/:id/restore`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+
+    await delay(120)
+    const idx = db.users.findIndex((u) => u.id === params.id)
+    if (idx < 0)
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+
+    db.users[idx] = { ...db.users[idx], status: '활성' }
     return HttpResponse.json(db.users[idx])
   }),
 ]
