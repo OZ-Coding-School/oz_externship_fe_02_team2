@@ -24,6 +24,27 @@ export type PageResp<T> = {
   sortOrder?: SortOrder
 }
 
+const DEFAULT_PAGE = 1
+const DEFAULT_PAGE_SIZE = 20
+
+// undefined/null 제거 + 기본값 채우기
+function buildParams(p: UsersParams = {}) {
+  const params: Record<string, unknown> = {
+    page: p.page ?? DEFAULT_PAGE,
+    pageSize: p.pageSize ?? DEFAULT_PAGE_SIZE,
+    sortBy: p.sortBy,
+    sortOrder: p.sortOrder,
+    q: p.q,
+    role: p.role,
+    status: p.status,
+  }
+  Object.keys(params).forEach((k) => {
+    const v = (params as any)[k]
+    if (v === undefined || v === null || v === '') delete (params as any)[k]
+  })
+  return params
+}
+
 // 목록 조회(듀얼 모드)
 export async function getUsers(
   params: UsersParams = {},
@@ -32,13 +53,13 @@ export async function getUsers(
   const bypass = decideBypass(opts?.mock)
   const res = await http.get<PageResp<UserDetail>>(
     '/admin/users',
-    withBypass({ params }, bypass)
+    withBypass({ params: buildParams(params) }, bypass)
   )
   return res.data
 }
 
 // 상세 조회(듀얼 모드)
-export async function getUser(id: string, opts?: { mock?: boolean }) {
+export async function getUserDetail(id: string, opts?: { mock?: boolean }) {
   const bypass = decideBypass(opts?.mock)
   const res = await http.get<UserDetail>(
     `/admin/users/${id}`,
@@ -60,4 +81,25 @@ export async function updateUser(
     withBypass({}, bypass)
   )
   return res.data
+}
+
+// 복구(듀얼 모드)
+export async function restoreUser(id: string, opts?: { mock?: boolean }) {
+  const bypass = decideBypass(opts?.mock)
+  const res = await http.post<UserDetail>(
+    `/admin/users/${id}/restore`,
+    {},
+    withBypass({}, bypass)
+  )
+  return res.data
+}
+
+// 삭제(듀얼 모드)
+export async function deleteUser(id: string, opts?: { mock?: boolean }) {
+  const bypass = decideBypass(opts?.mock)
+  const res = await http.delete<void>(
+    `/admin/users/${id}`,
+    withBypass({}, bypass)
+  )
+  return res.data // axios는 void면 undefined 반환 → 호출부에선 await만 하면 됨
 }
