@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
 import { http, withBypass } from '../http'
 import { decideBypass } from '../toggles/mockToggle'
