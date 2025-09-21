@@ -5,9 +5,18 @@ import UserRoleChange, { type UserRole } from './UserRoleChange'
 import UserDelete from './UserDelete'
 import type { UserDetail } from './User.types'
 import UserDetailView from './UserDetailView'
-import { useFormHandlers } from '@/hooks/useFormHandlers'
+import { useToast } from '@/hooks'
+import { updateUser } from '@/api/modules/users'
+import { useUserFormHandlers } from './useUserFormHandlers'
 
-/** 도메인 타입 — 실제 필드/라벨 명칭에 맞게 수정 가능 */
+interface UserDetailModalProps {
+  open: boolean
+  onClose: () => void
+  data: UserDetail
+  onEdit?: (updatedUser: UserDetail) => void
+  onDeleted?: () => void
+  onDeletedWithId?: (userId: string) => void
+}
 
 /** 실제 모달 — 상단 우측 닫기 버튼 포함 */
 export default function UserDetailModal({
@@ -15,37 +24,74 @@ export default function UserDetailModal({
   onClose,
   data,
   onEdit,
-}: {
-  open: boolean
-  onClose: () => void
-  data: UserDetail
-  onEdit?: (m: UserDetail) => void
-}) {
+  onDeletedWithId,
+}: UserDetailModalProps) {
+  const { triggerToast } = useToast()
   const {
     form,
     setForm,
     editing,
     setEditing,
+    loading,
+    error,
     handleChange,
     handleSave,
     handleCancel,
     resetForm,
-  } = useFormHandlers<UserDetail>(data, { onEdit })
+    handleDelete,
+  } = useUserFormHandlers(data, {
+    onServerUpdated: (latest) => {
+      // 모달 내부 동기화
+      setForm(latest)
+      // 부모 테이블 즉시 반영
+      onEdit?.(latest)
+    },
+  })
 
   const [roleModalOpen, setRoleModalOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [roleChanging, setRoleChanging] = useState(false)
 
-  // 실제 삭제 함수 (추후 API 연동)
-  //const deleteUser = async (userId: string) => {
-  const deleteUser = async () => {
-    // TODO: 서버 API 호출로 교체
-    // await api.delete(`/users/${userId}`)
-    await new Promise((r) => setTimeout(r, 500)) // 데모용
-  }
   // data prop이 바뀔 때 form 동기화
   useEffect(() => {
     resetForm(data)
   }, [data, resetForm])
+
+  // 권한 변경 처리
+  const handleRoleChange = async (nextRole: UserRole) => {
+    setRoleChanging(true)
+    try {
+      // 실제 API 호출을 통한 권한 변경
+      const updatedUser = await updateUser(
+        form.id,
+        { role: nextRole },
+        { mock: true }
+      )
+
+      // 로컬 상태 업데이트
+      setForm(updatedUser)
+
+      // 부모 컴포넌트에 변경사항 알림
+      onEdit?.(updatedUser)
+
+      // 성공 토스트
+      triggerToast(
+        'success',
+        '권한 변경 완료',
+        `권한이 ${nextRole}로 변경되었습니다.`
+      )
+      setRoleModalOpen(false)
+    } catch (error) {
+      console.error('권한 변경 실패:', error)
+      triggerToast(
+        'error',
+        '권한 변경 실패',
+        '권한 변경 중 오류가 발생했습니다'
+      )
+    } finally {
+      setRoleChanging(false)
+    }
+  }
 
   return (
     <Modal
@@ -61,9 +107,15 @@ export default function UserDetailModal({
         <Modal.Title id="user-title">회원 상세 정보</Modal.Title>
       </Modal.Header>
       <div className="border-b border-gray-200" />
+
       {/* Body */}
       <Modal.Body>
         <UserDetailView m={form} editing={editing} onChange={handleChange} />
+        {error && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3">
+            <p className="body-sm text-red-600">{error}</p>
+          </div>
+        )}
       </Modal.Body>
 
       <div className="border-b border-gray-200" />
@@ -72,30 +124,32 @@ export default function UserDetailModal({
         <div className="flex w-full justify-between">
           <Button
             btnStyle="success"
-            btnText="권한 변경하기"
+            btnText={roleChanging ? '권한 변경 중...' : '권한 변경하기'}
             onClick={() => setRoleModalOpen(true)}
+            disabled={loading || roleChanging || editing}
           />
 
           <UserRoleChange
             open={roleModalOpen}
             value={(form.role as UserRole) || '일반회원'}
             onClose={() => setRoleModalOpen(false)}
-            onConfirm={(nextRole) => {
-              setForm((prev) => ({ ...prev, role: nextRole }))
-            }}
+            onConfirm={handleRoleChange}
+            confirming={roleChanging}
           />
           <div className="flex gap-3">
             {editing ? (
               <>
                 <Button
                   btnStyle="primary"
-                  btnText="저장하기"
+                  btnText={loading ? '저장 중...' : '저장하기'}
                   onClick={handleSave}
+                  disabled={loading}
                 />
                 <Button
                   btnStyle="secondary"
                   btnText="취소"
                   onClick={handleCancel}
+                  disabled={loading}
                 />
               </>
             ) : (
@@ -103,12 +157,16 @@ export default function UserDetailModal({
                 <Button
                   btnStyle="primary"
                   btnText="수정하기"
-                  onClick={() => setEditing(true)}
+                  onClick={() => {
+                    setEditing(true)
+                  }}
+                  disabled={loading || roleChanging}
                 />
                 <Button
                   btnStyle="danger"
                   btnText="삭제하기"
                   onClick={() => setDeleteOpen(true)}
+                  disabled={loading || roleChanging}
                 />
               </>
             )}
@@ -119,12 +177,14 @@ export default function UserDetailModal({
       <UserDelete
         open={deleteOpen}
         userId={form.id}
-        deleteUser={deleteUser}
+        deleteUser={async () => {
+          await handleDelete()
+        }}
         onClose={() => setDeleteOpen(false)}
         onDeleted={() => {
-          // 삭제 성공 후, 토스트 띄우고 목록으로 복귀
           onClose()
         }}
+        onDeletedWithId={onDeletedWithId}
       />
     </Modal>
   )
