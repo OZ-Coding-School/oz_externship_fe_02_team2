@@ -4,9 +4,16 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { ToastContainer } from './components/ui/Toast/ToastContainer.tsx'
 
-if (import.meta.env.VITE_USE_MSW === 'true') {
+if (typeof window !== 'undefined' && import.meta.env.VITE_USE_MSW === 'true') {
   const { worker } = await import('./mocks/browser')
-  await worker.start({ onUnhandledRequest: 'bypass' })
+  await worker.start({
+    serviceWorker: {
+      url: '/mockServiceWorker.js',
+      options: { scope: '/' }, // 앱이 서브패스면 거기에 맞춰 변경
+    },
+    onUnhandledRequest: 'bypass', // 모킹 안 한 건 실제로 보냄
+    quiet: true,
+  })
 }
 
 createRoot(document.getElementById('root')!).render(
