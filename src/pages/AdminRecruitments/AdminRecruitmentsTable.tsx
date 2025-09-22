@@ -18,7 +18,6 @@ import { DataTable } from '@/components/table/DataTable'
 import { useTableQuery } from '@/hooks/useTableQuery'
 import { TableFilterBar } from '@/components/table/feature/TableFilterBar'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
-import { ChevronDown } from 'lucide-react'
 
 /** 태그 정규화 */
 function normalizeTags(value: unknown): Tag[] {
@@ -350,6 +349,7 @@ export default function RecruitmentsTable() {
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
           </div> */}
+          ㅎ
         </TableFilterBar>
       </div>
       <DataTable<RecruitmentItem>
