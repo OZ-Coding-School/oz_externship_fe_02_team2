@@ -18,6 +18,7 @@ import { DataTable } from '@/components/table/DataTable'
 import { useTableQuery } from '@/hooks/useTableQuery'
 import { TableFilterBar } from '@/components/table/feature/TableFilterBar'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
+import { ChevronDown } from 'lucide-react'
 
 /** 태그 정규화 */
 function normalizeTags(value: unknown): Tag[] {
@@ -148,7 +149,7 @@ function mapTableSortToApi(sort: TableSort): SortKey {
 
   const { id, desc } = sort
 
-  // 2. switch 문을 사용해 가독성 향상
+  // switch 문을 사용해 가독성 향상
   switch (id) {
     case 'created':
       return desc ? 'created_desc' : 'created_asc'
@@ -191,6 +192,8 @@ export default function RecruitmentsTable() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null) // 에러 상태 추가
+  /** 태그 필터 모달 오픈 상태(추후 모달 컴포넌트 연결) */
+  // const [isTagModalOpen, setTagModalOpen] = useState(false)
 
   // DataTable이 필요로 하는 totalPages 계산 (서버가 total만 줄 때)
   const totalPages = useMemo(
@@ -211,8 +214,8 @@ export default function RecruitmentsTable() {
   const filterConfig: TableFilterConfig = useMemo(
     () => ({
       mode: 'server',
-      searchPlaceholder: '제목으로 검색',
-      statusPlaceholder: '상태 선택',
+      searchPlaceholder: '공고명 검색...',
+      statusPlaceholder: '공고 상태',
       rolePlaceholder: '권한 선택',
       // 공용 컴포넌트가 '전체'를 자동 추가(withAllOption)하므로 OPEN/CLOSED만 넘김
       statusOptions: [
@@ -299,6 +302,7 @@ export default function RecruitmentsTable() {
             reset: queryActions.reset,
           }}
           config={filterConfig}
+          showChildrenDivider={false}
         >
           {/* 정렬 드롭다운: 공용 필터바의 children 슬롯 활용 */}
           <div>
@@ -315,6 +319,20 @@ export default function RecruitmentsTable() {
                 }))
               }
             />
+          </div>
+          {/* 태그 필터: 모달 트리거(스샷처럼 셀렉트 형태의 버튼 UI) */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+              태그 필터
+            </label>
+            <button
+              type="button"
+              // onClick={() => setTagModalOpen(true)}
+              className="relative inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              태그 선택...
+              <ChevronDown className="pointer-events-none absolute right-2 h-4 w-4 text-gray-500" />
+            </button>
           </div>
         </TableFilterBar>
       </div>
@@ -335,6 +353,14 @@ export default function RecruitmentsTable() {
           emptyText: '구인 공고가 없습니다.',
         }}
       />
+      {/* TODO: 태그 필터 모달 컴포넌트 연결 지점 */}
+      {/* {isTagModalOpen && (
+    <TagFilterModal
+      selectedTagIds={selectedTagIds}
+      onApply={(ids) => { setSelectedTagIds(ids); setTagModalOpen(false) }}
+      onClose={() => setTagModalOpen(false)}
+    />
+  )} */}
     </>
   )
 }

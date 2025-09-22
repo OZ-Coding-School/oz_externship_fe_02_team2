@@ -37,10 +37,7 @@ export type TableFilterBarProps = {
     role?: string
     withdrawalReason?: string
   }
-  /** 필터 표시 옵션 - 각 필터를 선택적으로 노출 */
-  showFilters?: FilterVisibilityOptions
-  /** 탈퇴사유 플레이스홀더 */
-  withdrawalReasonPlaceholder?: string
+  showChildrenDivider?: boolean
 }
 
 export function TableFilterBar({
@@ -49,19 +46,11 @@ export function TableFilterBar({
   config,
   className,
   children,
+
   showLabels = false,
-  labels = {
-    search: '검색',
-    status: '상태',
-    role: '권한',
-    withdrawalReason: '탈퇴사유',
-  },
-  showFilters = {
-    search: true,
-    status: true,
-    role: true,
-    reason: false,
-  },
+  labels = { search: '검색', status: '상태', role: '권한' },
+
+  showChildrenDivider = true,
 }: TableFilterBarProps) {
   const panelId = useId()
   // query.search를 사용
@@ -246,59 +235,53 @@ export function TableFilterBar({
           )}
 
           {/* 상태 */}
-          {showFilters.status && (
+          <div className="w-full">
+            {showLabels && (
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {labels.status ?? '상태'}
+              </label>
+            )}
             <div className="w-full">
-              {showLabels && (
-                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                  {labels.status ?? '상태'}
-                </label>
-              )}
-              <div className="w-full">
-                <Dropdown
-                  options={statusDropdownOptions}
-                  value={query.status || ''}
-                  onChange={handleStatusChange}
-                  placeholder={statusPlaceholder}
-                  classes={{
-                    wrapper: 'w-full',
-                    button:
-                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
-                  }}
-                  aria-label="상태 필터"
-                />
-              </div>
+              <Dropdown
+                options={statusDropdownOptions}
+                value={query.status || ''}
+                onChange={handleStatusChange}
+                placeholder={statusPlaceholder}
+                classes={{
+                  wrapper: 'w-full',
+                  button: 'w-full !min-w-0 !bg-gray-100',
+                }}
+                aria-label="상태 필터"
+              />
             </div>
-          )}
+          </div>
 
           {/* 권한 */}
-          {showFilters.role && (
+          <div className="w-full">
+            {showLabels && (
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {labels.role ?? '권한'}
+              </label>
+            )}
             <div className="w-full">
-              {showLabels && (
-                <label className="mb-2 block text-sm font-semibold text-gray-800">
-                  {labels.role ?? '권한'}
-                </label>
-              )}
-              <div className="w-full">
-                <Dropdown
-                  options={roleDropdownOptions}
-                  value={query.role || ''}
-                  onChange={handleRoleChange}
-                  placeholder={rolePlaceholder}
-                  classes={{
-                    wrapper: 'w-full',
-                    button:
-                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
-                  }}
-                  aria-label="권한 필터"
-                />
-              </div>
+              <Dropdown
+                options={roleDropdownOptions}
+                value={query.role || ''}
+                onChange={handleRoleChange}
+                placeholder={rolePlaceholder}
+                classes={{
+                  wrapper: 'w-full',
+                  button: 'w-full !min-w-0 !bg-gray-100',
+                }}
+                aria-label="권한 필터"
+              />
             </div>
-          )}
+          </div>
 
           {/* 초기화 */}
           <div className="shrink-0">
             {showLabels && (
-              <div className="mb-2 block text-sm font-semibold text-gray-800 opacity-0">
+              <div className="mb-1 block text-sm font-medium text-gray-700 opacity-0">
                 {/* 빈 라벨로 높이 맞춤 */}
                 &nbsp;
               </div>
@@ -306,23 +289,19 @@ export function TableFilterBar({
             <button
               type="button"
               onClick={onQueryChange.reset}
-              className={cn(
-                'inline-flex items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-all duration-200',
-                'h-9', // Input과 같은 높이로 고정
-                activeFilterCount > 0
-                  ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
-                  : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
-              )}
+              className="body-sm inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-50"
               aria-label={`${activeFilterCount}개 필터 초기화`}
-              disabled={activeFilterCount === 0}
             >
               <XIcon className="h-4 w-4" />
               초기화
-              {activeFilterCount > 0 && (
-                <span className="min-w-[20px] rounded-full bg-red-100 px-2 py-0.5 text-center text-xs text-red-800">
-                  {activeFilterCount}
-                </span>
-              )}
+              <span
+                className={cn(
+                  'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
+                  activeFilterCount === 0 && 'invisible'
+                )}
+              >
+                {activeFilterCount || 0}
+              </span>
             </button>
           </div>
         </div>
@@ -368,8 +347,8 @@ export function TableFilterBar({
         )}
       </div>
       {children && (
-        <div className="mt-4 border-t border-gray-100 pt-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-2 border-t border-gray-200 pt-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {children}
           </div>
         </div>
