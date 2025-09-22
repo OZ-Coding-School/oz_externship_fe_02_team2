@@ -307,9 +307,11 @@ export default function RecruitmentsTable() {
           showCoreLabels
           searchLabel="검색어"
           statusLabel="상태"
-          /* 검색이 너무 넓어 2줄로 내려가는 현상 방지 */
-          searchMaxWidthClassName="sm:max-w-[420px]"
-          /* 모바일 패널에도 children(정렬/태그) 포함 */
+          /* 한 줄 유지 위해 검색 최대폭 제한 */
+          searchMaxWidthClassName="sm:w-[520px]"
+          /* 데스크톱에서도 children(정렬/태그)을 같은 줄에 배치 */
+          childrenPlacement="inline"
+          /* 모바일 패널에도 children 포함 */
           includeChildrenInMobilePanel
         >
           {/* 정렬 드롭다운: 공용 필터바의 children 슬롯 활용 */}
@@ -326,6 +328,7 @@ export default function RecruitmentsTable() {
                   sort: mapApiSortToTable(nextValue as SortKey),
                 }))
               }
+              classes={{ button: 'w-36' }}
             />
           </div>
           {/* 태그 필터: 모달 트리거(스샷처럼 셀렉트 형태의 버튼 UI) */}
@@ -336,10 +339,10 @@ export default function RecruitmentsTable() {
             <button
               type="button"
               onClick={() => setTagModalOpen(true)}
-              className="relative inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-700 hover:bg-gray-50"
+              className="relative inline-flex h-9 w-40 items-center justify-between rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50"
             >
-              태그 선택...
-              <ChevronDown className="pointer-events-none absolute right-2 h-4 w-4 text-gray-500" />
+              <span className="truncate">태그 선택...</span>
+              <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
           </div>
         </TableFilterBar>
