@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Section from './Section'
 import { DROPDOWN_PERIOD_OPTIONS } from './constants'
 import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
+import VerticalBarChart from '../../../components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Leave() {
   const [period, setPeriod] = useState('MONTHLY')
@@ -18,7 +19,11 @@ export default function Leave() {
     },
   }
 
-  return <Section title="회원탈퇴 추세" dropdown={dropdownProps} />
+  return (
+    <Section title="회원탈퇴 추세" dropdown={dropdownProps}>
+      <VerticalBarChart />
+    </Section>
+  )
 }
 
 Leave.Section = Section
