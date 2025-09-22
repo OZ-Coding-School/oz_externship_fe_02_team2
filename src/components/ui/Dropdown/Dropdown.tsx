@@ -23,6 +23,7 @@ import {
   nextEnabledIndex,
 } from './utils'
 import { cn } from '@/lib'
+import SelectIcon from '@assets/icons/select-icon.svg'
 
 export default function Dropdown({
   options,
@@ -158,20 +159,11 @@ export default function Dropdown({
         <span className={cn(!selectedOption && BUTTON_PLACEHOLDER)}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className={cn(CARET, open && 'rotate-180')}
-        >
-          <path
-            d="M7 10l5 5 5-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </svg>
+        <img
+          src={SelectIcon}
+          alt="아이콘"
+          className={cn(CARET, open && '-rotate-180')}
+        />
       </button>
 
       {open && (
@@ -202,7 +194,7 @@ export default function Dropdown({
                 className={cn(
                   OPTION_BASE,
                   selected && OPTION_SELECTED,
-                  active && OPTION_ACTIVE,
+                  active && !selected && OPTION_ACTIVE,
                   options.disabled && OPTION_DISABLED,
                   classes?.option
                 )}

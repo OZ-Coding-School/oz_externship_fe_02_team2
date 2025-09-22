@@ -7,7 +7,9 @@ export default function PlaceHolderPage() {
 
   return (
     <section>
-      <h3 className="hidden md:block">{getPageTitle(pathname)}</h3>
+      <h3 className="hidden text-gray-800 md:block">
+        {getPageTitle(pathname)}
+      </h3>
     </section>
   )
 }
