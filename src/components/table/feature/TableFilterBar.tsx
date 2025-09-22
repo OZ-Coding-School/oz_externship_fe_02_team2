@@ -47,7 +47,7 @@ export function TableFilterBar({
   // query.search를 사용
   const [draft, setDraft] = useState<string>(query.search ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen] = useState(false)
   const {
     searchPlaceholder = DEFAULT_SEARCH_PLACEHOLDER,
     statusPlaceholder = DEFAULT_STATUS_PLACEHOLDER,
