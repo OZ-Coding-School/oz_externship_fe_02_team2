@@ -15,7 +15,7 @@ const mount = () => {
 }
 
 const shouldUseMsw =
-  typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_MSW === 'true'
+  typeof window !== 'undefined' && import.meta.env.VITE_USE_MSW === 'true'
 
 // MSW를 켜야 한다면: 먼저 시작시키고, 끝난 뒤 렌더
 if (shouldUseMsw) {
