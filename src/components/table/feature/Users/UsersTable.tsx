@@ -5,7 +5,7 @@ import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
 import { roleToTone, statusToTone } from '@/lib/mappers'
 import Badge from '@/components/ui/Badge/Badge'
-import type { UserRow } from '../Table.types'
+import type { UserRow } from '../../Table.types'
 
 type UserTableProps = {
   rows: UserRow[]
@@ -44,7 +44,9 @@ const columns: Column<UserRow>[] = [
     accessor: 'status',
     width: '100px',
     cell: ({ value }: { value: UserRow['status'] }) => (
-      <Badge tone={statusToTone[value]}>{value}</Badge>
+      <Badge tone={value ? statusToTone[value] : 'neutral'}>
+        {value ?? '—'}
+      </Badge>
     ),
   },
   {

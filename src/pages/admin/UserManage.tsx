@@ -1,13 +1,16 @@
 import { useCallback, useState } from 'react'
-import UsersTable from '@/components/table/feature/UsersTable'
+import { useTableFilters } from '@/hooks/useTableFilters'
+import UsersTable from '@/components/table/feature/Users/UsersTable'
 import UserDetail from '@/components/ui/Modal/feature/User/UserDetail'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
 import type { UserDetail as UserDetailType } from '@/components/ui/Modal/feature/User/User.types'
 import type { UserRow } from '@/components/table/Table.types'
+import type { TableQuery } from '@/types/table'
 import type { SortOrder } from '@/mocks/utils'
 import { getUserDetail, getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
+import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 
 // API 응답 → 테이블 로우 매핑
 function mapToRow(u: UserDetailType): UserRow {
@@ -22,13 +25,6 @@ function mapToRow(u: UserDetailType): UserRow {
     joinedAt: u.joinedAt ?? '',
     withdrawnAt: null,
   }
-}
-
-// 테이블 요청 파라미터 타입
-type RequestParams = {
-  page: number
-  pageSize: number
-  sort?: { id: string; desc: boolean } | null
 }
 
 // 정렬 키 매핑
@@ -47,15 +43,12 @@ const SORT_KEY_MAP: Record<string, string> = {
 export default function UsersManagePage() {
   const { triggerToast } = useToast()
 
-  // 테이블 상태
-  const [tableState, setTableState] = useState({
-    rows: [] as UserRow[],
-    totalPages: 1,
-    total: 0,
-    loading: false,
-    error: null as string | null,
-    currentParams: null as RequestParams | null,
-  })
+  // 테이블 데이터 상태
+  const [tableData, setTableData] = useState<UserRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // 모달 상태
   const [modalState, setModalState] = useState({
@@ -65,59 +58,99 @@ export default function UsersManagePage() {
     detailError: null as string | null,
   })
 
-  // 테이블 데이터 로드 함수
+  // 서버에서 사용자 데이터 로드
   const loadTableData = useCallback(
-    async (params: RequestParams) => {
-      setTableState((prev) => ({ ...prev, loading: true, error: null }))
-
-      const sortBy = params.sort
-        ? (SORT_KEY_MAP[params.sort.id] ?? params.sort.id)
-        : 'joinedAt'
-      const sortOrder: SortOrder = params.sort?.desc ? 'desc' : 'asc'
+    async (query: TableQuery) => {
+      setLoading(true)
+      setError(null)
 
       try {
-        const data = await getUsers(
-          {
-            page: params.page,
-            pageSize: params.pageSize,
-            sortBy,
-            sortOrder,
-          },
-          { mock: true }
-        )
+        // 정렬 파라미터 변환
+        const sortBy = query.sortBy
+          ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
+          : 'joinedAt'
+        const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
 
-        setTableState((prev) => ({
-          ...prev,
-          rows: data.items.map(mapToRow),
-          totalPages: data.totalPages,
-          total: data.total,
-          loading: false,
-          currentParams: params,
-        }))
+        const q = (query.search ?? '').trim()
+
+        // API 호출 파라미터 구성
+        const apiParams = {
+          page: query.page,
+          pageSize: query.pageSize,
+          sortBy,
+          sortOrder,
+          ...(q && { q }), // ← 바뀐 부분
+          ...(query.status && { status: query.status }),
+          ...(query.role && { role: query.role }),
+        }
+
+        const data = await getUsers(apiParams, { mock: true })
+
+        setTableData(data.items.map(mapToRow))
+        setTotal(data.total)
+        setTotalPages(data.totalPages)
       } catch (e: unknown) {
         const errorMessage =
           e instanceof ApiError || e instanceof Error
             ? e.message
             : '알 수 없는 오류'
 
-        setTableState((prev) => ({
-          ...prev,
-          loading: false,
-          error: errorMessage,
-        }))
-
+        setError(errorMessage)
         triggerToast('error', '데이터 로딩 실패', errorMessage)
+      } finally {
+        setLoading(false)
       }
     },
     [triggerToast]
   )
 
-  // 테이블 요청 핸들러
-  const handleRequest = useCallback(
-    (params: RequestParams) => {
-      void loadTableData(params)
+  // 테이블 필터 훅 사용
+  const tableFilters = useTableFilters({
+    initialQuery: {
+      page: 1,
+      pageSize: 10,
+      search: '',
+      status: undefined,
+      role: undefined,
+      sortBy: 'joinedAt',
+      sortDir: 'desc',
     },
-    [loadTableData]
+    syncUrl: true,
+    debounceMs: 300,
+    onQueryChange: loadTableData,
+  })
+
+  // 테이블에서 정렬 변경 처리
+  const handleTableRequest = useCallback(
+    ({
+      page,
+      pageSize,
+      sort,
+    }: {
+      page: number
+      pageSize: number
+      sort?: { id: string; desc: boolean } | null
+    }) => {
+      if (page !== tableFilters.query.page) {
+        tableFilters.setPage(page)
+      }
+      if (pageSize !== tableFilters.query.pageSize) {
+        tableFilters.setPageSize(pageSize)
+      }
+      if (sort) {
+        const sortBy = sort.id
+        const sortDir = sort.desc ? 'desc' : 'asc'
+        if (
+          sortBy !== tableFilters.query.sortBy ||
+          sortDir !== tableFilters.query.sortDir
+        ) {
+          tableFilters.setSort(sortBy, sortDir)
+        }
+      } else if (tableFilters.query.sortBy) {
+        tableFilters.setSort(null)
+      }
+    },
+    [tableFilters]
   )
 
   // 모달 열기 (상세 데이터 로드)
@@ -166,24 +199,20 @@ export default function UsersManagePage() {
     })
   }, [])
 
-  // 유저 업데이트 핸들러 (수정/권한 변경)
+  // 유저 업데이트 핸들러
   const handleUserUpdated = useCallback(
     (updatedUser: UserDetailType) => {
-      // 1. 테이블 데이터 즉시 업데이트
-      setTableState((prev) => ({
-        ...prev,
-        rows: prev.rows.map((row) =>
+      setTableData((prev) =>
+        prev.map((row) =>
           row.memberId === updatedUser.id ? mapToRow(updatedUser) : row
-        ),
-      }))
+        )
+      )
 
-      // 2. 모달 데이터도 업데이트
       setModalState((prev) => ({
         ...prev,
         detail: prev.detail?.id === updatedUser.id ? updatedUser : prev.detail,
       }))
 
-      // 3. 성공 알림
       triggerToast(
         'success',
         '업데이트 완료',
@@ -196,25 +225,18 @@ export default function UsersManagePage() {
   // 유저 삭제 핸들러
   const handleUserDeleted = useCallback(
     (deletedUserId: string) => {
-      // 1. MSW에서는 소프트 삭제 (status를 '비활성'으로 변경)
-      setTableState((prev) => ({
-        ...prev,
-        rows: prev.rows.map((row) =>
+      setTableData((prev) =>
+        prev.map((row) =>
           row.memberId === deletedUserId
             ? { ...row, status: '비활성' as const }
             : row
-        ),
-      }))
+        )
+      )
 
-      // 2. 모달 닫기
       closeDetail()
-
-      // 3. 테이블 새로고침으로 MSW 변경사항 확실히 반영
-      if (tableState.currentParams) {
-        void loadTableData(tableState.currentParams)
-      }
+      triggerToast('success', '삭제 완료', '회원이 비활성화되었습니다.')
     },
-    [closeDetail, tableState.currentParams, loadTableData]
+    [closeDetail, triggerToast]
   )
 
   // 테이블 로우 클릭 핸들러
@@ -225,12 +247,10 @@ export default function UsersManagePage() {
     [openUserDetail]
   )
 
-  // 테이블 새로고침 핸들러
+  // 새로고침 핸들러
   const refreshTable = useCallback(() => {
-    if (tableState.currentParams) {
-      void loadTableData(tableState.currentParams)
-    }
-  }, [tableState.currentParams, loadTableData])
+    void loadTableData(tableFilters.query)
+  }, [loadTableData, tableFilters.query])
 
   // 로딩 스켈레톤 컴포넌트
   const LoadingModal = () => (
@@ -241,7 +261,6 @@ export default function UsersManagePage() {
       <div className="border-b border-gray-200" />
       <Modal.Body>
         <div className="space-y-4">
-          {/* 프로필 영역 스켈레톤 */}
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 animate-pulse rounded-full bg-gray-200" />
             <div className="space-y-2">
@@ -249,8 +268,6 @@ export default function UsersManagePage() {
               <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
             </div>
           </div>
-
-          {/* 필드 스켈레톤 */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
@@ -310,36 +327,11 @@ export default function UsersManagePage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
-        </div>
-
-        {/* 새로고침 버튼 */}
-        <button
-          onClick={refreshTable}
-          disabled={tableState.loading}
-          className="btn btn-outline btn-sm"
-          title="테이블 새로고침"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          새로고침
-        </button>
+        <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
       </div>
 
       {/* 에러 알림 */}
-      {tableState.error && (
+      {error && (
         <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -359,7 +351,7 @@ export default function UsersManagePage() {
               <h3 className="text-sm font-medium text-red-800">
                 데이터 로딩 오류
               </h3>
-              <p className="mt-1 text-sm text-red-700">{tableState.error}</p>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
             <div className="ml-auto pl-3">
               <button
@@ -375,12 +367,28 @@ export default function UsersManagePage() {
 
       {/* 테이블 */}
       <div className="rounded-lg bg-white shadow">
+        {/* 필터 바 */}
+        <UsersFilterBar
+          query={tableFilters.query}
+          onQueryChange={tableFilters.onQueryChange}
+          density="compact" // 밀도 낮추기
+          tone="elevated" // 살짝 떠 보이는 톤
+          stickyTop={64} // 상단 64px 고정 (예: 헤더 높이)
+          // config로 옵션 일부만 덮어쓰기 가능
+          // config={{ statusOptions: [...], roleOptions: [...] }}
+        >
+          {/* 오른쪽/아래쪽에 붙일 유저 전용 컨트롤들 */}
+          {/* <button className="btn btn-primary btn-sm ml-auto">일괄 처리</button> */}
+        </UsersFilterBar>
+      </div>
+      <div className="mt-7">
+        {/* 테이블 */}
         <UsersTable
-          rows={tableState.rows}
-          total={tableState.total}
-          loading={tableState.loading}
-          totalPages={tableState.totalPages}
-          onRequest={handleRequest}
+          rows={tableData}
+          total={total}
+          loading={loading}
+          totalPages={totalPages}
+          onRequest={handleTableRequest}
           onRowClick={handleRowClick}
         />
       </div>
@@ -388,15 +396,10 @@ export default function UsersManagePage() {
       {/* 상세 모달들 */}
       {modalState.detailId && (
         <>
-          {/* 로딩 상태 */}
           {modalState.detailLoading && <LoadingModal />}
-
-          {/* 에러 상태 */}
           {!modalState.detailLoading && modalState.detailError && (
             <ErrorModal error={modalState.detailError} />
           )}
-
-          {/* 정상 상태 - 실시간 반영되는 모달 */}
           {!modalState.detailLoading &&
             !modalState.detailError &&
             modalState.detail && (

@@ -6,7 +6,7 @@ export type UserRow = {
   name: string
   birth?: string
   role?: string
-  status: '활성' | '정지' | '탈퇴요청' | '비활성'
+  status?: string
   joinedAt?: string
   withdrawnAt?: string | null
 }

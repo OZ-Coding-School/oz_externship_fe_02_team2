@@ -7,7 +7,7 @@ export type UserDetail = {
   birth?: string // yyyy-mm-dd
   phone?: string
   role?: string
-  status?: '활성' | '비활성'
+  status?: '활성' | '비활성' | undefined
   joinedAt?: string // ISO or display string
   avatarUrl?: string
 }

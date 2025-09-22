@@ -52,7 +52,7 @@ export function buildSearchParamsFromQuery(
   if (q.role) params.set(URL_PARAM_KEYS.role, q.role)
   if (q.sortBy && q.sortDir)
     params.set(URL_PARAM_KEYS.sort, `${q.sortBy}.${q.sortDir}`)
-  if (q.page > DEFAULT_QUERY.page)
+  if (Number(q.page) > Number(DEFAULT_QUERY.page))
     params.set(URL_PARAM_KEYS.page, String(q.page))
   if (q.pageSize !== DEFAULT_QUERY.pageSize)
     params.set(URL_PARAM_KEYS.size, String(q.pageSize))

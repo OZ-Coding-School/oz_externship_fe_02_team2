@@ -58,7 +58,6 @@ export function DataTable<T>({
   state,
   onStateChange,
   meta,
-  toolbar,
   footerExtra,
   stickyHeader = true,
   nowrapCells = true,
@@ -154,12 +153,6 @@ export function DataTable<T>({
 
   return (
     <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
-      {/* 헤더 툴바 */}
-      <div className="border-base-300 flex items-center justify-between border-b p-3">
-        <div className="text-base font-semibold">목록</div>
-        <div className="flex items-center gap-2">{toolbar}</div>
-      </div>
-
       {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="body-xs sm:body-sm w-full max-w-full min-w-max table-auto">
@@ -182,7 +175,7 @@ export function DataTable<T>({
                   <th
                     key={col.id}
                     className={cls(
-                      'px-3 py-2 text-left font-medium whitespace-nowrap',
+                      'bg-gray-100 px-3 py-2 text-left font-medium whitespace-nowrap',
                       col.align === 'center' && 'text-center',
                       col.align === 'left' && 'text-left',
                       col.align === 'right' && 'text-right'

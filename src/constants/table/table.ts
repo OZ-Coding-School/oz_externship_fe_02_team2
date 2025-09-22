@@ -2,12 +2,13 @@ import type { TableQuery } from '@/types/table'
 
 export const DEFAULT_QUERY: TableQuery = {
   q: '',
-  status: null,
-  role: null,
+  status: undefined,
+  role: undefined,
   sortBy: null,
-  sortDir: null,
+  sortDir: undefined,
   page: 1,
   pageSize: 20,
+  search: '',
 }
 
 export const URL_PARAM_KEYS = {

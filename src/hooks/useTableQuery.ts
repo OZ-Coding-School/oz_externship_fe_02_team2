@@ -86,11 +86,11 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       // trailing 디바운스: 입력이 멈춘 뒤 한 번만 반영
       scheduleDebounce(() => updateQuery({ q }))
     },
-    [updateQuery, debounceMs, cancelDebounce]
+    [scheduleDebounce, cancelDebounce, updateQuery]
   )
 
   const setStatus = useCallback(
-    (status: string | null) => {
+    (status: string | undefined) => {
       cancelDebounce() // ← 대기 중 q 디바운스 취소
       updateQuery({ status })
     },
@@ -98,7 +98,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const setRole = useCallback(
-    (role: string | null) => {
+    (role: string | undefined) => {
       cancelDebounce()
       updateQuery({ role })
     },
@@ -106,8 +106,8 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
   )
 
   const setSort = useCallback(
-    (sortBy: string | null, sortDir: TableQuery['sortDir'] = null) => {
-      cancelDebounce // 정렬 변경도 즉시 반영. q 디바운스가 남아있으면 뒤늦게 덮어쓸 수 있음
+    (sortBy: string | undefined, sortDir: TableQuery['sortDir']) => {
+      cancelDebounce() // 정렬 변경도 즉시 반영. q 디바운스가 남아있으면 뒤늦게 덮어쓸 수 있음
       updateQuery({ sortBy, sortDir })
     },
     [updateQuery, cancelDebounce]
@@ -120,7 +120,7 @@ export function useTableQuery(options: UseTableQueryOptions = {}) {
       } else if (query.sortDir === 'asc') {
         setSort(column, 'desc')
       } else {
-        setSort(null, null)
+        setSort(undefined, undefined)
       }
     },
     [query.sortBy, query.sortDir, setSort]

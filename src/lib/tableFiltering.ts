@@ -70,14 +70,14 @@ export function filterTableData<T extends Record<string, unknown>>(
 
   // 4) 페이징
   const total = items.length
-  const start = (q.page - 1) * q.pageSize
-  const paged = items.slice(start, start + q.pageSize)
+  const start = (q.page - 1) * Number(q.pageSize)
+  const paged = items.slice(start, start + Number(q.pageSize))
 
   return {
     items: paged,
     total,
     page: q.page,
     pageSize: q.pageSize,
-    totalPages: Math.max(1, Math.ceil(total / q.pageSize)),
+    totalPages: Math.max(1, Math.ceil(total / Number(q.pageSize))),
   }
 }
