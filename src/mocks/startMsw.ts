@@ -5,4 +5,6 @@ export async function startMsw() {
     serviceWorker: { url: '/mockServiceWorker.js' },
     onUnhandledRequest: 'bypass',
   })
+  console.log('[MSW] started')
+  return true
 }

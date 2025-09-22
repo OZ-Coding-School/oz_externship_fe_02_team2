@@ -4,10 +4,13 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { ToastContainer } from './components/ui/Toast/ToastContainer.tsx'
 
-if (typeof window !== 'undefined' && import.meta.env.VITE_USE_MSW === 'true') {
-  import('./mocks/startMsw.ts').then((m) => {
-    void m.startMsw()
-  })
+if (import.meta.env.VITE_USE_MSW === 'true' && typeof window !== 'undefined') {
+  try {
+    const { startMsw } = await import('./mocks/startMsw')
+    await startMsw() // ⬅ 첫 요청 전에 완료 보장
+  } catch (e) {
+    console.warn('[MSW] failed to start:', e)
+  }
 }
 
 createRoot(document.getElementById('root')!).render(
