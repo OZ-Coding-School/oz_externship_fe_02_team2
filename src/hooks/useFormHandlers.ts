@@ -60,19 +60,32 @@ export function useFormHandlers<T>(
 
   /** 저장 */
   const handleSave = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
       setError(null)
-      await opts.onEdit?.(form)
-      opts.onEdited?.(form)
+
+      // 1) 서버 반영 (PATCH/업데이트) — 반환값 없음이 보장됨
+      if (opts.onEdit) {
+        await opts.onEdit(form)
+      }
+
+      // 2) 후처리 (최신 재조회, 토스트, 부모 테이블 반영 등)
+      if (opts.onEdited) {
+        await opts.onEdited(form)
+      }
+
+      // 3) 편집 종료 (모달은 닫지 않음; 닫고 싶으면 opts.onClose?.() 추가)
       setEditing(false)
-      opts.onClose?.()
-    } catch (err) {
-      setError(`${err}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
+      // onEdited에서 토스트를 띄우는 설계라면 중복 방지 차원에서 여기선 토스트 생략
+      // 실패 토스트를 이 레벨에서 띄우고 싶다면 아래처럼:
+      // triggerToast?.('error', '저장 실패', msg)
     } finally {
       setLoading(false)
     }
-  }, [form, opts])
+  }, [form, opts, setEditing, setError, setLoading])
 
   /** 취소 → 최초 기준으로 되돌림 */
   const handleCancel = useCallback(() => {
@@ -94,18 +107,25 @@ export function useFormHandlers<T>(
 
   /** 삭제 */
   const handleDelete = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
       setError(null)
-      await opts.onDelete?.(form)
-      opts.onDeleted?.()
-      opts.onClose?.()
-    } catch (err) {
-      setError(`${err}, 삭제 중 오류 발생!! 잠시 후 다시 시도해주세요.`)
+
+      // 1) 서버 반영 (PATCH/업데이트) — 반환값 없음이 보장됨
+      if (opts.onDelete) {
+        await opts.onDelete(form)
+      }
+      // 2) 후처리 (최신 재조회, 토스트, 부모 테이블 반영 등)
+      if (opts.onDeleted) {
+        await opts.onDeleted()
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(msg)
     } finally {
       setLoading(false)
     }
-  }, [form, opts])
+  }, [form, opts, setError, setLoading])
 
   return {
     form,

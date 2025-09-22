@@ -20,6 +20,7 @@ type TableProps<T> = {
   stickyHeader?: boolean
   nowrapCells?: boolean
   wrapCells?: boolean
+  onRowClick?: (row: T, index: number) => void
 }
 
 function toNode(v: unknown): React.ReactNode {
@@ -62,6 +63,7 @@ export function DataTable<T>({
   stickyHeader = true,
   nowrapCells = true,
   wrapCells = false,
+  onRowClick,
 }: TableProps<T>) {
   const safeCols = useMemo(
     () => (Array.isArray(columns) ? columns : []),
@@ -241,7 +243,11 @@ export function DataTable<T>({
               renderData.map((row, i) => (
                 <tr
                   key={rowKey(row, i)}
-                  className="border-base-200 hover:bg-base-200/30 border-t"
+                  className={cls(
+                    'border-base-200 hover:bg-base-200/30 border-t',
+                    onRowClick && 'cursor-pointer'
+                  )}
+                  onClick={() => onRowClick?.(row, i)} // 클릭 연결
                 >
                   {visibleCols.map((col) => {
                     const raw: unknown =

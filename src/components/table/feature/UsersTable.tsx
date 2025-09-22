@@ -7,6 +7,19 @@ import { roleToTone, statusToTone } from '@/lib/mappers'
 import Badge from '@/components/ui/Badge/Badge'
 import type { UserRow } from '../Table.types'
 
+type UserTableProps = {
+  rows: UserRow[]
+  loading: boolean
+  total?: number
+  totalPages?: number
+  onRequest?: (params: {
+    page: number
+    pageSize: number
+    sort?: { id: string; desc: boolean } | null
+  }) => void
+  onRowClick?: (row: UserRow) => void
+}
+
 const columns: Column<UserRow>[] = [
   {
     id: 'memberId',
@@ -55,17 +68,8 @@ export default function UsersTable({
   loading,
   onRequest, // (추가) 서버 호출 트리거
   totalPages,
-}: {
-  rows: UserRow[]
-  total?: number
-  loading: boolean
-  totalPages?: number
-  onRequest?: (params: {
-    page: number
-    pageSize: number
-    sort?: { id: string; desc: boolean } | null
-  }) => void
-}) {
+  onRowClick,
+}: UserTableProps) {
   const [state, setState] = useState<TableState>({
     page: 1,
     pageSize: 10,
@@ -135,6 +139,7 @@ export default function UsersTable({
         emptyText: '회원이 없습니다.',
         totalPages: finalTotalPages, //  API 또는 폴백 총페이지
       }}
+      onRowClick={(row) => onRowClick?.(row)}
     />
   )
 }
