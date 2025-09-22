@@ -40,6 +40,12 @@ export type TableFilterBarProps = {
   showChildrenDivider?: boolean
   /** 기본 코어 필터(검색/상태/권한)의 가시 라벨 표시 여부 */
   showCoreLabels?: boolean
+  /**
++   * children(정렬/태그 등)의 배치 위치 (기본값: "inline")
++   * - "inline": 검색/상태와 같은 줄(데스크톱)에서 나란히 렌더
++   * - "below" : 검색/상태 아래 줄에 렌더
+    */
+  childrenPlacement?: 'inline' | 'below'
   /** 코어 필터 라벨 텍스트 커스터마이즈 */
   searchLabel?: string
   statusLabel?: string
@@ -62,6 +68,7 @@ export function TableFilterBar({
 
   showChildrenDivider = true,
   showCoreLabels = false,
+  childrenPlacement = 'inline',
   searchLabel = '검색어',
   statusLabel = '상태',
   roleLabel = '권한',
@@ -161,7 +168,7 @@ export function TableFilterBar({
       {/* 한 줄 유지: sm이상에서 줄바꿈 방지 */}
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-end sm:gap-3">
         {/* 검색 */}
-        <div className={cn('relative min-w-0 flex-1', searchMaxWidthClassName)}>
+        <div className={cn('relative min-w-0', searchMaxWidthClassName)}>
           {showCoreLabels && (
             <label
               className="mb-1.5 block text-sm font-semibold text-gray-600"
@@ -245,9 +252,9 @@ export function TableFilterBar({
           </button>
         </div>
         {/* 데스크톱: 코어 드롭다운 & 초기화 버튼 */}
-        <div className="hidden shrink-0 items-end gap-2 sm:flex">
+        <div className="hidden items-end gap-2 sm:inline-flex">
           {statusDropdownOptions.length > 0 && (
-            <div className="w-40 shrink-0">
+            <div className="w-36 shrink-0">
               {showCoreLabels && (
                 <label className="mb-1.5 block text-sm font-semibold text-gray-600">
                   {statusLabel}
@@ -281,6 +288,8 @@ export function TableFilterBar({
               />
             </div>
           )}
+          {/* inline 배치 시 children(정렬/태그)도 같은 줄에 밀착 렌더 */}
+          {children && childrenPlacement === 'inline' && <>{children}</>}
           {totalActiveCount > 0 && (
             <button
               type="button"
@@ -353,7 +362,7 @@ export function TableFilterBar({
           <div className="mt-2">{children}</div>
         )}
       </div>
-      {children && (
+      {children && childrenPlacement === 'below' && (
         <div
           className={cn(
             'mt-2 pt-2',
