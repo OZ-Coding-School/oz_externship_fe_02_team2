@@ -201,7 +201,7 @@ export default function UsersManagePage() {
         ...prev,
         rows: prev.rows.map((row) =>
           row.memberId === deletedUserId
-            ? { ...row, status: '정지' as const }
+            ? { ...row, status: '비활성' as const }
             : row
         ),
       }))
