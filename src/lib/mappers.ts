@@ -30,6 +30,7 @@ export const statusToTone: Record<UserRow['status'], Tone> = {
   활성: 'green',
   정지: 'red',
   탈퇴요청: 'yellow',
+  비활성: 'gray',
 }
 
 export const studyToTone: Record<StudyGroupRow['status'], Tone> = {

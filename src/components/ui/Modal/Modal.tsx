@@ -26,7 +26,6 @@ function Modal({
   placement = 'center',
   maxHeightClass = 'max-h-[80vh]',
   className = '',
-  zIndex = 85, // 토스트 컨테이너 z-index 조절
   showCloseIcon = true,
   backdropClassName,
 }: ModalProps) {
@@ -46,7 +45,7 @@ function Modal({
 
   return createPortal(
     <div
-      className={`fixed inset-0 flex ${PLACEMENT_CLASS[placement]} justify-center z-[${zIndex}]`}
+      className={`fixed inset-0 flex ${PLACEMENT_CLASS[placement]} z-90 justify-center`}
       onMouseDown={onBackdrop}
     >
       {/* Backdrop */}
@@ -65,6 +64,7 @@ function Modal({
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-describedby={describedById || undefined}
         ref={panelRef}
+        tabIndex={-1}
         className={cn(
           'text-primary-text relative z-[1] flex w-full flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out',
           SIZE_CLASS[size],
@@ -77,7 +77,7 @@ function Modal({
           <Button
             btnSize="small"
             btnIcon={<img src={CloseIcon} alt="닫기 아이콘" />}
-            className="absolute top-3 right-3 rounded-full bg-transparent p-2 hover:bg-gray-100 active:bg-gray-200"
+            className="absolute top-3 right-3 rounded-full bg-transparent p-2 hover:bg-gray-100 focus-visible:ring-2 active:bg-gray-200"
             iconOnly
             onClick={onClose}
           />
