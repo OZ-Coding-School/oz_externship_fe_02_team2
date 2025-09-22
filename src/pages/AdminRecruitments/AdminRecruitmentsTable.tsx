@@ -349,7 +349,6 @@ export default function RecruitmentsTable() {
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
           </div> */}
-          ㅎ
         </TableFilterBar>
       </div>
       <DataTable<RecruitmentItem>
