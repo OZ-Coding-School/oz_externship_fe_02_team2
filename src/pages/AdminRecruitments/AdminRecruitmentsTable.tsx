@@ -331,7 +331,7 @@ export default function RecruitmentsTable() {
               classes={{ button: 'w-36' }}
             />
           </div>
-          {/* 태그 필터: 모달 트리거(스샷처럼 셀렉트 형태의 버튼 UI) */}
+          {/* 태그 필터: 모달 트리거(스샷처럼 셀렉트 형태의 버튼 UI)
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-gray-600">
               태그 필터
@@ -349,7 +349,7 @@ export default function RecruitmentsTable() {
               <span className="truncate">태그 선택...</span>
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
-          </div>
+          </div> */}
         </TableFilterBar>
       </div>
       <DataTable<RecruitmentItem>
