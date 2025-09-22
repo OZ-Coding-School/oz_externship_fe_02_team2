@@ -33,6 +33,16 @@ export type TableFilterBarProps = {
   className?: string /** 추가 필터나 액션 버튼을 위한 슬롯 */
   children?: React.ReactNode
   showChildrenDivider?: boolean
+  /** 기본 코어 필터(검색/상태/권한)의 가시 라벨 표시 여부 */
+  showCoreLabels?: boolean
+  /** 코어 필터 라벨 텍스트 커스터마이즈 */
+  searchLabel?: string
+  statusLabel?: string
+  roleLabel?: string
+  searchMaxWidthClassName?: string
+  includeChildrenInMobilePanel?: boolean // 모바일 패널에 children 포함 여부 (기본 true)
+  extraActiveCount?: number // children이 가진 활성 필터 개수(예: 선택된 태그 수)
+  onResetExtras?: () => void // children 필터 초기화 핸들러
 }
 
 export function TableFilterBar({
@@ -42,6 +52,14 @@ export function TableFilterBar({
   className,
   children,
   showChildrenDivider = true,
+  showCoreLabels = false,
+  searchLabel = '검색어',
+  statusLabel = '상태',
+  roleLabel = '권한',
+  searchMaxWidthClassName,
+  includeChildrenInMobilePanel = true,
+  extraActiveCount = 0,
+  onResetExtras,
 }: TableFilterBarProps) {
   const panelId = useId()
   const [draft, setDraft] = useState<string>(query.q ?? '')
@@ -80,7 +98,8 @@ export function TableFilterBar({
     [roleOptions]
   )
 
-  const activeFilterCount = useMemo(() => countActiveFilters(query), [query])
+  const baseCount = useMemo(() => countActiveFilters(query), [query])
+  const totalActiveCount = baseCount + (extraActiveCount ?? 0)
 
   const handleStatusChange = (value: string) => {
     onQueryChange.setStatus(value || null)
@@ -103,6 +122,13 @@ export function TableFilterBar({
     inputRef.current?.focus()
   }
 
+  /** 기본 + children 필터를 함께 초기화 */
+  const handleReset = useCallback(() => {
+    onQueryChange.reset()
+    onResetExtras?.()
+    setDraft('')
+  }, [onQueryChange, onResetExtras])
+
   return (
     <section
       className={cn(
@@ -112,9 +138,20 @@ export function TableFilterBar({
       role="search"
       aria-label="테이블 필터"
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <div className="relative min-w-0 flex-1">
+      {/* 한 줄 유지: sm이상에서 줄바꿈 방지 */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-end sm:gap-3">
+        {/* 검색 */}
+        <div className={cn('relative min-w-0 flex-1', searchMaxWidthClassName)}>
+          {showCoreLabels && (
+            <label
+              className="mb-1.5 block text-sm font-semibold text-gray-600"
+              htmlFor="table-filterbar-search"
+            >
+              {searchLabel}
+            </label>
+          )}
           <Input
+            id="table-filterbar-search"
             ref={inputRef}
             type="text"
             value={draft}
@@ -167,57 +204,72 @@ export function TableFilterBar({
             <span
               className={cn(
                 'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
-                activeFilterCount === 0 && 'invisible' // 카운터 공간 유지 → 레이아웃 점프/깜빡임 방지
+                totalActiveCount === 0 && 'invisible' // 카운터 공간 유지 → 레이아웃 점프/깜빡임 방지
               )}
             >
-              {activeFilterCount || 0}
+              {totalActiveCount || 0}
             </span>
           </button>
           <button
             type="button"
-            onClick={onQueryChange.reset}
+            onClick={handleReset}
             className={cn(
               'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
               'border-gray-300 text-gray-700 hover:bg-gray-50',
-              activeFilterCount === 0 && 'invisible'
+              totalActiveCount === 0 && 'invisible'
             )}
-            aria-label={`${activeFilterCount}개 필터 초기화`}
+            aria-label={`${totalActiveCount}개 필터 초기화`}
           >
             <XIcon className="h-4 w-4" />
             초기화
           </button>
         </div>
-        {/* 데스크탑: 필터 즉시 노출 */}
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+        {/* 데스크톱: 코어 드롭다운 & 초기화 버튼 */}
+        <div className="hidden shrink-0 items-end gap-2 sm:flex">
           {statusDropdownOptions.length > 0 && (
-            <Dropdown
-              options={statusDropdownOptions}
-              value={query.status || ''}
-              onChange={handleStatusChange}
-              placeholder={statusPlaceholder}
-              classes={{ button: 'w-40' }}
-              aria-label="상태 필터"
-            />
+            <div className="w-40 shrink-0">
+              {showCoreLabels && (
+                <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+                  {statusLabel}
+                </label>
+              )}
+              <Dropdown
+                options={statusDropdownOptions}
+                value={query.status || ''}
+                onChange={handleStatusChange}
+                placeholder={statusPlaceholder}
+                classes={{ button: 'w-full' }}
+                aria-label="상태 필터"
+              />
+            </div>
           )}
+          {/* 권한 필터는 옵션이 있는 페이지에서만 노출됨 */}
           {roleDropdownOptions.length > 0 && (
-            <Dropdown
-              options={roleDropdownOptions}
-              value={query.role || ''}
-              onChange={handleRoleChange}
-              placeholder={rolePlaceholder}
-              classes={{ button: 'w-40' }}
-              aria-label="권한 필터"
-            />
+            <div className="w-40 shrink-0">
+              {showCoreLabels && (
+                <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+                  {roleLabel}
+                </label>
+              )}
+              <Dropdown
+                options={roleDropdownOptions}
+                value={query.role || ''}
+                onChange={handleRoleChange}
+                placeholder={rolePlaceholder}
+                classes={{ button: 'w-full' }}
+                aria-label="권한 필터"
+              />
+            </div>
           )}
-          {activeFilterCount > 0 && (
+          {totalActiveCount > 0 && (
             <button
               type="button"
-              onClick={onQueryChange.reset}
+              onClick={handleReset}
               className={cn(
                 'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
                 'border-gray-300 text-gray-700 hover:bg-gray-50'
               )}
-              aria-label={`${activeFilterCount}개 필터 초기화`}
+              aria-label={`${totalActiveCount}개 필터 초기화`}
             >
               <XIcon className="h-4 w-4" />
               초기화
@@ -226,7 +278,7 @@ export function TableFilterBar({
                   'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5'
                 )}
               >
-                {activeFilterCount}
+                {totalActiveCount}
               </span>
             </button>
           )}
@@ -240,32 +292,52 @@ export function TableFilterBar({
           mobileOpen ? 'block' : 'hidden'
         )}
       >
+        {/* 모바일: 상태/권한 블록 분리 (버그 수정) */}
         {statusDropdownOptions.length > 0 && (
-          <Dropdown
-            options={statusDropdownOptions}
-            value={query.status || ''}
-            onChange={handleStatusChange}
-            placeholder={statusPlaceholder}
-            classes={{ button: 'w-full' }}
-            aria-label="상태 필터(모바일)"
-          />
+          <div>
+            {showCoreLabels && (
+              <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+                {statusLabel}
+              </label>
+            )}
+            <Dropdown
+              options={statusDropdownOptions}
+              value={query.status || ''}
+              onChange={handleStatusChange}
+              placeholder={statusPlaceholder}
+              classes={{ button: 'w-full' }}
+              aria-label="상태 필터(모바일)"
+            />
+          </div>
         )}
         {roleDropdownOptions.length > 0 && (
-          <Dropdown
-            options={roleDropdownOptions}
-            value={query.role || ''}
-            onChange={handleRoleChange}
-            placeholder={rolePlaceholder}
-            classes={{ button: 'w-full' }}
-            aria-label="권한 필터(모바일)"
-          />
+          <div>
+            {showCoreLabels && (
+              <label className="mb-1.5 block text-sm font-semibold text-gray-600">
+                {roleLabel}
+              </label>
+            )}
+            <Dropdown
+              options={roleDropdownOptions}
+              value={query.role || ''}
+              onChange={handleRoleChange}
+              placeholder={rolePlaceholder}
+              classes={{ button: 'w-full' }}
+              aria-label="권한 필터(모바일)"
+            />
+          </div>
+        )}
+        {/* children도 모바일 패널 안으로 이동 */}
+        {includeChildrenInMobilePanel && children && (
+          <div className="mt-2">{children}</div>
         )}
       </div>
       {children && (
         <div
           className={cn(
             'mt-2 pt-2',
-            showChildrenDivider && 'border-t border-gray-200'
+            showChildrenDivider && 'border-t border-gray-200',
+            includeChildrenInMobilePanel && 'hidden sm:block'
           )}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -274,8 +346,8 @@ export function TableFilterBar({
         </div>
       )}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {activeFilterCount > 0
-          ? `${activeFilterCount}개의 필터가 적용되었습니다.`
+        {totalActiveCount > 0
+          ? `${totalActiveCount}개의 필터가 적용되었습니다.`
           : '모든 필터가 해제되었습니다.'}
         {query.q && ` 검색어: ${query.q}`}
         {query.status &&

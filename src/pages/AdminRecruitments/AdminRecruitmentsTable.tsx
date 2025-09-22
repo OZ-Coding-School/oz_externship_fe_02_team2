@@ -216,7 +216,8 @@ export default function RecruitmentsTable() {
       mode: 'server',
       searchPlaceholder: '공고명 검색...',
       statusPlaceholder: '공고 상태',
-      rolePlaceholder: '권한 선택',
+      // 권한 필터 미사용: 옵션을 비워두면 컴포넌트가 렌더링하지 않음
+      rolePlaceholder: '',
       // 공용 컴포넌트가 '전체'를 자동 추가(withAllOption)하므로 OPEN/CLOSED만 넘김
       statusOptions: [
         { value: 'OPEN', label: '모집중' },
@@ -302,7 +303,14 @@ export default function RecruitmentsTable() {
             reset: queryActions.reset,
           }}
           config={filterConfig}
-          showChildrenDivider={false}
+          /* 코어 필터(검색/상태) 라벨 가시화 */
+          showCoreLabels
+          searchLabel="검색어"
+          statusLabel="상태"
+          /* 검색이 너무 넓어 2줄로 내려가는 현상 방지 */
+          searchMaxWidthClassName="sm:max-w-[420px]"
+          /* 모바일 패널에도 children(정렬/태그) 포함 */
+          includeChildrenInMobilePanel
         >
           {/* 정렬 드롭다운: 공용 필터바의 children 슬롯 활용 */}
           <div>
@@ -349,7 +357,7 @@ export default function RecruitmentsTable() {
           enableClientSort: false,
           // 서버 페이징 사용(명시)
           clientPaging: false,
-          loading,
+          loading: loading && rows.length === 0,
           emptyText: '구인 공고가 없습니다.',
         }}
       />
