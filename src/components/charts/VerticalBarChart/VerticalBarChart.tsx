@@ -3,41 +3,97 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
   Tooltip,
-  Legend,
+  type ChartOptions,
+  type ChartData,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
+import { rightEdgeGridPlugin } from './plugin'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  rightEdgeGridPlugin
+)
 
-export const options = {
+const options: ChartOptions<'bar'> = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
-    legend: {
-      position: 'top' as const,
+    legend: { display: false },
+    tooltip: { enabled: true },
+    rightEdgeGrid: { color: '#ccc', lineWidth: 2, dash: [3, 3] },
+  },
+  scales: {
+    x: {
+      border: {
+        display: true,
+        color: '#666',
+        dash: [3, 3],
+      },
+      grid: {
+        display: true,
+        color: '#ccc',
+        tickColor: '#666',
+        tickLength: 6,
+        offset: false, // 그리드가 카테고리(막대) 중앙을 지나가게
+      },
+      ticks: {
+        color: '#6B7280',
+        padding: 2,
+        font: { size: 12, weight: 'normal' },
+      },
     },
-    title: {
-      display: true,
-      text: 'Chart.js Bar Chart',
+    y: {
+      beginAtZero: true,
+      border: {
+        display: true,
+        color: '#666',
+        dash: [3, 3],
+      },
+      grid: {
+        display: true,
+        color: '#ccc',
+        tickColor: '#666',
+        tickLength: 6,
+      },
+      ticks: {
+        stepSize: 9,
+        color: '#6B7280',
+        padding: 2,
+        font: { size: 12, weight: 'normal' },
+      },
     },
   },
 }
 
-const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July']
+const labels = [
+  '01월',
+  '02월',
+  '03월',
+  '04월',
+  '05월',
+  '06월',
+  '07월',
+  '08월',
+  '09월',
+  '10월',
+  '11월',
+  '12월',
+]
 
-export const data = {
+export const data: ChartData<'bar'> = {
   labels,
   datasets: [
     {
-      label: 'Dataset 1',
-      data: [120, 340, 210, 500, 260, 430, 380], // TODO: 고정값 교체
-      backgroundColor: 'rgba(255, 99, 132, 0.5)',
-    },
-    {
-      label: 'Dataset 2',
-      data: [180, 220, 390, 420, 310, 360, 450], // TODO: 고정값 교체
-      backgroundColor: 'rgba(53, 162, 235, 0.5)',
+      label: '회원가입 인원 수',
+      data: [12, 20, 18, 30, 24, 19, 22, 27, 33, 20, 16, 29],
+      backgroundColor: '#facc15',
+      borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+      borderSkipped: false,
+      categoryPercentage: 0.9,
     },
   ],
 }

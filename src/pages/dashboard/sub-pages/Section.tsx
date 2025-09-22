@@ -16,7 +16,7 @@ export default function Section({ title, dropdown, children }: SectionProps) {
           <h5>{title}</h5>
           {dropdown && <Dropdown {...dropdown} />}
         </header>
-        <article className="h-80 w-full">{children}</article>
+        <article className="h-80 w-full pr-2 pl-10">{children}</article>
       </div>
     </section>
   )
