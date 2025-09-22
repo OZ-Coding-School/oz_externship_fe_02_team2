@@ -47,22 +47,24 @@ export type TableMeta<T> = {
   rowKey?: (row: T, index: number) => React.Key
 }
 
-export type SortDirection = 'asc' | 'desc' | null
+export type SortDirection = 'asc' | 'desc' | undefined
 
 export type FilterOption = {
   value: string
   label: string
   disabled?: boolean
 }
+export type Maybe<T> = T | undefined
 
 export type TableQuery = {
-  q: string // 검색어
-  status: string | null // 상태 필터
-  role: string | null // 권한 필터
+  q?: string // 검색어
+  status?: Maybe<string> // 상태 필터
+  role?: Maybe<string> // 권한 필터
   sortBy: string | null // 정렬 컬럼
   sortDir: SortDirection // 정렬 방향
   page: number // 현재 페이지
-  pageSize: number // 페이지당 항목 수
+  pageSize: Maybe<number> // 페이지당 항목 수
+  search: string
 }
 
 export type TableFilterConfig = {
@@ -78,9 +80,9 @@ export type TableFilterConfig = {
 export type TableData<T = Record<string, any>> = {
   items: T[]
   total: number
-  page: number
-  pageSize: number
-  totalPages: number
+  page: Maybe<number>
+  pageSize: Maybe<number>
+  totalPages: Maybe<number>
 }
 
 export type UseTableQueryOptions = {
