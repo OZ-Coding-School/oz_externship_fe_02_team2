@@ -12,7 +12,7 @@ export type UsersParams = {
   sortOrder?: SortOrder
   q?: string
   role?: string
-  status?: '활성' | '비활성'
+  status?: string | undefined
 }
 
 export type PageResp<T> = {

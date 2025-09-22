@@ -71,7 +71,9 @@ export function TableWithFilters<T extends Record<string, any>>({
           total: data.length,
           page: queryActions.query.page,
           pageSize: queryActions.query.pageSize,
-          totalPages: Math.ceil(data.length / queryActions.query.pageSize),
+          totalPages: Math.ceil(
+            data.length / Number(queryActions.query.pageSize)
+          ),
         }
       }
       return data as TableData<T>
