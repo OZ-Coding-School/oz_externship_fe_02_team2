@@ -32,6 +32,7 @@ export type TableFilterBarProps = {
   config: TableFilterConfig
   className?: string /** 추가 필터나 액션 버튼을 위한 슬롯 */
   children?: React.ReactNode
+  showChildrenDivider?: boolean
 }
 
 export function TableFilterBar({
@@ -40,6 +41,7 @@ export function TableFilterBar({
   config,
   className,
   children,
+  showChildrenDivider = true,
 }: TableFilterBarProps) {
   const panelId = useId()
   const [draft, setDraft] = useState<string>(query.q ?? '')
@@ -69,12 +71,12 @@ export function TableFilterBar({
   }
 
   const statusDropdownOptions = useMemo(
-    () => withAllOption(statusOptions, '전체 상태'),
+    () => withAllOption(statusOptions, '전체'),
     [statusOptions]
   )
 
   const roleDropdownOptions = useMemo(
-    () => withAllOption(roleOptions, '전체 권한'),
+    () => withAllOption(roleOptions, '전체'),
     [roleOptions]
   )
 
@@ -207,26 +209,27 @@ export function TableFilterBar({
               aria-label="권한 필터"
             />
           )}
-          <button
-            type="button"
-            onClick={onQueryChange.reset}
-            className={cn(
-              'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
-              'border-gray-300 text-gray-700 hover:bg-gray-50'
-            )}
-            aria-label={`${activeFilterCount}개 필터 초기화`}
-          >
-            <XIcon className="h-4 w-4" />
-            초기화
-            <span
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={onQueryChange.reset}
               className={cn(
-                'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
-                activeFilterCount === 0 && 'invisible'
+                'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
+                'border-gray-300 text-gray-700 hover:bg-gray-50'
               )}
+              aria-label={`${activeFilterCount}개 필터 초기화`}
             >
-              {activeFilterCount || 0}
-            </span>
-          </button>
+              <XIcon className="h-4 w-4" />
+              초기화
+              <span
+                className={cn(
+                  'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5'
+                )}
+              >
+                {activeFilterCount}
+              </span>
+            </button>
+          )}
         </div>
       </div>
       {/* 모바일 접이식 패널 */}
@@ -259,7 +262,12 @@ export function TableFilterBar({
         )}
       </div>
       {children && (
-        <div className="mt-2 border-t border-gray-200 pt-2">
+        <div
+          className={cn(
+            'mt-2 pt-2',
+            showChildrenDivider && 'border-t border-gray-200'
+          )}
+        >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {children}
           </div>
