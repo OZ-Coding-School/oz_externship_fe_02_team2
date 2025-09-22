@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import UsersTable from '@/components/table/feature/UsersTable'
+import UsersTable from '@/components/table/feature/Users/UsersTable'
 import {
   setMockMode,
   getMockMode,
