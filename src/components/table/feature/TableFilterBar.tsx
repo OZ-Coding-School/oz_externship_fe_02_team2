@@ -1,9 +1,9 @@
 import React, { useCallback, useId, useMemo, useRef, useState } from 'react'
-import type { TableFilterConfig, TableQuery } from '@/types/table'
+import type { Maybe, TableFilterConfig, TableQuery } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 import { Input } from '@/components/ui/input/Input'
-import { FilterIcon, SearchIcon } from 'lucide-react'
+import { SearchIcon } from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
 import {
   DEFAULT_ROLE_PLACEHOLDER,
@@ -13,25 +13,25 @@ import {
 import { withAllOption } from './filterOption'
 import { countActiveFilters } from '../filterHelpers'
 
-/**
- * TableFilterBar
- * - 입력 중에는 상위 쿼리를 즉시 올리지 않고, 트레일링 디바운스(훅에서 300ms)로만 커밋
- * - Enter/blur 시에는 즉시 플러시(즉시 커밋)
- * - 한글 IME: 음절이 완성될 때 compositionend가 발생하므로, 여기서는 '즉시 커밋 금지'로 두고
- *   디바운스만 재스케줄
- */
-
 export type TableFilterBarProps = {
   query: TableQuery
   onQueryChange: {
     setSearch: (q: string, immediate?: boolean) => void
-    setStatus: (status: string | null) => void
-    setRole: (role: string | null) => void
+    setStatus: (status: Maybe<string>) => void
+    setRole: (role: Maybe<string>) => void
     reset: () => void
   }
   config: TableFilterConfig
-  className?: string /** 추가 필터나 액션 버튼을 위한 슬롯 */
+  className?: string
   children?: React.ReactNode
+  /** 각 필드 위에 라벨 노출 여부? */
+  showLabels?: boolean
+  /** 라벨 텍스트 커스터마이즈 */
+  labels?: {
+    search?: string
+    status?: string
+    role?: string
+  }
 }
 
 export function TableFilterBar({
@@ -40,9 +40,12 @@ export function TableFilterBar({
   config,
   className,
   children,
+  showLabels = false,
+  labels = { search: '검색', status: '상태', role: '권한' },
 }: TableFilterBarProps) {
   const panelId = useId()
-  const [draft, setDraft] = useState<string>(query.q ?? '')
+  // query.search를 사용
+  const [draft, setDraft] = useState<string>(query.search ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const {
@@ -53,9 +56,13 @@ export function TableFilterBar({
     roleOptions = [],
   } = config
 
+  // query.search가 변경되면 draft 동기화
+  React.useEffect(() => {
+    setDraft(query.search ?? '')
+  }, [query.search])
+
   const commitNow = useCallback(
     (value: string) => {
-      // 즉시 커밋: 디바운스 큐를 비우고 바로 상위로 올리기(훅 내부에서 처리)
       onQueryChange.setSearch(value, true)
     },
     [onQueryChange]
@@ -64,40 +71,39 @@ export function TableFilterBar({
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setDraft(v)
-    // 타이핑 중: 트레일링 디바운스(300ms). 입력마다 "재스케줄"만 하고, 실제 커밋은 멈출 때 1회.
+    // 타이핑 중: 디바운스 적용
     onQueryChange.setSearch(v, false)
   }
 
   const statusDropdownOptions = useMemo(
-    () => withAllOption(statusOptions, '전체 상태'),
+    () => withAllOption(statusOptions, '전체'),
     [statusOptions]
   )
 
   const roleDropdownOptions = useMemo(
-    () => withAllOption(roleOptions, '전체 권한'),
+    () => withAllOption(roleOptions, '전체'),
     [roleOptions]
   )
 
   const activeFilterCount = useMemo(() => countActiveFilters(query), [query])
 
   const handleStatusChange = (value: string) => {
-    onQueryChange.setStatus(value || null)
+    onQueryChange.setStatus(value === '' ? undefined : value)
   }
 
   const handleRoleChange = (value: string) => {
-    onQueryChange.setRole(value || null)
+    onQueryChange.setRole(value === '' ? undefined : value)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // 사용자가 명시적으로 Enter: 현재 값 즉시 반영
       commitNow((e.currentTarget as HTMLInputElement).value)
     }
   }
 
   const handleClearSearch = () => {
     setDraft('')
-    commitNow('') // 즉시 초기화
+    commitNow('')
     inputRef.current?.focus()
   }
 
@@ -110,125 +116,125 @@ export function TableFilterBar({
       role="search"
       aria-label="테이블 필터"
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <div className="relative min-w-0 flex-1">
-          <Input
-            ref={inputRef}
-            type="text"
-            value={draft}
-            onChange={onChange}
-            onKeyDown={handleKeyDown}
-            onCompositionEnd={(e) =>
-              onQueryChange.setSearch(
-                (e.currentTarget as HTMLInputElement).value,
-                false // IME 음절 확정 시에도 즉시 커밋 금지 -> '멈춤 후 1회 커밋' UX 유지
-              )
-            }
-            onBlur={(e) =>
-              // 포커스 아웃에서는 사용자가 타이핑을 끝낸 것으로 간주하고 즉시 커밋
-              commitNow((e.currentTarget as HTMLInputElement).value)
-            }
-            placeholder={searchPlaceholder}
-            enterKeyHint="search"
-            leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
-            size="md"
-            className="w-full pr-10" // 오른쪽 X 자리 확보하는 css
-            aria-label="검색어 입력"
-          />
-          {draft && (
+      <div className="hidden items-end gap-4 sm:flex">
+        {/* 4필드를 grid로 배치: 검색/상태/권한은 flex-1, 초기화는 auto */}
+        <div className="grid w-full grid-cols-[1fr_1fr_1fr_auto] gap-4">
+          {/* 검색 */}
+          <div>
+            {showLabels && (
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {labels.search ?? '검색'}
+              </label>
+            )}
+            <div className="relative">
+              <Input
+                ref={inputRef}
+                type="text"
+                value={draft}
+                onChange={onChange}
+                onKeyDown={handleKeyDown}
+                onCompositionEnd={(e) =>
+                  onQueryChange.setSearch(
+                    (e.currentTarget as HTMLInputElement).value,
+                    false
+                  )
+                }
+                onBlur={(e) =>
+                  commitNow((e.currentTarget as HTMLInputElement).value)
+                }
+                placeholder={searchPlaceholder}
+                enterKeyHint="search"
+                leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
+                size="md"
+                className="w-full pr-10"
+                aria-label="검색어 입력"
+              />
+              {draft && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  aria-label="검색어 지우기"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 상태 */}
+          <div className="w-full">
+            {showLabels && (
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {labels.status ?? '상태'}
+              </label>
+            )}
+            <div className="w-full">
+              <Dropdown
+                options={statusDropdownOptions}
+                value={query.status || ''}
+                onChange={handleStatusChange}
+                placeholder={statusPlaceholder}
+                classes={{
+                  wrapper: 'w-full',
+                  button: 'w-full !min-w-0 !bg-gray-100',
+                }}
+                aria-label="상태 필터"
+              />
+            </div>
+          </div>
+
+          {/* 권한 */}
+          <div className="w-full">
+            {showLabels && (
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                {labels.role ?? '권한'}
+              </label>
+            )}
+            <div className="w-full">
+              <Dropdown
+                options={roleDropdownOptions}
+                value={query.role || ''}
+                onChange={handleRoleChange}
+                placeholder={rolePlaceholder}
+                classes={{
+                  wrapper: 'w-full',
+                  button: 'w-full !min-w-0 !bg-gray-100',
+                }}
+                aria-label="권한 필터"
+              />
+            </div>
+          </div>
+
+          {/* 초기화 */}
+          <div className="shrink-0">
+            {showLabels && (
+              <div className="mb-1 block text-sm font-medium text-gray-700 opacity-0">
+                {/* 빈 라벨로 높이 맞춤 */}
+                &nbsp;
+              </div>
+            )}
             <button
               type="button"
-              onClick={handleClearSearch}
-              aria-label="검색어 지우기"
-              className={cn(
-                'absolute inset-y-0 right-2 flex items-center',
-                'text-gray-500 hover:text-gray-800'
-              )}
+              onClick={onQueryChange.reset}
+              className="body-sm inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-50"
+              aria-label={`${activeFilterCount}개 필터 초기화`}
             >
               <XIcon className="h-4 w-4" />
+              초기화
+              <span
+                className={cn(
+                  'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
+                  activeFilterCount === 0 && 'invisible'
+                )}
+              >
+                {activeFilterCount || 0}
+              </span>
             </button>
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-2 sm:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-expanded={mobileOpen}
-            aria-controls={panelId}
-            className={cn(
-              'body-sm inline-flex items-center gap-2 rounded-md border px-3 py-2',
-              'border-gray-300 text-gray-700 hover:bg-gray-50'
-            )}
-          >
-            <FilterIcon className="h-4 w-4" />
-            필터
-            <span
-              className={cn(
-                'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
-                activeFilterCount === 0 && 'invisible' // 카운터 공간 유지 → 레이아웃 점프/깜빡임 방지
-              )}
-            >
-              {activeFilterCount || 0}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={onQueryChange.reset}
-            className={cn(
-              'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
-              'border-gray-300 text-gray-700 hover:bg-gray-50',
-              activeFilterCount === 0 && 'invisible'
-            )}
-            aria-label={`${activeFilterCount}개 필터 초기화`}
-          >
-            <XIcon className="h-4 w-4" />
-            초기화
-          </button>
-        </div>
-        {/* 데스크탑: 필터 즉시 노출 */}
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
-          {statusDropdownOptions.length > 0 && (
-            <Dropdown
-              options={statusDropdownOptions}
-              value={query.status || ''}
-              onChange={handleStatusChange}
-              placeholder={statusPlaceholder}
-              classes={{ button: 'w-40' }}
-              aria-label="상태 필터"
-            />
-          )}
-          {roleDropdownOptions.length > 0 && (
-            <Dropdown
-              options={roleDropdownOptions}
-              value={query.role || ''}
-              onChange={handleRoleChange}
-              placeholder={rolePlaceholder}
-              classes={{ button: 'w-40' }}
-              aria-label="권한 필터"
-            />
-          )}
-          <button
-            type="button"
-            onClick={onQueryChange.reset}
-            className={cn(
-              'body-sm inline-flex items-center gap-1 rounded-md border px-3 py-2',
-              'border-gray-300 text-gray-700 hover:bg-gray-50'
-            )}
-            aria-label={`${activeFilterCount}개 필터 초기화`}
-          >
-            <XIcon className="h-4 w-4" />
-            초기화
-            <span
-              className={cn(
-                'bg-primary-100 text-primary-700 body-xs ml-1 rounded-full px-1.5 py-0.5',
-                activeFilterCount === 0 && 'invisible'
-              )}
-            >
-              {activeFilterCount || 0}
-            </span>
-          </button>
+          </div>
         </div>
       </div>
+
       {/* 모바일 접이식 패널 */}
       <div
         id={panelId}
@@ -258,6 +264,7 @@ export function TableFilterBar({
           />
         )}
       </div>
+
       {children && (
         <div className="mt-2 border-t border-gray-200 pt-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -265,11 +272,12 @@ export function TableFilterBar({
           </div>
         </div>
       )}
+
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {activeFilterCount > 0
           ? `${activeFilterCount}개의 필터가 적용되었습니다.`
           : '모든 필터가 해제되었습니다.'}
-        {query.q && ` 검색어: ${query.q}`}
+        {query.search && ` 검색어: ${query.search}`}
         {query.status &&
           ` 상태: ${statusOptions.find((opt) => opt.value === query.status)?.label ?? query.status}`}
         {query.role &&
