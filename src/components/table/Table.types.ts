@@ -38,11 +38,12 @@ export type StudyGroupRow = {
 
 export type WithdrawalRow = {
   /** 회원 탈퇴 관리 */
-  wid: string
+  id: number
   email: string
   name: string
-  role: '일반회원' | '관리자' | '스태프'
-  birth?: string
-  reason?: string
-  withdrawnAt: string
+  permission: string
+  birthday: string
+  reason: string
+  created_at: string
+  profileImgUrl?: string | null
 }
