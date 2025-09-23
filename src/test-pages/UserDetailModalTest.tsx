@@ -1,14 +1,14 @@
 import { Button } from '@/components/ui/Button'
-import MemberDetailModal, {
-  type MemberDetail,
-} from '@/components/ui/Modal/feature/UserDetail'
+import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
+import UserDetailModal from '@/components/ui/Modal/feature/User/UserDetail'
+
 import { useState } from 'react'
 
 export default function TestMemberDetailPage() {
   const [open, setOpen] = useState(false)
 
   // 더미 데이터
-  const mockMember: MemberDetail = {
+  const mockMember: UserDetail = {
     id: 'U001',
     name: '홍길동',
     email: 'hong@example.com',
@@ -30,13 +30,11 @@ export default function TestMemberDetailPage() {
         onClick={() => setOpen(true)}
       />
 
-      <MemberDetailModal
+      <UserDetailModal
         open={open}
         onClose={() => setOpen(false)}
         data={mockMember}
         onEdit={(m) => alert(`EDIT: ${JSON.stringify(m)}`)}
-        onDelete={(m) => alert(`DELETE: ${m.id}`)}
-        onChangeRole={(m) => alert(`CHANGE ROLE: ${m.id}`)}
       />
     </div>
   )

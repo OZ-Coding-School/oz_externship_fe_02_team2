@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react'
 import type { Column, TableMeta, TableState, SortState } from '@type/table'
 import { cls } from '@/lib/table'
+import Pagination from '../ui/Pagination/Pagination'
+import { isValidElement, useCallback, useEffect, useMemo } from 'react'
+import { makeComparer, type Getter } from './sort'
+import SortIcon from './SortIcon'
 
-type MobileKeep =
-  | 'all' // 모바일에서도 전부 보이게(기본)
-  | number // 앞에서부터 N개만 보이기(원하면 숫자로)
+type MobileKeep = 'all' | number
 
-type Props<T> = {
+type TableProps<T> = {
   columns?: Column<T>[]
   data?: T[]
   state: TableState
@@ -16,10 +16,40 @@ type Props<T> = {
   toolbar?: React.ReactNode
   footerExtra?: React.ReactNode
 
-  mobileKeepCols?: MobileKeep // ← 기본 "all"
-  stickyHeader?: boolean // ← 기본 true
-  nowrapCells?: boolean // ← 기본 true (말줄임)
-  wrapCells?: boolean // ← true면 셀 줄바꿈(break-words)
+  mobileKeepCols?: MobileKeep
+  stickyHeader?: boolean
+  nowrapCells?: boolean
+  wrapCells?: boolean
+  onRowClick?: (row: T, index: number) => void
+}
+
+function toNode(v: unknown): React.ReactNode {
+  if (v == null) return null
+
+  // 이미 React 엘리먼트면 그대로
+  if (isValidElement(v)) return v
+
+  // 원시 타입
+  if (
+    typeof v === 'string' ||
+    typeof v === 'number' ||
+    typeof v === 'bigint' ||
+    typeof v === 'boolean'
+  ) {
+    return String(v)
+  }
+
+  // 배열(Iterable) → 각 요소를 재귀 변환
+  if (Array.isArray(v)) {
+    return v.map(toNode)
+  }
+
+  // 함수/Promise 등 ReactNode 불가 타입은 문자열 등으로 안전 변환
+  if (typeof v === 'function') return String(v)
+  if (v instanceof Promise) return null // 또는 '...'
+
+  // 그 외 객체(Date 등)
+  return String(v)
 }
 
 export function DataTable<T>({
@@ -28,42 +58,104 @@ export function DataTable<T>({
   state,
   onStateChange,
   meta,
-  toolbar,
   footerExtra,
   stickyHeader = true,
   nowrapCells = true,
   wrapCells = false,
-}: Props<T>) {
-  const safeCols = Array.isArray(columns) ? columns : []
-  const safeData = Array.isArray(data) ? data : []
-  const visibleCols = safeCols.filter((c) => !c.hidden)
-  const rowKey = meta?.rowKey ?? ((_: T, i: number) => i)
+  onRowClick,
+}: TableProps<T>) {
+  const safeCols = useMemo(
+    () => (Array.isArray(columns) ? columns : []),
+    [columns]
+  )
+  const safeData = useMemo(() => (Array.isArray(data) ? data : []), [data])
+  const visibleCols = useMemo(
+    () => safeCols.filter((c) => !c.hidden),
+    [safeCols]
+  )
+
   const { page, pageSize, sort } = state ?? {
     page: 1,
     pageSize: 10,
     sort: null,
   }
 
+  const isClientSort = meta?.enableClientSort !== false
+  const isClientPaging = meta?.clientPaging === true
+  const alwaysShowPagination = meta?.alwaysShowPagination === true
+
+  // --- 정렬 파이프라인 (asc/desc) ---
+  const getSortGetter = useCallback(
+    (col: Column<T> | undefined): Getter<T> | null => {
+      if (!col) return null
+      if (col.sortAccessor) return col.sortAccessor as Getter<T>
+      if (typeof col.accessor === 'function') return col.accessor as Getter<T>
+      if (col.accessor) {
+        const key = col.accessor as keyof T
+        return (row: T) => row[key]
+      }
+      return null
+    },
+    []
+  )
+
+  const sortedData = useMemo(() => {
+    if (!isClientSort || !sort) return safeData
+    const col = safeCols.find((c) => c.id === sort.id && c.sortable)
+    if (!col) return safeData
+
+    const getter = getSortGetter(col)
+    if (!getter) return safeData
+
+    const withIdx = safeData.map((row, i) => ({ row, i }))
+    withIdx.sort(makeComparer(getter, Boolean(sort.desc)))
+    return withIdx.map((x) => x.row)
+  }, [isClientSort, sort, safeCols, safeData, getSortGetter])
+
+  // --- 페이지네이션 파이프라인 ---
+  const start = (page - 1) * pageSize
+  const end = start + pageSize
+
+  const renderData = useMemo(() => {
+    if (isClientPaging) return sortedData.slice(start, end)
+    return sortedData
+  }, [isClientPaging, sortedData, start, end])
+
+  const computedTotalPages = useMemo(() => {
+    if (isClientPaging) {
+      return Math.max(1, Math.ceil(sortedData.length / pageSize))
+    }
+    return Math.max(1, Number(meta?.totalPages ?? 1))
+  }, [isClientPaging, sortedData.length, pageSize, meta?.totalPages])
+
+  useEffect(() => {
+    if (page > computedTotalPages) onStateChange?.({ page: computedTotalPages })
+  }, [page, computedTotalPages, onStateChange])
+
+  const rowKey = meta?.rowKey ?? ((_: T, i: number) => i)
+
+  // --- 정렬 핸들러 (asc/desc toggle) ---
   const handleSort = (col: Column<T>) => {
     if (!col.sortable || !onStateChange) return
-    const next: SortState =
-      sort?.id === col.id
-        ? { id: col.id, desc: !sort.desc }
-        : { id: col.id, desc: false }
-    onStateChange({ sort: next, page: 1 })
+    let next: SortState = null
+
+    if (!sort || sort.id !== col.id) {
+      next = { id: col.id, desc: false } // 오름차순
+    } else if (!sort.desc) {
+      next = { id: col.id, desc: true } // 내림차순
+    } else {
+      next = null // 초기화
+    }
+    onStateChange({ sort: next })
   }
+
+  const showPagination = alwaysShowPagination || computedTotalPages > 1
 
   return (
     <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
-      {/* 헤더 툴바 */}
-      <div className="border-base-300 flex items-center justify-between border-b p-3">
-        <div className="text-base font-semibold">목록</div>
-        <div className="flex items-center gap-2">{toolbar}</div>
-      </div>
-
-      {/* 가로 스크롤 */}
+      {/* 테이블 */}
       <div className="overflow-x-auto">
-        <table className="min-w-max text-xs sm:text-sm">
+        <table className="body-xs sm:body-sm w-full max-w-full min-w-max table-auto">
           <thead
             className={cls(
               'bg-base-200/60',
@@ -72,36 +164,55 @@ export function DataTable<T>({
           >
             <tr>
               {visibleCols.map((col) => {
-                const isSorted = sort?.id === col.id
-                const arrow = isSorted ? (sort!.desc ? ' ▼' : ' ▲') : ''
+                const isSorted = !!sort && sort.id === col.id
+                const iconState: 'none' | 'asc' | 'desc' = !isSorted
+                  ? 'none'
+                  : sort!.desc
+                    ? 'desc'
+                    : 'asc'
+
                 return (
                   <th
                     key={col.id}
                     className={cls(
-                      'px-3 py-2 text-left font-medium whitespace-nowrap',
+                      'bg-gray-100 px-3 py-2 text-left font-medium whitespace-nowrap',
                       col.align === 'center' && 'text-center',
+                      col.align === 'left' && 'text-left',
                       col.align === 'right' && 'text-right'
                     )}
-                    style={{ width: col.width }}
+                    scope="col"
                   >
-                    {typeof col.header === 'function' ? (
-                      col.header({ sort, onSort: () => handleSort(col) })
-                    ) : col.sortable ? (
+                    {col.sortable ? (
                       <button
-                        className="hover:underline"
+                        type="button"
                         onClick={() => handleSort(col)}
+                        className="inline-flex items-center gap-1 hover:opacity-80 focus:outline-none"
+                        aria-label={
+                          !isSorted
+                            ? `${String(col.header)} 정렬 없음`
+                            : sort!.desc
+                              ? `${String(col.header)} 내림차순`
+                              : `${String(col.header)} 오름차순`
+                        }
                       >
-                        {col.header}
-                        {arrow}
+                        {typeof col.header === 'function'
+                          ? col.header({ sort, onSort: () => handleSort(col) })
+                          : col.header}
+                        <SortIcon state={iconState} />
                       </button>
                     ) : (
-                      col.header
+                      <span>
+                        {typeof col.header === 'function'
+                          ? col.header({ sort: null, onSort: () => {} })
+                          : col.header}
+                      </span>
                     )}
                   </th>
                 )
               })}
             </tr>
           </thead>
+
           <tbody>
             {meta?.loading ? (
               <tr>
@@ -112,7 +223,7 @@ export function DataTable<T>({
                   불러오는 중…
                 </td>
               </tr>
-            ) : safeData.length === 0 ? (
+            ) : renderData.length === 0 ? (
               <tr>
                 <td
                   className="text-base-content/60 px-3 py-10 text-center"
@@ -122,26 +233,38 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              safeData.map((row, i) => (
+              renderData.map((row, i) => (
                 <tr
                   key={rowKey(row, i)}
-                  className="border-base-200 hover:bg-base-200/30 border-t"
+                  className={cls(
+                    'border-base-200 hover:bg-base-200/30 border-t',
+                    onRowClick && 'cursor-pointer'
+                  )}
+                  onClick={() => onRowClick?.(row, i)} // 클릭 연결
                 >
                   {visibleCols.map((col) => {
-                    const raw =
+                    const raw: unknown =
                       typeof col.accessor === 'function'
                         ? col.accessor(row)
                         : col.accessor
-                          ? (row as any)[col.accessor]
+                          ? row[col.accessor as keyof T]
                           : undefined
-                    const content = col.cell
-                      ? col.cell({ value: raw, row, rowIndex: i })
-                      : String(raw ?? '')
+
+                    const cellValue = col.cell?.({
+                      value: raw,
+                      row,
+                      rowIndex: i,
+                    })
+
+                    const content: React.ReactNode =
+                      cellValue !== undefined ? cellValue : toNode(raw)
+
                     return (
                       <td
                         key={col.id}
                         className={cls(
-                          'px-3 py-2 align-middle',
+                          'px-3 py-2 align-middle whitespace-pre-wrap',
+                          col.align === 'left' && 'text-left',
                           col.align === 'center' && 'text-center',
                           col.align === 'right' && 'text-right',
                           nowrapCells && 'whitespace-nowrap',
@@ -160,12 +283,18 @@ export function DataTable<T>({
       </div>
 
       {/* 푸터 */}
-      <div className="border-base-300 flex items-center justify-between gap-2 border-t p-3">
-        <div className="text-base-content/60 text-xs">
-          페이지 {page} · 페이지당 {pageSize}
-          {typeof meta?.total === 'number' && <> · 총 {meta.total}건</>}
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="border-base-300 flex flex-col gap-3 border-t p-3 sm:flex-row sm:items-center sm:justify-between">
+        {showPagination && (
+          <div className="flex w-full justify-center">
+            <Pagination
+              totalPages={computedTotalPages}
+              currentPage={page}
+              onChange={(next) => onStateChange?.({ page: next })}
+            />
+          </div>
+        )}
+
+        <div className="flex flex-col items-start gap-2 sm:ml-auto sm:flex-row sm:items-center">
           <label htmlFor="page-size" className="sr-only">
             페이지당 항목 수
           </label>
@@ -181,31 +310,15 @@ export function DataTable<T>({
           >
             {[5, 10, 20, 50].map((n) => (
               <option key={n} value={n}>
-                {n} / 페이지
+                {n}개
               </option>
             ))}
           </select>
-
-          <div className="join">
-            <button
-              type="button"
-              className="btn btn-xs join-item"
-              disabled={page <= 1}
-              onClick={() => onStateChange?.({ page: page - 1 })}
-            >
-              이전
-            </button>
-            <button
-              type="button"
-              className="btn btn-xs join-item"
-              onClick={() => onStateChange?.({ page: page + 1 })}
-            >
-              다음
-            </button>
-          </div>
           {footerExtra}
         </div>
       </div>
     </div>
   )
 }
+
+export default DataTable

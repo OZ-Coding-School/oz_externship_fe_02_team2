@@ -9,8 +9,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://api.yourservice.com', // 추후 연결될 백엔드 api 연결주소
+        target: 'https://api.ozcoding.site', // 추후 연결될 백엔드 api 연결주소
         changeOrigin: true,
+        secure: false,
       },
     },
   },

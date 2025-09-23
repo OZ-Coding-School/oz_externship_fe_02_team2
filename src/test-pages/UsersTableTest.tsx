@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 
-import UsersTable, { type UserRow } from '@components/table/feature/UsersTable'
-import CoursesTable, {
-  type CourseRow,
-} from '@components/table/feature/CoursesTable'
-import WithdrawalsTable, {
-  type WithdrawalRow,
-} from '@components/table/feature/withdrawalsTable'
-import StudyGroupsTable, {
-  type StudyGroupRow,
-} from '@components/table/feature/StudyGrouptsTable'
+import UsersTable from '@/components/table/feature/Users/UsersTable'
+import CoursesTable from '@components/table/feature/CoursesTable'
+import WithdrawalsTable from '@components/table/feature/withdrawalsTable'
+import StudyGroupsTable from '@components/table/feature/StudyGrouptsTable'
+import type {
+  CourseRow,
+  StudyGroupRow,
+  UserRow,
+  WithdrawalRow,
+} from '@/components/table/Table.types'
 
 type TabKey = 'users' | 'withdrawals' | 'courses' | 'studygroups'
 
@@ -50,6 +50,128 @@ export default function AdminTablesTest() {
         status: '탈퇴요청',
         joinedAt: '2025-08-03T09:00:00Z',
         withdrawnAt: '2025-08-30T09:00:00Z',
+      },
+      {
+        memberId: '4',
+        email: 'david@example.com',
+        nickname: '데이비드',
+        name: 'David',
+        birth: '1988-07-14',
+        role: '일반회원',
+        status: '활성',
+        joinedAt: '2025-08-04T11:45:00Z',
+      },
+      {
+        memberId: '5',
+        email: 'eva@example.com',
+        nickname: '에바',
+        name: 'Eva',
+        birth: '1993-02-19',
+        role: '스태프',
+        status: '활성',
+        joinedAt: '2025-08-05T08:20:00Z',
+      },
+      {
+        memberId: '6',
+        email: 'frank@example.com',
+        nickname: '프랭크',
+        name: 'Frank',
+        birth: '1991-09-10',
+        role: '일반회원',
+        status: '정지',
+        joinedAt: '2025-08-06T14:15:00Z',
+      },
+      {
+        memberId: '7',
+        email: 'grace@example.com',
+        nickname: '그레이스',
+        name: 'Grace',
+        birth: '1996-11-22',
+        role: '관리자',
+        status: '활성',
+        joinedAt: '2025-08-07T07:30:00Z',
+      },
+      {
+        memberId: '8',
+        email: 'henry@example.com',
+        nickname: '헨리',
+        name: 'Henry',
+        birth: '1989-03-03',
+        role: '스태프',
+        status: '탈퇴요청',
+        joinedAt: '2025-08-08T15:00:00Z',
+        withdrawnAt: '2025-09-01T15:00:00Z',
+      },
+      {
+        memberId: '9',
+        email: 'irene@example.com',
+        nickname: '아이린',
+        name: 'Irene',
+        birth: '1997-06-16',
+        role: '일반회원',
+        status: '활성',
+        joinedAt: '2025-08-09T10:50:00Z',
+      },
+      {
+        memberId: '10',
+        email: 'jack@example.com',
+        nickname: '잭',
+        name: 'Jack',
+        birth: '1994-12-01',
+        role: '관리자',
+        status: '정지',
+        joinedAt: '2025-08-10T13:40:00Z',
+      },
+      {
+        memberId: '11',
+        email: 'kate@example.com',
+        nickname: '케이트',
+        name: 'Kate',
+        birth: '1990-04-25',
+        role: '스태프',
+        status: '활성',
+        joinedAt: '2025-08-11T09:25:00Z',
+      },
+      {
+        memberId: '12',
+        email: 'leo@example.com',
+        nickname: '레오',
+        name: 'Leo',
+        birth: '1992-08-08',
+        role: '일반회원',
+        status: '활성',
+        joinedAt: '2025-08-12T17:05:00Z',
+      },
+      {
+        memberId: '13',
+        email: 'mia@example.com',
+        nickname: '미아',
+        name: 'Mia',
+        birth: '1999-10-30',
+        role: '일반회원',
+        status: '탈퇴요청',
+        joinedAt: '2025-08-13T16:00:00Z',
+        withdrawnAt: '2025-09-05T16:00:00Z',
+      },
+      {
+        memberId: '14',
+        email: 'nick@example.com',
+        nickname: '닉',
+        name: 'Nick',
+        birth: '1987-05-12',
+        role: '스태프',
+        status: '활성',
+        joinedAt: '2025-08-14T11:00:00Z',
+      },
+      {
+        memberId: '15',
+        email: 'olivia@example.com',
+        nickname: '올리비아',
+        name: 'Olivia',
+        birth: '1998-07-07',
+        role: '관리자',
+        status: '활성',
+        joinedAt: '2025-08-15T19:30:00Z',
       },
     ],
     []
@@ -157,11 +279,7 @@ export default function AdminTablesTest() {
 
         <div className="mt-4">
           <TabsContent value="users">
-            <UsersTable
-              rows={userRows}
-              total={userRows.length}
-              loading={false}
-            />
+            <UsersTable rows={userRows} loading={false} />
           </TabsContent>
 
           <TabsContent value="withdrawals">

@@ -10,6 +10,7 @@ import type { ButtonProps } from '@/types/button'
 
 export default function Button(props: ButtonProps) {
   const {
+    type = 'button',
     btnStyle = 'primary',
     btnSize = 'medium',
     btnIcon,
@@ -22,7 +23,7 @@ export default function Button(props: ButtonProps) {
 
   return (
     <button
-      type="button"
+      type={type}
       aria-label={`${btnStyle} button`}
       onClick={onClick}
       disabled={disabled}

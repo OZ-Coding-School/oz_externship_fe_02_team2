@@ -1,20 +1,11 @@
 // 회원 탈퇴 관리
 import { useState } from 'react'
 import { DataTable } from '@components/table/DataTable'
-import { Badge } from '@components/table/Badges'
 import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
 import { roleToTone } from '@/lib/mappers'
-
-export type WithdrawalRow = {
-  wid: string
-  email: string
-  name: string
-  role: '일반회원' | '관리자' | '스태프'
-  birth?: string
-  reason?: string
-  withdrawnAt: string
-}
+import type { WithdrawalRow } from '../Table.types'
+import Badge from '@/components/ui/Badge/Badge'
 
 const columns: Column<WithdrawalRow>[] = [
   {
@@ -25,7 +16,13 @@ const columns: Column<WithdrawalRow>[] = [
     sortable: true,
   },
   { id: 'email', header: '이메일', accessor: 'email', width: '220px' },
-  { id: 'name', header: '이름', accessor: 'name', width: '100px' },
+  {
+    id: 'name',
+    header: '이름',
+    accessor: 'name',
+    width: '100px',
+    sortable: true,
+  },
   {
     id: 'role',
     header: '권한',
@@ -48,8 +45,9 @@ const columns: Column<WithdrawalRow>[] = [
   {
     id: 'withdrawnAt',
     header: '탈퇴일시',
-    accessor: (r) => fmtDate(r.withdrawnAt),
+    accessor: (r) => fmtDate(r.withdrawnAt, { withTime: true }),
     width: '170px',
+    sortable: true,
   },
 ]
 

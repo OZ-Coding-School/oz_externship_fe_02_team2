@@ -6,7 +6,7 @@ export default function Title({
   id?: string
 }) {
   return (
-    <h4 id={id} className="mb-2 font-bold">
+    <h4 id={id} className="mb-0 font-bold">
       {children}
     </h4>
   )
