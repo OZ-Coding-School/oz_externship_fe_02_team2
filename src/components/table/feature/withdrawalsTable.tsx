@@ -46,14 +46,18 @@ const columns: Column<WithdrawalRow>[] = [
   {
     id: 'birthday',
     header: '생년월일',
-    accessor: (r) => r.birthday ?? '-',
+    accessor: 'birthday', // 단순히 필드명만 사용
     width: '120px',
+    cell: ({ value }) => value || '-', // cell에서 fallback 처리
   },
   {
     id: 'reason',
     header: '탈퇴 사유',
-    accessor: (r) => r.reason ?? '-',
-    cell: ({ value }) => <span className="line-clamp-1">{value}</span>,
+    accessor: 'reason', // 단순히 필드명만 사용
+    width: '200px',
+    cell: ({ value }) => (
+      <span className="line-clamp-1">{value || '-'}</span> // cell에서 fallback 처리
+    ),
   },
   {
     id: 'created_at',
@@ -77,6 +81,7 @@ export default function WithdrawalsTable({
     pageSize: 10,
     sort: null,
   })
+
   // DataTable이 상태를 바꾸면, 바로 서버 호출까지 함께 트리거
   const handleStateChange = useCallback(
     (next: Partial<TableState>) => {
@@ -92,6 +97,7 @@ export default function WithdrawalsTable({
     },
     [onRequest]
   )
+
   // 최초 1회 또는 외부 deps에 따라 초기 로드
   useEffect(() => {
     onRequest?.({
@@ -127,7 +133,6 @@ export default function WithdrawalsTable({
   return (
     <DataTable<WithdrawalRow>
       columns={columns}
-      //data={rows}
       data={displayRows} // 분할된 데이터(서버 모드면 원본 그대로)
       state={state}
       onStateChange={handleStateChange}

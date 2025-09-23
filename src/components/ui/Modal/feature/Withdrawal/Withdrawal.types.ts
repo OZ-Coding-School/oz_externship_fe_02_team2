@@ -11,6 +11,7 @@ export type WithdrawalDetail = {
   profile_img_url?: string | null
   created_at: string // ISO
   reason?: string
-  reasonDetail?: string
+  reason_detail: string | null
   due_date?: string // ISO
+  withdrawalRequestId?: string
 }
