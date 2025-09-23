@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
 import { ADMIN, like, paginate, sortByKey, toInt } from '../../utils'
+import { withdrawalsDb } from '@/mocks/seeds/withdrawals.seed'
+
 import type {
   WithdrawalListItem,
   WithdrawalDetail,
@@ -8,111 +10,8 @@ import type {
   AdminPermission,
 } from '@/api/modules/withdrawals'
 
-// 추가 타입 정의
-type WithdrawalStatus =
-  | 'PENDING'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'COMPLETED'
-  | 'CANCELLED'
-
-interface WithdrawalDetailExtended extends Omit<WithdrawalDetail, 'status'> {
-  status: WithdrawalStatus
-}
-
 interface RejectRequestBody {
   reason?: string
-}
-
-// 더미 데이터 생성
-const withdrawalsDb = {
-  withdrawals: [] as WithdrawalDetailExtended[],
-
-  init() {
-    if (this.withdrawals.length > 0) return // 이미 초기화됨
-
-    const perms: AdminPermission[] = ['admin', 'staff', 'general']
-    const statuses: WithdrawalStatus[] = [
-      'PENDING',
-      'APPROVED',
-      'REJECTED',
-      'COMPLETED',
-    ]
-
-    this.withdrawals = Array.from({ length: 58 }).map((_, i) => {
-      const id = i + 1
-      const baseDate = new Date()
-
-      return {
-        id,
-        name: `회원${String(id).padStart(3, '0')}`,
-        gender: i % 2 ? '남성' : '여성',
-        nickname: `user${id}`,
-        email: `user${String(id).padStart(3, '0')}@example.com`,
-        permission: perms[i % perms.length],
-        status: statuses[i % statuses.length],
-        user_joined_at: new Date(
-          baseDate.getTime() - (i + 50) * 86400_000
-        ).toISOString(),
-        profile_img_url:
-          i % 3 === 0 ? `https://picsum.photos/seed/w${id}/80/80` : null,
-        created_at: new Date(baseDate.getTime() - i * 3600_000).toISOString(),
-        reason:
-          i % 5 === 0
-            ? 'NO_LONGER_NEEDED'
-            : i % 5 === 1
-              ? 'LACK_OF_INTEREST'
-              : i % 5 === 2
-                ? 'TOO_DIFFICULT'
-                : i % 5 === 3
-                  ? 'FOUND_BETTER_SERVICE'
-                  : 'OTHER',
-        reason_detail: i % 3 === 0 ? `탈퇴 사유 상세 내용 ${id}` : null,
-        due_date: new Date(baseDate.getTime() + ((i % 10) + 7) * 86400_000)
-          .toISOString()
-          .slice(0, 10),
-      } as WithdrawalDetailExtended
-    })
-
-    console.log(
-      '[MSW] Withdrawals DB 초기화 완료:',
-      this.withdrawals.length,
-      '건'
-    )
-  },
-
-  find(id: number): WithdrawalDetailExtended | undefined {
-    return this.withdrawals.find((w) => w.id === id)
-  },
-
-  search(params: WithdrawalsParams) {
-    let results = [...this.withdrawals]
-
-    // 검색어 필터
-    if (params.q) {
-      results = results.filter((w) =>
-        like(`${w.name} ${w.email} ${w.nickname} ${w.id}`, params.q!)
-      )
-    }
-
-    // 권한 필터
-    if (params.permission) {
-      results = results.filter((w) => w.permission === params.permission)
-    }
-
-    return results
-  },
-
-  update(
-    id: number,
-    updates: Partial<WithdrawalDetailExtended>
-  ): WithdrawalDetailExtended | null {
-    const index = this.withdrawals.findIndex((w) => w.id === id)
-    if (index === -1) return null
-
-    this.withdrawals[index] = { ...this.withdrawals[index], ...updates }
-    return this.withdrawals[index]
-  },
 }
 
 // DB 초기화
@@ -156,16 +55,39 @@ function parseOrderingDirection(
   return ordering.startsWith('-') ? 'desc' : 'asc'
 }
 
-// WithdrawalDetailExtended을 WithdrawalListItem으로 변환
-function toListItem(detail: WithdrawalDetailExtended): WithdrawalListItem {
+// WithdrawalDetail을 WithdrawalListItem으로 변환
+function toListItem(detail: WithdrawalDetail): WithdrawalListItem {
   return {
     id: detail.id,
     name: detail.name,
     email: detail.email,
     permission: detail.permission,
-    status: detail.status as WithdrawalDetail['status'], // 타입 호환성을 위한 변환
+    birthday: detail.birthday,
+    reason: detail.reason,
     created_at: detail.created_at,
   }
+}
+
+// 검색 및 필터링 함수
+function searchAndFilter(
+  withdrawals: WithdrawalDetail[],
+  params: WithdrawalsParams
+): WithdrawalDetail[] {
+  let results = [...withdrawals]
+
+  // 검색어 필터
+  if (params.q) {
+    results = results.filter((w) =>
+      like(`${w.name} ${w.email} ${w.nickname} ${w.id}`, params.q!)
+    )
+  }
+
+  // 권한 필터
+  if (params.permission) {
+    results = results.filter((w) => w.permission === params.permission)
+  }
+
+  return results
 }
 
 export const withdrawalHandlers = [
@@ -180,7 +102,7 @@ export const withdrawalHandlers = [
     const params = parseParams(url)
 
     // 검색 및 필터링
-    let results = withdrawalsDb.search(params)
+    let results = searchAndFilter(withdrawalsDb.withdrawals, params)
 
     // 정렬
     if (params.sortBy) {
@@ -188,7 +110,7 @@ export const withdrawalHandlers = [
         results as unknown as Record<string, unknown>[],
         params.sortBy,
         params.sortOrder || 'desc'
-      ) as unknown as WithdrawalDetailExtended[]
+      ) as unknown as WithdrawalDetail[]
     }
 
     // 페이지네이션
@@ -237,10 +159,10 @@ export const withdrawalHandlers = [
     await delay(120 + Math.random() * 60)
 
     try {
-      const body = (await request.json()) as Partial<WithdrawalDetailExtended>
+      const body = (await request.json()) as Partial<WithdrawalDetail>
       const id = parseInt(params.id as string)
 
-      const updated = withdrawalsDb.update(id, body)
+      const updated = withdrawalsDb.patch(id, body)
 
       if (!updated) {
         console.log(`[MSW] Withdrawal ${id} not found for update`)
@@ -283,7 +205,7 @@ export const withdrawalHandlers = [
     }
 
     // 실제 삭제 대신 상태를 CANCELLED로 변경
-    withdrawalsDb.update(id, { status: 'CANCELLED' })
+    withdrawalsDb.patch(id, { status: 'CANCELLED' })
 
     console.log(`[MSW] Withdrawal ${id} 취소/삭제:`, found.name)
 
@@ -299,7 +221,7 @@ export const withdrawalHandlers = [
       await delay(150)
 
       const id = parseInt(params.id as string)
-      const approved = withdrawalsDb.update(id, { status: 'APPROVED' })
+      const approved = withdrawalsDb.patch(id, { status: 'APPROVED' })
 
       if (!approved) {
         console.log(`[MSW] Withdrawal ${id} not found for approval`)
@@ -326,7 +248,7 @@ export const withdrawalHandlers = [
         const body = (await request.json()) as RejectRequestBody
         const id = parseInt(params.id as string)
 
-        const rejected = withdrawalsDb.update(id, {
+        const rejected = withdrawalsDb.patch(id, {
           status: 'REJECTED',
           reason_detail: body.reason || '관리자에 의한 거절',
         })
@@ -357,45 +279,19 @@ export const withdrawalHandlers = [
 
     await delay(50)
 
-    const stats = {
-      total: withdrawalsDb.withdrawals.length,
-      pending: withdrawalsDb.withdrawals.filter((w) => w.status === 'PENDING')
-        .length,
-      approved: withdrawalsDb.withdrawals.filter((w) => w.status === 'APPROVED')
-        .length,
-      rejected: withdrawalsDb.withdrawals.filter((w) => w.status === 'REJECTED')
-        .length,
-      completed: withdrawalsDb.withdrawals.filter(
-        (w) => w.status === 'COMPLETED'
-      ).length,
-      permissions: {
-        admin: withdrawalsDb.withdrawals.filter((w) => w.permission === 'admin')
-          .length,
-        staff: withdrawalsDb.withdrawals.filter((w) => w.permission === 'staff')
-          .length,
-        general: withdrawalsDb.withdrawals.filter(
-          (w) => w.permission === 'general'
-        ).length,
-      },
-      topReasons: {
-        NO_LONGER_NEEDED: withdrawalsDb.withdrawals.filter(
-          (w) => w.reason === 'NO_LONGER_NEEDED'
-        ).length,
-        LACK_OF_INTEREST: withdrawalsDb.withdrawals.filter(
-          (w) => w.reason === 'LACK_OF_INTEREST'
-        ).length,
-        TOO_DIFFICULT: withdrawalsDb.withdrawals.filter(
-          (w) => w.reason === 'TOO_DIFFICULT'
-        ).length,
-        FOUND_BETTER_SERVICE: withdrawalsDb.withdrawals.filter(
-          (w) => w.reason === 'FOUND_BETTER_SERVICE'
-        ).length,
-        OTHER: withdrawalsDb.withdrawals.filter((w) => w.reason === 'OTHER')
-          .length,
-      },
-    }
+    const stats = withdrawalsDb.stats()
 
     console.log('[MSW] 탈퇴 요청 통계 조회:', stats)
-    return HttpResponse.json(stats)
+    return HttpResponse.json({
+      total: stats.total,
+      pending: stats.byStatus.PENDING,
+      approved: stats.byStatus.APPROVED,
+      rejected: stats.byStatus.REJECTED,
+      completed: stats.byStatus.COMPLETED,
+      permissions: stats.byPermission,
+      topReasons: stats.byReason,
+    })
   }),
 ]
+
+export { withdrawalsDb }
