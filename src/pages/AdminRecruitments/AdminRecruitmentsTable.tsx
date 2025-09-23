@@ -303,7 +303,7 @@ export default function RecruitmentsTable() {
           }}
           config={filterConfig}
           /* 코어 필터(검색/상태) 라벨 가시화 */
-          showCoreLabels
+          showLabels
           searchLabel="검색어"
           statusLabel="상태"
           /* 한 줄 유지 위해 검색 최대폭 제한 */
@@ -337,13 +337,8 @@ export default function RecruitmentsTable() {
             </label>
             <button
               type="button"
-<<<<<<< HEAD
-              // onClick={() => setTagModalOpen(true)}
-              className="relative inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-700 hover:bg-gray-50"
-=======
               onClick={() => setTagModalOpen(true)}
               className="relative inline-flex h-9 w-40 items-center justify-between rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50"
->>>>>>> ea3c805 (refactor: 로직, 스타일을 수정해 자식 드롭다운도 한 줄에 위치하게끔 변경 (#66))
             >
               <span className="truncate">태그 선택...</span>
               <ChevronDown className="h-4 w-4 text-gray-500" />
