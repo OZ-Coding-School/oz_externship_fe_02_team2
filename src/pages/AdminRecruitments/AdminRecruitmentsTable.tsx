@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-// ✅ 타입: 네 프로젝트 경로에 맞춰 그대로 사용
+// 타입: 네 프로젝트 경로에 맞춰 그대로 사용
 import type {
   RecruitmentItem,
   RecruitmentListRes,
@@ -8,9 +8,6 @@ import type {
   Tag,
 } from '@/pages/AdminRecruitments/AdminRecruitments.types'
 
-// ✅ 공용 컴포넌트 경로: 네 프로젝트 구조에 맞게 딱 한 줄만 맞추면 됨
-// 예) import Table from '@/components/table/Table'
-import Table from '@/components/table/Table'
 import { TableFilterBar } from '@/components/table/feature/TableFilterBar'
 import Modal from '@/components/ui/Modal/Modal'
 import { Input } from '@/components/ui/input/Input'
@@ -421,7 +418,7 @@ export default function AdminRecruitmentsPage() {
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-semibold">스터디 구인 공고 관리</h1>
 
-      <Table<Row>
+      <table<Row>
         columns={columns}
         data={items}
         state={state}

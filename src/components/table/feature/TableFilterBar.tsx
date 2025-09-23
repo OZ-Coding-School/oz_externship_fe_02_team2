@@ -3,7 +3,6 @@ import type {
   EnhancedTableQuery,
   EnhancedTableFilterConfig,
   EnhancedQueryChangeHandlers,
-  FilterVisibilityOptions,
 } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'

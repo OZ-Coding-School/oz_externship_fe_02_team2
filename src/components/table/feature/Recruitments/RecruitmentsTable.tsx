@@ -87,15 +87,10 @@ export default function RecruitmentsTable({
       },
       {
         id: 'views_count',
-        header: ({ sort, onSort }) => (
-          <button
-            type="button"
-            onClick={onSort}
-            className="inline-flex items-center gap-1"
-            aria-label="조회수 정렬"
-          >
+        header: ({ sort }) => (
+          <span className="inline-flex items-center gap-1">
             조회수 <span>{sort ? (sort.desc ? '↑' : '↓') : ''}</span>
-          </button>
+          </span>
         ),
         accessor: 'views_count',
         width: '100px',
@@ -104,15 +99,10 @@ export default function RecruitmentsTable({
       },
       {
         id: 'bookmarks_count',
-        header: ({ sort, onSort }) => (
-          <button
-            type="button"
-            onClick={onSort}
-            className="inline-flex items-center gap-1"
-            aria-label="북마크 정렬"
-          >
+        header: ({ sort }) => (
+          <span className="inline-flex items-center gap-1">
             북마크 <span>{sort ? (sort.desc ? '↑' : '↓') : ''}</span>
-          </button>
+          </span>
         ),
         accessor: 'bookmarks_count',
         width: '100px',
@@ -121,15 +111,10 @@ export default function RecruitmentsTable({
       },
       {
         id: 'created_at',
-        header: ({ sort, onSort }) => (
-          <button
-            type="button"
-            onClick={onSort}
-            className="inline-flex items-center gap-1"
-            aria-label="생성일시 정렬"
-          >
+        header: ({ sort }) => (
+          <span className="inline-flex items-center gap-1">
             생성일시 <span>{sort ? (sort.desc ? '↑' : '↓') : ''}</span>
-          </button>
+          </span>
         ),
         accessor: 'created_at',
         width: '160px',
