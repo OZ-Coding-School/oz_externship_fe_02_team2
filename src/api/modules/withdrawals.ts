@@ -31,7 +31,8 @@ export type WithdrawalListItem = {
   name: string
   email: string
   permission: AdminPermission
-  status: string
+  birthday?: string
+  reason: string
   created_at: string // ISO
   profileImgUrl?: string | null
 }
@@ -44,6 +45,7 @@ export type WithdrawalDetail = {
   nickname: string
   email: string
   permission: AdminPermission
+  birthday?: string
   status: string
   user_joined_at: string
   profile_img_url: string | null

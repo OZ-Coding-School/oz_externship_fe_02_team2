@@ -8,20 +8,24 @@ import type { SortOrder } from '@/mocks/utils'
 import { ApiError } from '@/api/http'
 import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 import type { WithdrawalDetail } from '@/components/ui/Modal/feature/Withdrawal/Withdrawal.types'
-import { getWithdrawalDetail, getWithdrawals } from '@/api/modules/withdrawals'
+import {
+  getWithdrawalDetail,
+  getWithdrawals,
+  type WithdrawalListItem,
+} from '@/api/modules/withdrawals'
 import WithdrawalsTable from '@/components/table/feature/withdrawalsTable'
 import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
 
 // API 응답 → 테이블 로우 매핑
-function mapToRow(w: WithdrawalDetail): WithdrawalRow {
+function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   return {
     id: w.id,
     email: w.email,
     name: w.name,
     permission: w.permission ?? '',
-    birthday: w.birth ?? '',
+    birthday: (('birthday' in w ? w.birthday : undefined) ?? '') || undefined,
     reason: w.reason ?? '',
-    created_at: w.created_at,
+    created_at: w.created_at ?? '',
   }
 }
 
@@ -32,7 +36,7 @@ const SORT_KEY_MAP: Record<string, string> = {
   nickname: 'nickname',
   name: 'name',
   role: 'role',
-  birth: 'birth',
+  birthday: 'birthday',
   reason: 'reason',
   withdrawnAt: 'withdrawnAt',
 }
@@ -322,7 +326,7 @@ export default function UserWithdrawalPage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">회원 탈퇴 관리</h1>
       </div>
 
       {/* 에러 알림 */}

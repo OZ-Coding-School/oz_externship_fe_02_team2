@@ -5,8 +5,8 @@ export type WithdrawalDetail = {
   nickname?: string
   email: string
   permission: string
-  birth?: string
-  status: string
+  birthday?: string
+  status?: string
   user_joined_at?: string // ISO
   profile_img_url?: string | null
   created_at: string // ISO
