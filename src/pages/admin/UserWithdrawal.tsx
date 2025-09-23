@@ -16,15 +16,46 @@ import {
 import WithdrawalsTable from '@/components/table/feature/withdrawalsTable'
 import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
 
+// 권한 번역 함수
+function translatePermission(permission: string): string {
+  const permissionMap: Record<string, string> = {
+    admin: '관리자',
+    staff: '스태프',
+    general: '일반회원',
+  }
+  return permissionMap[permission] || permission
+}
+
+// 탈퇴 사유 번역 함수
+function translateWithdrawalReason(reason: string): string {
+  const reasonMap: Record<string, string> = {
+    SERVICE_DISSATISFACTION: '서비스 불만족',
+    PRIVACY_CONCERNS: '개인정보 우려',
+    LOW_USAGE: '사용 빈도 낮음',
+    COMPETITOR_SERVICE: '경쟁 서비스 이용',
+    OTHER: '기타',
+    // 기존 영어 사유들도 지원 (호환성)
+    NO_LONGER_NEEDED: '사용 빈도 낮음',
+    LACK_OF_INTEREST: '사용 빈도 낮음',
+    TOO_DIFFICULT: '서비스 불만족',
+    FOUND_BETTER_SERVICE: '경쟁 서비스 이용',
+    POOR_SERVICE_QUALITY: '서비스 불만족',
+    TECHNICAL_ISSUES: '서비스 불만족',
+    LACK_OF_CONTENT: '서비스 불만족',
+  }
+  return reasonMap[reason] || reason
+}
+
 // API 응답 → 테이블 로우 매핑
 function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   return {
     id: w.id,
     email: w.email,
     name: w.name,
-    permission: w.permission ?? '',
-    birthday: (('birthday' in w ? w.birthday : undefined) ?? '') || undefined,
-    reason: w.reason ?? '',
+    permission: translatePermission(w.permission ?? ''),
+    // 생년월일 처리 - null이나 undefined면 빈 문자열로
+    birthday: (('birthday' in w ? w.birthday : undefined) ?? '') || '',
+    reason: translateWithdrawalReason(w.reason ?? ''),
     created_at: w.created_at ?? '',
   }
 }
@@ -167,9 +198,17 @@ export default function UserWithdrawalPage() {
 
       try {
         const userData = await getWithdrawalDetail(userId, { mock: true })
+
+        // 모달에 표시할 데이터도 번역 처리
+        const translatedUserData = {
+          ...userData,
+          permission: translatePermission(userData.permission),
+          reason: translateWithdrawalReason(userData.reason),
+        }
+
         setModalState((prev) => ({
           ...prev,
-          detail: userData,
+          detail: translatedUserData,
           detailLoading: false,
         }))
       } catch (e: unknown) {
@@ -199,44 +238,6 @@ export default function UserWithdrawalPage() {
       detailError: null,
     })
   }, [])
-
-  //   // 유저 업데이트 핸들러
-  //   const handleWithdrawalUpdated = useCallback(
-  //     (updatedUser: WithdrawalDetail) => {
-  //       setTableData((prev) =>
-  //         prev.map((row) =>
-  //           row.id === updatedUser.id ? mapToRow(updatedUser) : row
-  //         )
-  //       )
-
-  //       setModalState((prev) => ({
-  //         ...prev,
-  //         detail: prev.detail?.id === updatedUser.id ? updatedUser : prev.detail,
-  //       }))
-
-  //       triggerToast(
-  //         'success',
-  //         '업데이트 완료',
-  //         '회원 정보가 성공적으로 업데이트되었습니다.'
-  //       )
-  //     },
-  //     [triggerToast]
-  //   )
-
-  //   // 유저 복구 핸들러
-  //   const handleUserRestored = useCallback(
-  //     (restoredUserId: number) => {
-  //       setTableData((prev) =>
-  //         prev.map((row) =>
-  //           row.id === restoredUserId ? { ...row, status: '활성' as const } : row
-  //         )
-  //       )
-
-  //       closeDetail()
-  //       triggerToast('success', '복구 완료', '회원이 활성화되었습니다.')
-  //     },
-  //     [closeDetail, triggerToast]
-  //   )
 
   // 테이블 로우 클릭 핸들러
   const handleRowClick = useCallback(
