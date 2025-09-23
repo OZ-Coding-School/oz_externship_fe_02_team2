@@ -29,17 +29,13 @@ const STATUS_DIST: Record<string, number> = {
   COMPLETED: 15, // 완료됨
 }
 
-// 탈퇴 사유 분포(%)
+// 탈퇴 사유 분포(%) - 5가지로 수정
 const REASON_DIST: Record<string, number> = {
-  NO_LONGER_NEEDED: 30, // 더 이상 서비스가 필요하지 않음
-  LACK_OF_INTEREST: 25, // 관심 사라짐
-  TOO_DIFFICULT: 15, // 사용하기 어려움
-  FOUND_BETTER_SERVICE: 15, // 더 좋은 대안 발견
-  PRIVACY_CONCERNS: 5, // 개인정보 우려
-  POOR_SERVICE_QUALITY: 5, // 서비스 품질 불만
-  TECHNICAL_ISSUES: 3, // 기술적 문제
-  LACK_OF_CONTENT: 1, // 콘텐츠 부족
-  OTHER: 1, // 기타
+  SERVICE_DISSATISFACTION: 30, // 서비스 불만족
+  PRIVACY_CONCERNS: 25, // 개인정보 우려
+  LOW_USAGE: 20, // 사용 빈도 낮음
+  COMPETITOR_SERVICE: 15, // 경쟁 서비스 이용
+  OTHER: 10, // 기타
 }
 
 // 성별 분포
@@ -178,57 +174,41 @@ const domains = [
   'oz.com',
 ] as const
 
-// 탈퇴 사유별 상세 내용 템플릿
-const REASON_DETAILS: Record<string, (string | null)[]> = {
-  NO_LONGER_NEEDED: [
-    '더 이상 해당 서비스를 이용할 필요가 없어졌습니다',
-    '목적을 달성하여 서비스가 필요하지 않습니다',
-    '상황이 변경되어 서비스 이용이 불필요해졌습니다',
-    '다른 방법을 찾아서 더 이상 필요하지 않습니다',
-  ],
-  LACK_OF_INTEREST: [
-    '처음 생각했던 것과 달라 관심이 떨어졌습니다',
-    '시간이 지나면서 흥미를 잃었습니다',
-    '기대했던 것과 다른 내용이어서 관심이 없어졌습니다',
-    '다른 분야에 관심이 생겨서 그만두고 싶습니다',
-  ],
-  TOO_DIFFICULT: [
-    '사용법이 너무 복잡해서 어렵습니다',
-    '기능이 많아서 익히기가 힘듭니다',
-    '초보자에게는 진입장벽이 높은 것 같습니다',
-    '시간을 많이 투자해야 해서 부담됩니다',
-  ],
-  FOUND_BETTER_SERVICE: [
-    '더 나은 대안 서비스를 발견했습니다',
-    '기능이 더 좋은 다른 서비스를 찾았습니다',
-    '가격 대비 더 효율적인 서비스가 있어서요',
-    '주변에서 추천해준 더 좋은 서비스가 있습니다',
+// 탈퇴 사유별 상세 내용 템플릿 - 수정된 사유에 맞게
+const REASON_DETAILS: Record<string, string[]> = {
+  SERVICE_DISSATISFACTION: [
+    '서비스 품질이 기대에 미치지 못합니다',
+    '고객 응대가 불만족스럽습니다',
+    '서비스 속도나 안정성에 문제가 있습니다',
+    '기능이 부족하거나 사용하기 어렵습니다',
+    '업데이트가 느리고 개선사항이 반영되지 않습니다',
   ],
   PRIVACY_CONCERNS: [
     '개인정보 보호가 우려됩니다',
     '데이터 수집 범위가 너무 넓은 것 같습니다',
     '보안 정책이 마음에 들지 않습니다',
+    '개인정보 처리 방침에 동의하기 어렵습니다',
+    '정보 보안에 대한 신뢰가 부족합니다',
   ],
-  POOR_SERVICE_QUALITY: [
-    '서비스 품질이 기대에 미치지 못합니다',
-    '고객 응대가 불만족스럽습니다',
-    '서비스 속도나 안정성에 문제가 있습니다',
+  LOW_USAGE: [
+    '서비스를 자주 사용하지 않게 되었습니다',
+    '필요성을 느끼지 못하게 되었습니다',
+    '시간이 부족해서 이용하기 어렵습니다',
+    '관심이 줄어들어 사용 빈도가 낮아졌습니다',
+    '더 이상 해당 서비스가 필요하지 않습니다',
   ],
-  TECHNICAL_ISSUES: [
-    '기술적인 오류가 자주 발생합니다',
-    '앱이나 웹사이트에 버그가 많습니다',
-    '호환성 문제로 이용이 어렵습니다',
-  ],
-  LACK_OF_CONTENT: [
-    '원하는 콘텐츠가 부족합니다',
-    '업데이트가 느려서 아쉽습니다',
-    '다양성이 부족한 것 같습니다',
+  COMPETITOR_SERVICE: [
+    '더 나은 대안 서비스를 발견했습니다',
+    '기능이 더 좋은 다른 서비스를 찾았습니다',
+    '가격 대비 더 효율적인 서비스가 있어서요',
+    '주변에서 추천해준 더 좋은 서비스가 있습니다',
+    '경쟁사 서비스가 더 편리하고 유용합니다',
   ],
   OTHER: [
     '개인적인 사정으로 인해 탈퇴합니다',
     '기타 개인적인 이유입니다',
-    null, // 상세 내용 없음
-    null,
+    '환경 변화로 인해 서비스가 불필요해졌습니다',
+    '다른 우선순위가 생겨서 이용을 중단합니다',
   ],
 }
 
@@ -265,9 +245,13 @@ export function makeWithdrawal(): WithdrawalDetail {
   const nickname = `${fn.toLowerCase()}${pick(nickSuffix)}`
 
   const permission = pickByDist(PERMISSION_DIST)
-  const birthday = `199${Math.floor(rnd() * 10)}-${pad2(Math.floor(rnd() * 12) + 1)}-${pad2(
-    Math.floor(rnd() * 28) + 1
-  )}`
+
+  // 생년월일 생성 (1980~2005년 사이)
+  const birthYear = 1980 + Math.floor(rnd() * 26) // 1980-2005
+  const birthMonth = Math.floor(rnd() * 12) + 1
+  const birthDay = Math.floor(rnd() * 28) + 1 // 28일까지로 안전하게
+  const birthday = `${birthYear}-${pad2(birthMonth)}-${pad2(birthDay)}`
+
   const status = pickByDist(STATUS_DIST)
   const gender = pickByDist(GENDER_DIST)
   const reason = pickByDist(REASON_DIST)
@@ -285,12 +269,9 @@ export function makeWithdrawal(): WithdrawalDetail {
   const created_at = randomDateBetween(180, 0) // 6개월 이내 탈퇴 요청
   const due_date = futureDateDays(7 + Math.floor(rnd() * 30)) // 1주일~1개월 후
 
-  // 탈퇴 사유 상세 내용 (70% 확률로 있음)
+  // 탈퇴 사유 상세 내용 (85% 확률로 있음)
   const reasonDetails = REASON_DETAILS[reason] || []
-  const reason_detail =
-    rnd() > 0.3 && reasonDetails.length > 0
-      ? pick(reasonDetails.filter(Boolean))
-      : null
+  const reason_detail = rnd() > 0.15 ? pick(reasonDetails) : null
 
   return {
     id,
