@@ -40,7 +40,7 @@ const SORT_KEY_MAP: Record<string, string> = {
   withdrawnAt: 'withdrawnAt',
 }
 
-export default function UsersManagePage() {
+export default function UserManagePage() {
   const { triggerToast } = useToast()
 
   // 테이블 데이터 상태
