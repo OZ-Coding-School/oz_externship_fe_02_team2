@@ -251,6 +251,10 @@ function futureDateDays(days: number): string {
   return new Date(future).toISOString().split('T')[0] // YYYY-MM-DD
 }
 
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
+}
+
 // ── 시드 생성기 ───────────────────────────────────────────────────────────────
 export function makeWithdrawal(): WithdrawalDetail {
   const id = newId()
@@ -261,6 +265,9 @@ export function makeWithdrawal(): WithdrawalDetail {
   const nickname = `${fn.toLowerCase()}${pick(nickSuffix)}`
 
   const permission = pickByDist(PERMISSION_DIST)
+  const birthday = `199${Math.floor(rnd() * 10)}-${pad2(Math.floor(rnd() * 12) + 1)}-${pad2(
+    Math.floor(rnd() * 28) + 1
+  )}`
   const status = pickByDist(STATUS_DIST)
   const gender = pickByDist(GENDER_DIST)
   const reason = pickByDist(REASON_DIST)
@@ -292,6 +299,7 @@ export function makeWithdrawal(): WithdrawalDetail {
     nickname,
     email,
     permission,
+    birthday,
     status,
     user_joined_at,
     profile_img_url,
