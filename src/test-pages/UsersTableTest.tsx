@@ -180,21 +180,21 @@ export default function AdminTablesTest() {
   const withdrawalRows = useMemo<WithdrawalRow[]>(
     () => [
       {
-        wid: 'w-101',
+        id: 101,
         email: 'dan@example.com',
         name: '단',
-        role: '일반회원',
-        birth: '1993-03-03',
+        permission: '일반회원',
+        birthday: '1993-03-03',
         reason: '서비스 미이용',
-        withdrawnAt: '2025-08-20T14:20:00Z',
+        created_at: '2025-08-20T14:20:00Z',
       },
       {
-        wid: 'w-102',
+        id: 102,
         email: 'erin@example.com',
         name: '에린',
-        role: '스태프',
+        permission: '스태프',
         reason: '기타',
-        withdrawnAt: '2025-08-22T09:00:00Z',
+        created_at: '2025-08-22T09:00:00Z',
       },
     ],
     []
