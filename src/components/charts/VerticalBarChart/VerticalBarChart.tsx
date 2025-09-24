@@ -39,7 +39,8 @@ const options: ChartOptions<'bar'> = {
         color: '#ccc',
         tickColor: '#666',
         tickLength: 6,
-        offset: false, // 그리드가 카테고리(막대) 중앙을 지나가게
+        /** 그리드가 카테고리(막대) 중앙을 지나가게 */
+        offset: false,
       },
       ticks: {
         color: '#6B7280',

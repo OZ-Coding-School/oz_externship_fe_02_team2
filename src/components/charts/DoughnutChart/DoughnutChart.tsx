@@ -1,4 +1,3 @@
-// DoughnutChart.tsx
 import { useMemo } from 'react'
 import {
   Chart as ChartJS,
