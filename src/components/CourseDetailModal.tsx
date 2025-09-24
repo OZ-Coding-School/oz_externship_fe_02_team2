@@ -1,3 +1,6 @@
+import Badge from '@/components/ui/Badge/Badge'
+import { cusToTone } from '@/lib';
+
 interface Course {
   id: number;
   thumbnail: string;
@@ -32,11 +35,11 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose }
           <h2 className="text-lg font-bold text-gray-800">강의 상세 정보</h2>
           <button onClick={onClose} className="text-2xl text-gray-600 hover:text-gray-800">&times;</button>
         </div>
-        <div className="grid grid-cols-[320px,1fr] gap-8 p-6">
+        <div className="grid grid-cols-2 gap-8 p-6">
           {/* 왼쪽 섹션 */}
-          <div className="w-[320px]">
+          <div className="w-full">
             <div className="mb-6">
-              <div className="w-72 h-48 bg-blue-200 rounded-lg flex items-center justify-center">
+              <div className="w-full h-48 bg-blue-200 rounded-lg flex items-center justify-center">
                 <div className="text-6xl text-cyan-500 font-bold">⚛</div>
               </div>
             </div>
@@ -79,7 +82,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose }
           </div>
           
           {/* 오른쪽 섹션 */}
-          <div className="flex-1">
+          <div className="w-full">
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-800 mb-2">강의 설명</h3>
@@ -89,7 +92,7 @@ const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose }
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-xs text-gray-600">강의 난이도</p>
-                  <p className="text-sm font-medium text-orange-500">{course.difficulty}</p>
+                  <Badge tone={cusToTone[course.difficulty]}>{course.difficulty}</Badge>
                 </div>
                 <div>
                   <p className="text-xs text-gray-600">총 강의 길이</p>

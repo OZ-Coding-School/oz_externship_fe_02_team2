@@ -1,6 +1,12 @@
-import TestRoutes from '@/routes/TestRoutes'
-// import MainApp from "@/routes/AppRoutes"; // 메인이 필요해지면 교체
+import React from 'react';
+import CourseManagement from 'src/components/CourseManagement';
 
-export default function App() {
-  return <TestRoutes />
+function App() {
+  return (
+    <div className="App">
+      <CourseManagement />
+    </div>
+  );
 }
+
+export default App;
