@@ -1,39 +1,31 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { getPage } from '@/lib'
 import { PAGE_TITLE } from '@/routes/constants'
-import { useState } from 'react'
-import { Join, Leave, Reason } from './sub-pages'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 
-type DashboardTabKey = 'join' | 'leave' | 'reason'
-
-// TODO: 대시보드 탭 바뀌면(트리거) 쿼리 달라지게
 export default function DashboardPage() {
-  const [tab, setTab] = useState<DashboardTabKey>('join')
+  const { pathname } = useLocation()
+  const tab = getPage(pathname)
 
   return (
     <div className="flex w-full flex-col gap-13">
       <h3 className="hidden text-gray-800 md:block">{PAGE_TITLE.DASHBOARD}</h3>
 
-      <Tabs
-        value={tab}
-        onValueChange={(v) => setTab(v as DashboardTabKey)}
-        className="w-full"
-      >
+      <Tabs value={tab} className="w-full">
         <TabsList>
-          <TabsTrigger value="join">회원가입 추세</TabsTrigger>
-          <TabsTrigger value="leave">회원탈퇴 추세</TabsTrigger>
-          <TabsTrigger value="reason">탈퇴 사유 분석</TabsTrigger>
+          <TabsTrigger value="join" asChild>
+            <Link to="join">회원가입 추세</Link>
+          </TabsTrigger>
+          <TabsTrigger value="leave" asChild>
+            <Link to="leave">회원탈퇴 추세</Link>
+          </TabsTrigger>
+          <TabsTrigger value="reason" asChild>
+            <Link to="reason">탈퇴 사유 분석</Link>
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-3">
-          <TabsContent value="join">
-            <Join />
-          </TabsContent>
-          <TabsContent value="leave">
-            <Leave />
-          </TabsContent>
-          <TabsContent value="reason">
-            <Reason />
-          </TabsContent>
+          <Outlet />
         </div>
       </Tabs>
     </div>
