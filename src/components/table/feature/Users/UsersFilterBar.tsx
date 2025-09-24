@@ -47,6 +47,7 @@ const defaultUsersConfig: TableFilterConfig = {
     { label: '스태프', value: '스태프' },
     { label: '일반회원', value: '일반회원' },
   ],
+  debounceMs: 200,
 }
 
 /** tone별 외곽 스타일 */
@@ -106,6 +107,12 @@ export default function UsersFilterBar({
         )}
         showLabels
         labels={{ search: '검색', status: '상태', role: '권한' }}
+        showFilters={{
+          search: true,
+          status: true,
+          role: true,
+          withdrawalReason: false, // 사용자 관리에서는 탈퇴사유 숨김
+        }}
       >
         {/* 하단 커스텀 영역: 필요 시 버튼/토글/설명 배치 */}
         {children}
