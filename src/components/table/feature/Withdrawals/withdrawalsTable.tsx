@@ -4,7 +4,7 @@ import { DataTable } from '@components/table/DataTable'
 import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
 import { roleToTone } from '@/lib/mappers'
-import type { WithdrawalRow } from '../Table.types'
+import type { WithdrawalRow } from '../../Table.types'
 import Badge from '@/components/ui/Badge/Badge'
 
 type WithdrawalTableProps = {

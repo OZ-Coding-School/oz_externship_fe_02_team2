@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs'
 
 import UsersTable from '@/components/table/feature/Users/UsersTable'
 import CoursesTable from '@components/table/feature/CoursesTable'
-import WithdrawalsTable from '@components/table/feature/withdrawalsTable'
+import WithdrawalsTable from '@/components/table/feature/Withdrawals/withdrawalsTable'
 import StudyGroupsTable from '@components/table/feature/StudyGrouptsTable'
 import type {
   CourseRow,
