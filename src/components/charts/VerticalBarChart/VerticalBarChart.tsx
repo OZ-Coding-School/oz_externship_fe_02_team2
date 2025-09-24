@@ -25,6 +25,7 @@ const options: ChartOptions<'bar'> = {
     legend: { display: false },
     tooltip: { enabled: true },
     rightEdgeGrid: { color: '#ccc', lineWidth: 2, dash: [3, 3] },
+    datalabels: { display: false },
   },
   scales: {
     x: {
