@@ -46,6 +46,17 @@ function translateWithdrawalReason(reason: string): string {
   return reasonMap[reason] || reason
 }
 
+// 상태 번역 함수
+function translateWithdrawalStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    PENDING: '대기중',
+    APPROVED: '승인됨',
+    REJECTED: '거절됨',
+    COMPLETED: '완료됨',
+  }
+  return statusMap[status] || status
+}
+
 // API 응답 → 테이블 로우 매핑
 function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   return {
@@ -204,6 +215,7 @@ export default function UserWithdrawalPage() {
           ...userData,
           permission: translatePermission(userData.permission),
           reason: translateWithdrawalReason(userData.reason),
+          status: translateWithdrawalStatus(userData.status),
         }
 
         setModalState((prev) => ({
