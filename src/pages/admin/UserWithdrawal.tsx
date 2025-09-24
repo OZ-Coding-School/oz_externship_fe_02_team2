@@ -347,7 +347,7 @@ export default function UserWithdrawalPage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">회원 탈퇴 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">탈퇴 관리</h1>
       </div>
 
       {/* 에러 알림 */}
