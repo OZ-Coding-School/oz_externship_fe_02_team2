@@ -13,7 +13,6 @@ export default function Reason() {
     value: reason,
     onChange: (value) => {
       setReason(value)
-      // TODO: 드롭다운 변경 시 차트 데이터 바뀌게
     },
     classes: {
       button: 'w-[147px]',

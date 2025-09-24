@@ -12,7 +12,6 @@ export default function Leave() {
     value: period,
     onChange: (value) => {
       setPeriod(value)
-      // TODO: 드롭다운 변경 시 차트 데이터 바뀌게
     },
     classes: {
       button: 'w-23',
