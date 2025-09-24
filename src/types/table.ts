@@ -63,7 +63,7 @@ export type TableQuery = {
   search?: string // 검색어 (메인)
   status?: Maybe<string> // 상태 필터
   role?: Maybe<string> // 권한 필터
-  withdrawalReason?: Maybe<string> // 탈퇴 사유 필터
+  reason?: Maybe<string> // 탈퇴 사유 필터
   sortBy?: string | null // 정렬 컬럼
   sortDir?: SortDirection // 정렬 방향
   page: number // 현재 페이지
@@ -72,7 +72,7 @@ export type TableQuery = {
 
 /** 확장된 테이블 쿼리 타입 (탈퇴사유 포함) */
 export type EnhancedTableQuery = TableQuery & {
-  withdrawalReason?: Maybe<string>
+  reason?: Maybe<string>
   permission?: Maybe<string>
 }
 
@@ -97,7 +97,7 @@ export type FilterVisibilityOptions = {
   search?: boolean
   status?: boolean
   role?: boolean
-  withdrawalReason?: boolean
+  reason?: boolean
 }
 // ===== 핸들러 타입들 =====
 

@@ -60,7 +60,7 @@ export function TableFilterBar({
     search: true,
     status: true,
     role: true,
-    withdrawalReason: false,
+    reason: false,
   },
 }: TableFilterBarProps) {
   const panelId = useId()
@@ -119,7 +119,7 @@ export function TableFilterBar({
     if (showFilters.search) filters.push('search')
     if (showFilters.status) filters.push('status')
     if (showFilters.role) filters.push('role')
-    if (showFilters.withdrawalReason) filters.push('withdrawalReason')
+    if (showFilters.reason) filters.push('reason')
     return filters
   }, [showFilters])
 
@@ -221,7 +221,7 @@ export function TableFilterBar({
           )}
 
           {/* 탈퇴사유 */}
-          {showFilters.withdrawalReason && (
+          {showFilters.reason && (
             <div className="w-full">
               {showLabels && (
                 <label className="mb-2 block text-sm font-semibold text-gray-800">
@@ -231,7 +231,7 @@ export function TableFilterBar({
               <div className="w-full">
                 <Dropdown
                   options={withdrawalDropdownOptions}
-                  value={query.withdrawalReason || ''}
+                  value={query.reason || ''}
                   onChange={handleWithdrawalReasonChange}
                   placeholder={withdrawalReasonPlaceholder}
                   classes={{
@@ -336,10 +336,10 @@ export function TableFilterBar({
           mobileOpen ? 'block' : 'hidden'
         )}
       >
-        {showFilters.withdrawalReason && (
+        {showFilters.reason && (
           <Dropdown
-            options={withdrawalReasonOptions}
-            value={query.withdrawalReason || ''}
+            options={withdrawalDropdownOptions}
+            value={query.reason || ''}
             onChange={handleWithdrawalReasonChange}
             placeholder={withdrawalReasonPlaceholder}
             classes={{ button: 'w-full !bg-gray-50' }}
@@ -384,8 +384,8 @@ export function TableFilterBar({
           ` 상태: ${statusOptions.find((opt) => opt.value === query.status)?.label ?? query.status}`}
         {query.role &&
           ` 권한: ${roleOptions.find((opt) => opt.value === query.role)?.label ?? query.role}`}
-        {query.withdrawalReason &&
-          ` 탈퇴사유: ${config.withdrawalReasonOptions?.find((opt) => opt.value === query.withdrawalReason)?.label ?? query.withdrawalReason}`}
+        {query.reason &&
+          ` 탈퇴사유: ${config.withdrawalReasonOptions?.find((opt) => opt.value === query.reason)?.label ?? query.reason}`}
       </div>
     </section>
   )

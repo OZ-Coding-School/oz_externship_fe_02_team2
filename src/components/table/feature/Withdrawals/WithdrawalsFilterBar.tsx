@@ -103,7 +103,7 @@ export default function WithdrawalsFilterBar({
         }}
         showFilters={{
           search: true,
-          withdrawalReason: true,
+          reason: true,
           status: false,
           role: true,
         }}

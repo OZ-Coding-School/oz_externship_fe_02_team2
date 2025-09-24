@@ -111,7 +111,7 @@ export default function UsersFilterBar({
           search: true,
           status: true,
           role: true,
-          withdrawalReason: false, // 사용자 관리에서는 탈퇴사유 숨김
+          reason: false, // 사용자 관리에서는 탈퇴사유 숨김
         }}
       >
         {/* 하단 커스텀 영역: 필요 시 버튼/토글/설명 배치 */}

@@ -12,6 +12,7 @@ export type WithdrawalsParams = {
   sortOrder?: SortOrder // 'asc' | 'desc'
   q?: string // 검색어
   permission?: Maybe<string>
+  reason?: Maybe<string>
 }
 
 /** 공통 페이지 응답(Users와 동일 포맷) */
@@ -71,6 +72,7 @@ function buildParams(
     sortOrder: p.sortOrder,
     q: p.q,
     permission: p.permission,
+    reason: p.reason,
   }
 
   // 빈 값 제거
@@ -102,6 +104,7 @@ function buildServerParams(
     ordering,
     search: p.q,
     permission: p.permission,
+    reason: p.reason,
   }
 
   // 빈 값 제거

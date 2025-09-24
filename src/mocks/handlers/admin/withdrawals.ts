@@ -7,7 +7,6 @@ import type {
   WithdrawalListItem,
   WithdrawalDetail,
   WithdrawalsParams,
-  AdminPermission,
 } from '@/api/modules/withdrawals'
 
 interface RejectRequestBody {
@@ -35,11 +34,12 @@ function parseParams(url: URL): WithdrawalsParams {
     | undefined
   const q =
     url.searchParams.get('q') || url.searchParams.get('search') || undefined
-  const permission = url.searchParams.get('permission') as
-    | AdminPermission
-    | undefined
+  const permission = url.searchParams.get('permission') as string | undefined
 
-  return { page, pageSize, sortBy, sortOrder, q, permission }
+  // 탈퇴사유 파라미터 추가
+  const reason = url.searchParams.get('reason') as string | undefined
+
+  return { page, pageSize, sortBy, sortOrder, q, permission, reason }
 }
 
 // DRF ordering 파라미터 파싱
@@ -87,6 +87,16 @@ function searchAndFilter(
     results = results.filter((w) => w.permission === params.permission)
   }
 
+  // 탈퇴사유 필터링 로직 추가
+  if (params.reason) {
+    results = results.filter((w) => {
+      // 대소문자 구분 없이 비교
+      const reason = w.reason?.toLowerCase()
+      const filterReason = params.reason?.toLowerCase()
+      return reason === filterReason
+    })
+  }
+
   return results
 }
 
@@ -100,6 +110,8 @@ export const withdrawalHandlers = [
 
     const url = new URL(request.url)
     const params = parseParams(url)
+
+    console.log('🔍 [MSW] Withdrawals 요청 파라미터:', params)
 
     // 검색 및 필터링
     let results = searchAndFilter(withdrawalsDb.withdrawals, params)
