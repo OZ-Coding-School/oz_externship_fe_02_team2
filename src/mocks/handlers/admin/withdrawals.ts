@@ -291,15 +291,14 @@ export const withdrawalHandlers = [
 
     await delay(50)
 
-    const stats = withdrawalsDb.stats()
+    const stats = withdrawalsDb.status()
 
     console.log('[MSW] 탈퇴 요청 통계 조회:', stats)
     return HttpResponse.json({
       total: stats.total,
-      pending: stats.byStatus.PENDING,
-      approved: stats.byStatus.APPROVED,
-      rejected: stats.byStatus.REJECTED,
-      completed: stats.byStatus.COMPLETED,
+      active: stats.byStatus.ACTIVE,
+      inactive: stats.byStatus.INACTIVE,
+      withdrawn: stats.byStatus.WITHDRAWN,
       permissions: stats.byPermission,
       topReasons: stats.byReason,
     })
