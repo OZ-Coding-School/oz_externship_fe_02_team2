@@ -174,7 +174,7 @@ export function TableFilterBar({
     >
       <div className="hidden items-end gap-4 sm:flex">
         {/* 동적 그리드 레이아웃 */}
-        <div className={cn('grid w-full gap-4', gridCols)}>
+        <div className={cn('grid w-full gap-4 pb-2', gridCols)}>
           {/* 검색 */}
           {showFilters.search && (
             <div>
@@ -308,7 +308,7 @@ export function TableFilterBar({
               onClick={onQueryChange.reset}
               className={cn(
                 'inline-flex items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-all duration-200',
-                'h-10', // Input과 같은 높이로 고정
+                'h-9', // Input과 같은 높이로 고정
                 activeFilterCount > 0
                   ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
                   : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
