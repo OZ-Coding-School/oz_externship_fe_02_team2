@@ -1,10 +1,10 @@
 import { useCallback, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { Maybe, TableQuery } from '@/types/table'
+import type { EnhancedTableQuery, Maybe, TableQuery } from '@/types/table'
 import { useDebounce } from '@/hooks/useDebounce'
 
 export interface UseTableFiltersOptions {
-  initialQuery?: Partial<TableQuery>
+  initialQuery?: Partial<EnhancedTableQuery>
   syncUrl?: boolean
   debounceMs?: number
   onQueryChange?: (query: TableQuery) => void
@@ -88,7 +88,7 @@ export function useTableFilters(options: UseTableFiltersOptions = {}) {
       // 안전한 기본값으로 정규화
       const page: number = newQuery.page ?? DEFAULT_QUERY.page
       const pageSize = newQuery.pageSize ?? DEFAULT_QUERY.pageSize
-      const search: string = newQuery.search ?? DEFAULT_QUERY.search
+      const search = newQuery.search ?? DEFAULT_QUERY.search
       const status: Maybe<string> = newQuery.status ?? undefined
       const role: Maybe<string> = newQuery.role ?? undefined
       const sortBy: TableQuery['sortBy'] =

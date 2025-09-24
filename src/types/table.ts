@@ -56,26 +56,65 @@ export type FilterOption = {
 }
 export type Maybe<T> = T | undefined
 
+// ===== 테이블 쿼리 타입들 =====
+
 export type TableQuery = {
-  q?: string // 검색어
+  q?: string // 검색어 (별칭)
+  search?: string // 검색어 (메인)
   status?: Maybe<string> // 상태 필터
   role?: Maybe<string> // 권한 필터
-  sortBy: string | null // 정렬 컬럼
-  sortDir: SortDirection // 정렬 방향
+  withdrawalReason?: Maybe<string> // 탈퇴 사유 필터
+  sortBy?: string | null // 정렬 컬럼
+  sortDir?: SortDirection // 정렬 방향
   page: number // 현재 페이지
-  pageSize: Maybe<number> // 페이지당 항목 수
-  search: string
+  pageSize: number // 페이지당 항목 수
 }
 
+/** 확장된 테이블 쿼리 타입 (탈퇴사유 포함) */
+export type EnhancedTableQuery = TableQuery & {
+  withdrawalReason?: Maybe<string>
+  permission?: Maybe<string>
+}
+
+/** 기본 테이블 필터 설정 */
 export type TableFilterConfig = {
+  mode?: 'client' | 'server'
   searchPlaceholder?: string
   statusPlaceholder?: string
   rolePlaceholder?: string
+  withdrawalReasonPlaceholder?: string
   statusOptions?: FilterOption[]
   roleOptions?: FilterOption[]
-  debounceMs?: number
-  mode: 'client' | 'server'
+  withdrawalReasonOptions?: FilterOption[]
+  debounceMs: number
 }
+
+/** 확장된 테이블 필터 설정 (탈퇴사유 포함) */
+export type EnhancedTableFilterConfig = TableFilterConfig
+
+/** 필터 표시 옵션 - 각 필터를 선택적으로 노출 */
+export type FilterVisibilityOptions = {
+  search?: boolean
+  status?: boolean
+  role?: boolean
+  withdrawalReason?: boolean
+}
+// ===== 핸들러 타입들 =====
+
+/** 기본 쿼리 변경 핸들러 */
+export type QueryChangeHandlers = {
+  setSearch: (q: string, immediate?: boolean) => void
+  setStatus: (status: Maybe<string>) => void
+  setRole: (role: Maybe<string>) => void
+  reset: () => void
+}
+
+/** 확장된 쿼리 변경 핸들러 (탈퇴사유 포함) */
+export type EnhancedQueryChangeHandlers = QueryChangeHandlers & {
+  setWithdrawalReason?: (reason: Maybe<string>) => void
+}
+
+// ===== 테이블 데이터 타입 =====
 
 export type TableData<T = Record<string, any>> = {
   items: T[]
@@ -84,6 +123,8 @@ export type TableData<T = Record<string, any>> = {
   pageSize: Maybe<number>
   totalPages: Maybe<number>
 }
+
+// ===== 훅 옵션 타입 =====
 
 export type UseTableQueryOptions = {
   initialQuery?: Partial<TableQuery>

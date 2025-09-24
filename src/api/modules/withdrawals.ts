@@ -1,8 +1,8 @@
+import type { Maybe } from '@/types'
 import { http, withBypass } from '../http'
 import { decideBypass } from '../toggles/mockToggle'
 
 export type SortOrder = 'asc' | 'desc'
-export type AdminPermission = 'admin' | 'staff' | 'general'
 
 /** FE 공통 파라미터(Users와 동일 포맷) */
 export type WithdrawalsParams = {
@@ -11,7 +11,7 @@ export type WithdrawalsParams = {
   sortBy?: string // e.g. 'created_at'
   sortOrder?: SortOrder // 'asc' | 'desc'
   q?: string // 검색어
-  permission?: AdminPermission
+  permission?: Maybe<string>
 }
 
 /** 공통 페이지 응답(Users와 동일 포맷) */
@@ -30,7 +30,7 @@ export type WithdrawalListItem = {
   id: number
   name: string
   email: string
-  permission: AdminPermission
+  permission: Maybe<string>
   birthday?: string
   reason: string
   created_at: string // ISO
@@ -44,7 +44,7 @@ export type WithdrawalDetail = {
   gender: string
   nickname: string
   email: string
-  permission: AdminPermission
+  permission: string
   birthday?: string
   status: string
   user_joined_at: string
