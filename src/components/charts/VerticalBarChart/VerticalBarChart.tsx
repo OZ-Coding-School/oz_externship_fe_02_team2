@@ -1,22 +1,6 @@
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-} from 'chart.js'
-import { rightEdgeGridPlugin } from './plugin'
 import JoinBar from './Join/JoinBar'
 import LeaveBar from './Leave/LeaveBar'
 import ReasonBar from './Reason/ReasonBar'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  rightEdgeGridPlugin
-)
 
 type VerticalBarChartProps =
   | { type: 'join'; period: string }
