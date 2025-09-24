@@ -21,7 +21,7 @@ export default function Join() {
 
   return (
     <Section title="회원가입 추세" dropdown={dropdownProps}>
-      <VerticalBarChart />
+      <VerticalBarChart type="join" period={period} />
     </Section>
   )
 }

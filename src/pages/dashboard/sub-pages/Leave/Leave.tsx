@@ -21,7 +21,7 @@ export default function Leave() {
 
   return (
     <Section title="회원탈퇴 추세" dropdown={dropdownProps}>
-      <VerticalBarChart />
+      <VerticalBarChart type="leave" period={period} />
     </Section>
   )
 }

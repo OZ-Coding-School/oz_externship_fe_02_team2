@@ -27,7 +27,7 @@ export default function Reason() {
       </Section>
       <div className="h-6" />
       <Section title="탈퇴 사유별 월별 추세" dropdown={dropdownProps}>
-        <VerticalBarChart />
+        <VerticalBarChart type="reason" reason={reason} />
       </Section>
     </>
   )

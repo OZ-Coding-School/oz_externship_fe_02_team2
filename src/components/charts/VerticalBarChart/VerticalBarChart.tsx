@@ -100,6 +100,18 @@ export const data: ChartData<'bar'> = {
   ],
 }
 
-export default function VerticalBarChart() {
+type VerticalBarChartProps = {
+  type: 'join' | 'leave' | 'reason'
+  /** 월별, 연별 */
+  period?: string
+  /** 탈퇴 사유 */
+  reason?: string
+}
+
+export default function VerticalBarChart({
+  type,
+  period,
+  reason,
+}: VerticalBarChartProps) {
   return <Bar options={options} data={data} />
 }
