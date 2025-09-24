@@ -65,7 +65,7 @@ const SORT_KEY_MAP: Record<string, string> = {
   withdrawalRequestId: 'id',
   email: 'email',
   name: 'name',
-  permission: 'permission',
+  role: 'permission',
   birthday: 'birthday',
   reason: 'reason',
   created_at: 'created_at',
@@ -114,8 +114,9 @@ export default function UserWithdrawalPage() {
           ...(query.withdrawalReason && {
             withdrawalReason: query.withdrawalReason,
           }),
-          ...(query.permission && { permission: query.permission }),
+          ...(query.role && { permission: query.role }),
         }
+        console.log('📡 API call params:', apiParams)
 
         const data = await getWithdrawals(apiParams, { mock: true })
 
@@ -144,7 +145,7 @@ export default function UserWithdrawalPage() {
       pageSize: 10,
       search: '',
       withdrawalReason: undefined,
-      permission: undefined,
+      role: undefined,
       sortBy: 'created_at',
       sortDir: 'desc',
     },
