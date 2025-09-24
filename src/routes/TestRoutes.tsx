@@ -9,7 +9,8 @@ import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
 import LoginPage from '@/pages/auth/LoginPage'
 
 import DashboardPage from '@/pages/dashboard/DashboardPage'
-import UsersManagePage from '@/pages/admin/UserManage'
+import UserManagePage from '@/pages/admin/UserManage'
+import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -24,8 +25,8 @@ export default function TestRoutes() {
         <Route path={PATHS.APP} element={<MainPage />}>
           {/* /app 진입 시 + 로그인 한 경우 -> 대시보드 페이지로 */}
           <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
-          <Route path={PATHS.USER} element={<UsersManagePage />} />
-          <Route path={PATHS.WITHDRAWAL} element={<PlaceHolderPage />} />
+          <Route path={PATHS.USER} element={<UserManagePage />} />
+          <Route path={PATHS.WITHDRAWAL} element={<UserWithdrawalPage />} />
           <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
 
           <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />

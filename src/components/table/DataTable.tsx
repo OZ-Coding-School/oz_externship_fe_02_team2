@@ -152,13 +152,13 @@ export function DataTable<T>({
   const showPagination = alwaysShowPagination || computedTotalPages > 1
 
   return (
-    <div className="border-base-300 bg-base-100 w-full overflow-hidden rounded-2xl border">
+    <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* 테이블 */}
       <div className="overflow-x-auto">
-        <table className="body-xs sm:body-sm w-full max-w-full min-w-max table-auto">
+        <table className="w-full min-w-max table-auto">
           <thead
             className={cls(
-              'bg-base-200/60',
+              'bg-gradient-to-r from-gray-50 to-gray-100/80',
               stickyHeader && 'sticky top-0 z-10'
             )}
           >
@@ -175,7 +175,8 @@ export function DataTable<T>({
                   <th
                     key={col.id}
                     className={cls(
-                      'bg-gray-100 px-3 py-2 text-left font-medium whitespace-nowrap',
+                      'border-b border-gray-200/60 px-6 py-4 text-left font-semibold whitespace-nowrap text-gray-900',
+                      'text-sm tracking-wide uppercase',
                       col.align === 'center' && 'text-center',
                       col.align === 'left' && 'text-left',
                       col.align === 'right' && 'text-right'
@@ -186,7 +187,11 @@ export function DataTable<T>({
                       <button
                         type="button"
                         onClick={() => handleSort(col)}
-                        className="inline-flex items-center gap-1 hover:opacity-80 focus:outline-none"
+                        className={cls(
+                          'inline-flex items-center gap-2 transition-colors duration-200 hover:text-blue-600',
+                          '-m-1 rounded-md p-1 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none',
+                          isSorted && 'text-blue-600'
+                        )}
                         aria-label={
                           !isSorted
                             ? `${String(col.header)} 정렬 없음`
@@ -213,23 +218,45 @@ export function DataTable<T>({
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-gray-100">
             {meta?.loading ? (
               <tr>
                 <td
-                  className="text-base-content/60 px-3 py-8 text-center"
+                  className="px-6 py-12 text-center text-gray-500"
                   colSpan={Math.max(1, visibleCols.length)}
                 >
-                  불러오는 중…
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                    <span className="text-sm font-medium">불러오는 중…</span>
+                  </div>
                 </td>
               </tr>
             ) : renderData.length === 0 ? (
               <tr>
                 <td
-                  className="text-base-content/60 px-3 py-10 text-center"
+                  className="px-6 py-16 text-center text-gray-500"
                   colSpan={Math.max(1, visibleCols.length)}
                 >
-                  {meta?.emptyText ?? '데이터가 없습니다.'}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                      <svg
+                        className="h-6 w-6 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium">
+                      {meta?.emptyText ?? '데이터가 없습니다.'}
+                    </span>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -237,10 +264,11 @@ export function DataTable<T>({
                 <tr
                   key={rowKey(row, i)}
                   className={cls(
-                    'border-base-200 hover:bg-base-200/30 border-t',
-                    onRowClick && 'cursor-pointer'
+                    'transition-colors duration-150 hover:bg-gray-50/80',
+                    'group relative',
+                    onRowClick && 'cursor-pointer hover:bg-blue-50/50'
                   )}
-                  onClick={() => onRowClick?.(row, i)} // 클릭 연결
+                  onClick={() => onRowClick?.(row, i)}
                 >
                   {visibleCols.map((col) => {
                     const raw: unknown =
@@ -263,7 +291,8 @@ export function DataTable<T>({
                       <td
                         key={col.id}
                         className={cls(
-                          'px-3 py-2 align-middle whitespace-pre-wrap',
+                          'px-6 py-4 text-sm text-gray-900',
+                          'border-b border-gray-50 last:border-b-0',
                           col.align === 'left' && 'text-left',
                           col.align === 'center' && 'text-center',
                           col.align === 'right' && 'text-right',
@@ -283,38 +312,49 @@ export function DataTable<T>({
       </div>
 
       {/* 푸터 */}
-      <div className="border-base-300 flex flex-col gap-3 border-t p-3 sm:flex-row sm:items-center sm:justify-between">
-        {showPagination && (
-          <div className="flex w-full justify-center">
-            <Pagination
-              totalPages={computedTotalPages}
-              currentPage={page}
-              onChange={(next) => onStateChange?.({ page: next })}
-            />
-          </div>
-        )}
+      <div className="border-t border-gray-200 bg-gray-50/50 px-6 py-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* 왼쪽 공간 (균형을 위해) */}
+          <div className="hidden sm:flex sm:flex-1"></div>
 
-        <div className="flex flex-col items-start gap-2 sm:ml-auto sm:flex-row sm:items-center">
-          <label htmlFor="page-size" className="sr-only">
-            페이지당 항목 수
-          </label>
-          <select
-            id="page-size"
-            name="page-size"
-            className="select select-bordered select-xs"
-            value={pageSize}
-            onChange={(e) =>
-              onStateChange?.({ pageSize: Number(e.target.value), page: 1 })
-            }
-            aria-label="페이지당 항목 수 선택"
-          >
-            {[5, 10, 20, 50].map((n) => (
-              <option key={n} value={n}>
-                {n}개
-              </option>
-            ))}
-          </select>
-          {footerExtra}
+          {/* 페이지네이션 - 가운데 */}
+          {showPagination && (
+            <div className="flex justify-center">
+              <Pagination
+                totalPages={computedTotalPages}
+                currentPage={page}
+                onChange={(next) => onStateChange?.({ page: next })}
+              />
+            </div>
+          )}
+
+          {/* 페이지 사이즈 선택 - 오른쪽 */}
+          <div className="flex flex-col items-center gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+            <select
+              id="page-size"
+              name="page-size"
+              className={cls(
+                'rounded-lg border border-gray-300 px-3 py-2 shadow-sm',
+                'focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
+                'bg-white text-sm font-medium text-gray-900',
+                'transition-colors duration-200 hover:border-gray-400'
+              )}
+              value={pageSize}
+              onChange={(e) =>
+                onStateChange?.({ pageSize: Number(e.target.value), page: 1 })
+              }
+              aria-label="페이지당 항목 수 선택"
+            >
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}개
+                </option>
+              ))}
+            </select>
+            {footerExtra && (
+              <div className="flex items-center gap-2">{footerExtra}</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
