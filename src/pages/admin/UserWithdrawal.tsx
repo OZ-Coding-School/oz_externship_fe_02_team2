@@ -125,7 +125,6 @@ export default function UserWithdrawalPage() {
           ...(query.reason && { reason: query.reason }),
           ...(query.role && { permission: query.role }),
         }
-        console.log('API call params:', apiParams)
 
         const data = await getWithdrawals(apiParams, { mock: true })
 
@@ -263,7 +262,6 @@ export default function UserWithdrawalPage() {
   const enhancedOnQueryChange: EnhancedQueryChangeHandlers = {
     ...tableFilters.onQueryChange,
     setWithdrawalReason: (reason) => {
-      console.log(`setting withdrawal reason:`, reason)
       const newQuery = { ...tableFilters.query, reason: reason }
       tableFilters.updateQuery(newQuery)
       loadTableData(newQuery)
