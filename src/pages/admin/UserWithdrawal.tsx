@@ -30,7 +30,7 @@ function translatePermission(permission: string): string {
 function translateWithdrawalReason(reason: string): string {
   const reasonMap: Record<string, string> = {
     SERVICE_DISSATISFACTION: '서비스 불만족',
-    PRIVACY_CONCERNS: '개인정보 우려',
+    PRIVACY_CONCERN: '개인정보 우려',
     LOW_USAGE: '사용 빈도 낮음',
     COMPETITOR_SERVICE: '경쟁 서비스 이용',
     OTHER: '기타',
@@ -60,14 +60,14 @@ function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   }
 }
 
-// 정렬 키 매핑
+// 정렬 키 매핑 ( 프론트: 서버 )
 const SORT_KEY_MAP: Record<string, string> = {
   withdrawalRequestId: 'id',
   email: 'email',
   name: 'name',
   role: 'permission',
   birthday: 'birthday',
-  reason: 'reason',
+  withdrawalReason: 'reason',
   created_at: 'created_at',
 }
 
@@ -111,12 +111,10 @@ export default function UserWithdrawalPage() {
           sortBy,
           sortOrder,
           ...(q && { q }),
-          ...(query.withdrawalReason && {
-            withdrawalReason: query.withdrawalReason,
-          }),
+          ...(query.reason && { reason: query.reason }),
           ...(query.role && { permission: query.role }),
         }
-        console.log('📡 API call params:', apiParams)
+        console.log('API call params:', apiParams)
 
         const data = await getWithdrawals(apiParams, { mock: true })
 
@@ -144,7 +142,7 @@ export default function UserWithdrawalPage() {
       page: 1,
       pageSize: 10,
       search: '',
-      withdrawalReason: undefined,
+      reason: undefined,
       role: undefined,
       sortBy: 'created_at',
       sortDir: 'desc',
@@ -249,10 +247,13 @@ export default function UserWithdrawalPage() {
     [openWithdrawalDetail]
   )
 
+  // 쿼리 변경 핸들러
   const enhancedOnQueryChange: EnhancedQueryChangeHandlers = {
     ...tableFilters.onQueryChange,
     setWithdrawalReason: (reason) => {
-      const newQuery = { ...tableFilters.query, withdrawalReason: reason }
+      console.log(`setting withdrawal reason:`, reason)
+      const newQuery = { ...tableFilters.query, reason: reason }
+      tableFilters.updateQuery(newQuery)
       loadTableData(newQuery)
     },
   }
