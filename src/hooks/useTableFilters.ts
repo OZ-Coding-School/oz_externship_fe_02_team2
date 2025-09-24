@@ -209,6 +209,7 @@ export function useTableFilters(options: UseTableFiltersOptions = {}) {
 
   return {
     query,
+    updateQuery,
     setSearch,
     setStatus,
     setRole,
