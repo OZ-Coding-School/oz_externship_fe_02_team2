@@ -1,52 +1,64 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { TableState, Maybe } from '@/types/table'
+import type { TableState } from '@/types/table'
 import type {
   RecruitmentItem,
   RecruitmentListRes,
+  RecruitmentStatusFilter,
+  SortKey,
 } from '@/pages/AdminRecruitments/AdminRecruitments.types'
 import RecruitmentsTable from '@/components/table/feature/Recruitments/RecruitmentsTable'
 import RecruitmentsFilterBar from '@/components/table/feature/Recruitments/RecruitmentsFilterBar'
+import { getRecruitments } from '@/api/modules/recruitments'
 
-// DataTable.sort → API ordering 매핑
-function toOrdering(sort: TableState['sort'] | null): string {
-  if (!sort) return '-created_at' // 기본 최신순
-  const s = sort as any
-  const id: string = s?.id ?? 'created_at'
-  const desc: boolean = !!s?.desc
-  if (id === 'created_at') return desc ? '-created_at' : 'created_at'
-  if (id === 'views_count') return '-views_count' // 서버는 desc만 의미있음
-  if (id === 'bookmarks_count') return '-bookmarks_count'
-  return '-created_at'
+// SortKey ↔ TableState.sort 매핑 -----------------------------
+function sortKeyToSortState(k: SortKey): TableState['sort'] {
+  switch (k) {
+    case 'created_asc':
+      return { id: 'created_at', desc: false }
+    case 'views_desc':
+      return { id: 'views_count', desc: true }
+    case 'bookmarks_desc':
+      return { id: 'bookmarks_count', desc: true }
+    case 'created_desc':
+    default:
+      return { id: 'created_at', desc: true }
+  }
+}
+function sortStateToSortKey(s: TableState['sort'] | null): SortKey {
+  if (!s) return 'created_desc'
+  const { id, desc } = s as any
+  if (id === 'created_at') return desc ? 'created_desc' : 'created_asc'
+  if (id === 'views_count') return 'views_desc'
+  if (id === 'bookmarks_count') return 'bookmarks_desc'
+  return 'created_desc'
 }
 
-// OpenAPI 결과 → 테이블 아이템 어댑터
-function adaptResultToItem(r: any): RecruitmentItem {
+// API 결과 → UI 행 변환 ---------------------------------------
+function adaptListItemToRow(r: any): RecruitmentItem {
   const now = Date.now()
   const close = r.close_at ? Date.parse(r.close_at) : NaN
   const status: 'OPEN' | 'CLOSED' =
     Number.isFinite(close) && close < now ? 'CLOSED' : 'OPEN'
-
   return {
     id: String(r.id),
+    uuid: r.uuid,
     title: r.title,
     tags: Array.isArray(r.tags)
-      ? r.tags.slice(0, 3).map((name: string, i: number) => ({
-          id: `${r.id}-${i}`,
-          name,
-        }))
+      ? r.tags
+          .slice(0, 3)
+          .map((name: string, i: number) => ({ id: `${r.id}-${i}`, name }))
       : [],
     deadline: r.close_at ? String(r.close_at).slice(0, 10) : null,
     status,
     views_count: r.views_count ?? 0,
     bookmarks_count: r.bookmarks_count ?? 0,
-    // OpenAPI 목록에는 created/updated가 없으므로 UI용으로 보정
-    created_at: r.created_at ?? '-',
-    updated_at: r.updated_at ?? '-',
+    created_at: r.created_at ?? '-', // 목록엔 없으므로 표기용
+    updated_at: r.updated_at ?? '-', // 목록엔 없으므로 표기용
   }
 }
 
 export default function AdminRecruitmentsPage() {
-  // 공용 테이블 상태
+  // 테이블 상태
   const [state, setState] = useState<TableState>({
     page: 1,
     pageSize: 10,
@@ -54,23 +66,42 @@ export default function AdminRecruitmentsPage() {
     search: '',
   })
 
-  // 필터바 상태 (role은 현재 미사용)
-  const [query, setQuery] = useState<{
-    search: string
-    status: 'ALL' | 'OPEN' | 'CLOSED'
-    role?: Maybe<string>
+  // 필터 상태
+  const [filters, setFilters] = useState<{
+    queryText: string
+    status: RecruitmentStatusFilter
+    sortKey: SortKey
+    tagId?: string | null
   }>({
-    search: '',
+    queryText: '',
     status: 'ALL',
-    role: undefined,
+    sortKey: 'created_desc',
+    tagId: undefined,
   })
 
   // 서버 데이터
   const [data, setData] = useState<RecruitmentListRes | null>(null)
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 목록 호출 (OpenAPI: GET /api/v1/recruitments)
+  // 정렬 드롭다운 ↔ 헤더 정렬 동기화
+  useEffect(() => {
+    setState((prev) => ({ ...prev, sort: sortKeyToSortState(filters.sortKey) }))
+  }, [filters.sortKey])
+
+  // 헤더 정렬 변경 시 드롭다운 값도 동기화
+  const handleStateChange = (next: Partial<TableState>) => {
+    setState((prev) => {
+      const merged = { ...prev, ...next }
+      if ('sort' in next) {
+        setFilters((f) => ({ ...f, sortKey: sortStateToSortKey(merged.sort) }))
+      }
+      return merged
+    })
+  }
+
+  // 목록 호출 (API 래퍼 사용)
   useEffect(() => {
     const ac = new AbortController()
     ;(async () => {
@@ -78,37 +109,33 @@ export default function AdminRecruitmentsPage() {
         setLoading(true)
         setError(null)
 
-        const qs = new URLSearchParams()
-        qs.set('page', String(state.page)) // required
-        qs.set('size', String(state.pageSize))
-        if (query.search) qs.set('search', query.search) // ← search 로 보냄
-        qs.set('ordering', toOrdering(state.sort)) // ← ordering 사용
-
-        const url = `/api/v1/recruitments?${qs.toString()}`
-        const res = await fetch(url, { signal: ac.signal })
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '')
-          throw new Error(`LIST_FETCH_FAILED ${res.status} ${txt}`)
-        }
-
-        const json = await res.json() // { count, next, previous, results }
-        let items: RecruitmentItem[] = (json.results ?? []).map(
-          adaptResultToItem
+        const resp = await getRecruitments(
+          {
+            page: state.page,
+            pageSize: state.pageSize,
+            search: filters.queryText || undefined,
+            tag: filters.tagId || undefined, // API는 단일 tag만 지원
+            sortKey: filters.sortKey,
+          },
+          { mock: true }
         )
 
-        // 서버에 status 필터가 없으므로 클라에서 보정
-        if (query.status !== 'ALL') {
-          items = items.filter((it) => it.status === query.status)
+        let items: RecruitmentItem[] = (resp.items ?? []).map(
+          adaptListItemToRow
+        )
+
+        // 서버에 상태 필터는 없으므로 클라이언트에서 보정
+        if (filters.status !== 'ALL') {
+          items = items.filter((it) => it.status === filters.status)
         }
 
-        const adapted: RecruitmentListRes = {
-          total: Number(json.count ?? items.length),
-          page: state.page,
-          size: state.pageSize,
+        setData({
+          total: resp.total,
+          page: resp.page,
+          size: resp.pageSize,
           items,
-        }
-
-        setData(adapted)
+        })
+        setTotalPages(resp.totalPages)
       } catch (e: any) {
         if (e?.name !== 'AbortError') setError(String(e?.message ?? e))
       } finally {
@@ -116,10 +143,17 @@ export default function AdminRecruitmentsPage() {
       }
     })()
     return () => ac.abort()
-  }, [state.page, state.pageSize, state.sort, query.search, query.status])
+  }, [
+    state.page,
+    state.pageSize,
+    state.sort, // 정렬 헤더로 바뀐 경우도 반영
+    filters.queryText,
+    filters.status,
+    filters.tagId,
+    filters.sortKey, // 드롭다운으로 바뀐 경우도 반영
+  ])
 
-  const items = useMemo(() => (data?.items ?? []) as RecruitmentItem[], [data])
-  const totalPages = data ? Math.ceil(data.total / data.size) : 1
+  const items = useMemo(() => data?.items ?? [], [data])
 
   return (
     <div className="p-6">
@@ -128,15 +162,12 @@ export default function AdminRecruitmentsPage() {
       <RecruitmentsTable
         data={items}
         state={state}
-        onStateChange={(next) => setState((prev) => ({ ...prev, ...next }))}
+        onStateChange={handleStateChange}
         totalPages={totalPages}
         toolbar={
           <RecruitmentsFilterBar
-            tableState={state}
-            setTableState={setState}
-            query={query}
-            setQuery={setQuery}
-            className="mb-2"
+            value={filters}
+            onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
           />
         }
       />

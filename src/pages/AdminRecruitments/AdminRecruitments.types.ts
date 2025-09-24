@@ -8,6 +8,7 @@ export interface Tag {
 
 export interface RecruitmentItem {
   id: string
+  uuid?: string
   title: string
   tags: Tag[] // 목록 표기용
   deadline?: string | null // YYYY-MM-DD
