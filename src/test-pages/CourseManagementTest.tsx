@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import CourseDetailModal from 'src/components/CourseDetailModal';
+import CourseDetailModal from 'src/components/course/CourseDetailModal';
 
 // 강의 데이터의 타입을 정의합니다.
 interface Course {
@@ -111,12 +111,24 @@ const DUMMY_COURSES: Course[] = [
 
 // 메인 컴포넌트
 const CourseManagement = () => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  
+  // 검색 필터링 로직
+  const filteredCourses = DUMMY_COURSES.filter(course =>
+    course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.platform.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   const handleRowClick = (course: Course) => {
     setSelectedCourse(course);
     setIsModalOpen(true);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
   
   return (
@@ -130,10 +142,19 @@ const CourseManagement = () => {
         </div>
         <input
           type="text"
-          placeholder="강의명, 강사명 검색..."
+          placeholder="강의명, 강사명, 플랫폼 검색..."
+          value={searchTerm}
+          onChange={handleSearchChange}
           className="min-w-[300px] w-1/3 rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-gray-900 focus:border-blue-500 focus:outline-none"
         />
       </div>
+
+      {/* 검색 결과 개수 표시 */}
+      {searchTerm && (
+        <div className="mb-4 text-sm text-gray-600">
+          검색 결과: {filteredCourses.length}개
+        </div>
+      )}
 
       {/* 강의 테이블 */}
       <div className="overflow-hidden rounded-lg bg-white shadow-md">
@@ -150,11 +171,11 @@ const CourseManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {DUMMY_COURSES.length > 0 ? (
-              DUMMY_COURSES.map((course) => (
+            {filteredCourses.length > 0 ? (
+              filteredCourses.map((course) => (
                 <tr
                   key={course.uuid}
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleRowClick(course)}
                 >
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{course.id}</td>
@@ -175,7 +196,7 @@ const CourseManagement = () => {
             ) : (
               <tr>
                 <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                  표시할 강의 데이터가 없습니다.
+                  {searchTerm ? '검색 결과가 없습니다.' : '표시할 강의 데이터가 없습니다.'}
                 </td>
               </tr>
             )}
