@@ -3,18 +3,18 @@ import { useTableFilters } from '@/hooks/useTableFilters'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
 import type { WithdrawalRow } from '@/components/table/Table.types'
-import type { TableQuery } from '@/types/table'
 import type { SortOrder } from '@/mocks/utils'
 import { ApiError } from '@/api/http'
-import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 import type { WithdrawalDetail } from '@/components/ui/Modal/feature/Withdrawal/Withdrawal.types'
 import {
   getWithdrawalDetail,
   getWithdrawals,
   type WithdrawalListItem,
 } from '@/api/modules/withdrawals'
-import WithdrawalsTable from '@/components/table/feature/withdrawalsTable'
+import WithdrawalsTable from '@/components/table/feature/Withdrawals/withdrawalsTable'
 import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
+import WithdrawalsFilterBar from '@/components/table/feature/Withdrawals/WithdrawalsFilterBar'
+import type { EnhancedQueryChangeHandlers, EnhancedTableQuery } from '@/types'
 
 // 권한 번역 함수
 function translatePermission(permission: string): string {
@@ -62,14 +62,13 @@ function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
 
 // 정렬 키 매핑
 const SORT_KEY_MAP: Record<string, string> = {
-  wid: 'id',
+  withdrawalRequestId: 'id',
   email: 'email',
-  nickname: 'nickname',
   name: 'name',
-  role: 'role',
+  permission: 'permission',
   birthday: 'birthday',
   reason: 'reason',
-  withdrawnAt: 'withdrawnAt',
+  created_at: 'created_at',
 }
 
 export default function UserWithdrawalPage() {
@@ -92,7 +91,7 @@ export default function UserWithdrawalPage() {
 
   // 서버에서 사용자 데이터 로드
   const loadTableData = useCallback(
-    async (query: TableQuery) => {
+    async (query: EnhancedTableQuery) => {
       setLoading(true)
       setError(null)
 
@@ -100,7 +99,7 @@ export default function UserWithdrawalPage() {
         // 정렬 파라미터 변환
         const sortBy = query.sortBy
           ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
-          : 'joinedAt'
+          : 'created_at'
         const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
 
         const q = (query.search ?? '').trim()
@@ -111,9 +110,11 @@ export default function UserWithdrawalPage() {
           pageSize: query.pageSize,
           sortBy,
           sortOrder,
-          ...(q && { q }), // ← 바뀐 부분
-          ...(query.status && { status: query.status }),
-          ...(query.role && { role: query.role }),
+          ...(q && { q }),
+          ...(query.withdrawalReason && {
+            withdrawalReason: query.withdrawalReason,
+          }),
+          ...(query.permission && { permission: query.permission }),
         }
 
         const data = await getWithdrawals(apiParams, { mock: true })
@@ -142,9 +143,9 @@ export default function UserWithdrawalPage() {
       page: 1,
       pageSize: 10,
       search: '',
-      status: undefined,
-      role: undefined,
-      sortBy: 'joinedAt',
+      withdrawalReason: undefined,
+      permission: undefined,
+      sortBy: 'created_at',
       sortDir: 'desc',
     },
     syncUrl: true,
@@ -246,6 +247,14 @@ export default function UserWithdrawalPage() {
     },
     [openWithdrawalDetail]
   )
+
+  const enhancedOnQueryChange: EnhancedQueryChangeHandlers = {
+    ...tableFilters.onQueryChange,
+    setWithdrawalReason: (reason) => {
+      const newQuery = { ...tableFilters.query, withdrawalReason: reason }
+      loadTableData(newQuery)
+    },
+  }
 
   // 새로고침 핸들러
   const refreshTable = useCallback(() => {
@@ -368,9 +377,9 @@ export default function UserWithdrawalPage() {
       {/* 테이블 */}
       <div className="rounded-lg bg-white shadow">
         {/* 필터 바 */}
-        <UsersFilterBar
-          query={tableFilters.query}
-          onQueryChange={tableFilters.onQueryChange}
+        <WithdrawalsFilterBar
+          query={tableFilters.query as EnhancedTableQuery}
+          onQueryChange={enhancedOnQueryChange}
           density="compact" // 밀도 낮추기
           tone="elevated" // 살짝 떠 보이는 톤
           stickyTop={64} // 상단 64px 고정 (예: 헤더 높이)
@@ -379,7 +388,7 @@ export default function UserWithdrawalPage() {
         >
           {/* 오른쪽/아래쪽에 붙일 유저 전용 컨트롤들 */}
           {/* <button className="btn btn-primary btn-sm ml-auto">일괄 처리</button> */}
-        </UsersFilterBar>
+        </WithdrawalsFilterBar>
       </div>
       <div className="mt-7">
         {/* 테이블 */}
