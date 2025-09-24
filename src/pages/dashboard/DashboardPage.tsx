@@ -14,13 +14,19 @@ export default function DashboardPage() {
       <Tabs value={tab} className="w-full">
         <TabsList>
           <TabsTrigger value="join" asChild>
-            <Link to="join">회원가입 추세</Link>
+            <Link to="join" className="no-underline">
+              회원가입 추세
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="leave" asChild>
-            <Link to="leave">회원탈퇴 추세</Link>
+            <Link to="leave" className="no-underline">
+              회원탈퇴 추세
+            </Link>
           </TabsTrigger>
           <TabsTrigger value="reason" asChild>
-            <Link to="reason">탈퇴 사유 분석</Link>
+            <Link to="reason" className="no-underline">
+              탈퇴 사유 분석
+            </Link>
           </TabsTrigger>
         </TabsList>
 
