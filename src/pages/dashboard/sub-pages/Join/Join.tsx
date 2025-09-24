@@ -1,8 +1,8 @@
 import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
-import Section from './Section'
+import Section from '../Section'
 import { useState } from 'react'
-import { DROPDOWN_PERIOD_OPTIONS } from './constants'
-import VerticalBarChart from '../../../components/charts/VerticalBarChart/VerticalBarChart'
+import { DROPDOWN_PERIOD_OPTIONS } from '../constants'
+import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Join() {
   const [period, setPeriod] = useState('MONTHLY')

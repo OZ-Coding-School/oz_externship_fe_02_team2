@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import Section from './Section'
-import { DROPDOWN_PERIOD_OPTIONS } from './constants'
-import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
-import VerticalBarChart from '../../../components/charts/VerticalBarChart/VerticalBarChart'
+import Section from '../Section'
+import { DROPDOWN_PERIOD_OPTIONS } from '../constants'
+import type { DropdownProps } from '@components/ui/Dropdown/Dropdown.types'
+import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Leave() {
   const [period, setPeriod] = useState('MONTHLY')
