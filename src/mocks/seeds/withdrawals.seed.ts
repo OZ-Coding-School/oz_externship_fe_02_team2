@@ -4,10 +4,7 @@
 // - localStorage 퍼시스트로 새로고침 유지
 // -----------------------------------------------------------------------------
 
-import type {
-  WithdrawalDetail,
-  AdminPermission,
-} from '@/api/modules/withdrawals'
+import type { WithdrawalDetail } from '@/api/modules/withdrawals'
 
 // ── 설정값 ───────────────────────────────────────────────────────────────────
 const WITHDRAWAL_COUNT = Number(import.meta.env.VITE_MSW_WITHDRAWALS ?? 68)
@@ -15,7 +12,7 @@ const PERSIST_KEY = '__msw_withdrawals__'
 const ENABLE_PERSIST = true
 
 // 권한 분포(%)
-const PERMISSION_DIST: Record<AdminPermission, number> = {
+const PERMISSION_DIST: Record<string, number> = {
   general: 85, // 일반회원이 대부분
   staff: 10, // 스태프
   admin: 5, // 관리자
@@ -32,7 +29,7 @@ const STATUS_DIST: Record<string, number> = {
 // 탈퇴 사유 분포(%) - 5가지로 수정
 const REASON_DIST: Record<string, number> = {
   SERVICE_DISSATISFACTION: 30, // 서비스 불만족
-  PRIVACY_CONCERNS: 25, // 개인정보 우려
+  PRIVACY_CONCERN: 25, // 개인정보 우려
   LOW_USAGE: 20, // 사용 빈도 낮음
   COMPETITOR_SERVICE: 15, // 경쟁 서비스 이용
   OTHER: 10, // 기타
@@ -183,7 +180,7 @@ const REASON_DETAILS: Record<string, string[]> = {
     '기능이 부족하거나 사용하기 어렵습니다',
     '업데이트가 느리고 개선사항이 반영되지 않습니다',
   ],
-  PRIVACY_CONCERNS: [
+  PRIVACY_CONCERN: [
     '개인정보 보호가 우려됩니다',
     '데이터 수집 범위가 너무 넓은 것 같습니다',
     '보안 정책이 마음에 들지 않습니다',
@@ -372,7 +369,7 @@ export const withdrawalsDb = {
     return this.withdrawals.filter((w) => w.status === status)
   },
 
-  findByPermission(permission: AdminPermission): WithdrawalDetail[] {
+  findByPermission(permission: string): WithdrawalDetail[] {
     return this.withdrawals.filter((w) => w.permission === permission)
   },
 
