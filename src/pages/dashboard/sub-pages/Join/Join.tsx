@@ -1,7 +1,7 @@
 import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
-import Section from '../Section'
+import Section from '../common/Section'
 import { useState } from 'react'
-import { DROPDOWN_PERIOD_OPTIONS } from '../constants'
+import { DROPDOWN_PERIOD_OPTIONS } from '../common/constants'
 import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Join() {
