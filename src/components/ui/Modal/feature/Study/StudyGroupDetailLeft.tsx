@@ -40,7 +40,7 @@ export default function StudyGroupDetailLeft({
 
       <div className="sm:col-span-2">
         <div className="body-xs text-gray-500">그룹명</div>
-        <div className="text-base font-semibold">{data.name}</div>
+        <div className="text-base font-semibold">{data.title}</div>
       </div>
 
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -57,7 +57,7 @@ export default function StudyGroupDetailLeft({
         <div>
           <dt className="body-xs text-gray-500">인원 현황</dt>
           <dd className="body-sm">
-            <span className="text-primary-600">{data.currentMembers}</span>
+            <span className="text-primary-600">{data.enrolled}</span>
             <span> / {data.capacity}명</span>
           </dd>
         </div>
@@ -71,12 +71,12 @@ export default function StudyGroupDetailLeft({
 
         <div>
           <dt className="body-xs text-gray-500">스터디 시작일</dt>
-          <dd className="body-sm">{fmt(data.startDate)}</dd>
+          <dd className="body-sm">{fmt(data.period.start)}</dd>
         </div>
 
         <div>
           <dt className="body-xs text-gray-500">스터디 종료일</dt>
-          <dd className="body-sm">{fmt(data.endDate)}</dd>
+          <dd className="body-sm">{fmt(data.period.end)}</dd>
         </div>
 
         <div>

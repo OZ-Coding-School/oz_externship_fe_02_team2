@@ -37,10 +37,9 @@ const defaultUsersConfig: TableFilterConfig = {
   statusPlaceholder: '전체',
   rolePlaceholder: '전체',
   statusOptions: [
-    { label: '활성', value: '활성' },
-    { label: '비활성', value: '비활성' },
-    { label: '정지', value: '정지' },
-    { label: '탈퇴요청', value: '탈퇴요청' },
+    { label: '활성', value: 'active' },
+    { label: '비활성', value: 'inactive' },
+    { label: '탈퇴요청', value: 'withdrawn' },
   ],
   roleOptions: [
     { label: '관리자', value: '관리자' },
