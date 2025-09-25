@@ -18,6 +18,8 @@ export const usersHandlers = [
       total: usersDb.users.length,
       active: usersDb.users.filter((u) => u.status === '활성').length,
       inactive: usersDb.users.filter((u) => u.status === '비활성').length,
+      withdrawn: usersDb.users.filter((u) => u.status === '탈퇴요청').length,
+
       roles: {
         일반회원: usersDb.users.filter((u) => u.role === '일반회원').length,
         스태프: usersDb.users.filter((u) => u.role === '스태프').length,

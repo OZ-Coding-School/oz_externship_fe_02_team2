@@ -18,9 +18,10 @@ const ROLE_DIST: Record<string, number> = {
   스태프: 12,
   관리자: 6,
 }
-const STATUS_DIST: Record<'활성' | '비활성', number> = {
-  활성: 88,
-  비활성: 12,
+const STATUS_DIST: Record<string, number> = {
+  active: 62,
+  inactive: 12,
+  withdrawn: 26,
 }
 
 // ── RNG(결정적) ──────────────────────────────────────────────────────────────

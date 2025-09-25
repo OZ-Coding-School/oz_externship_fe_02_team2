@@ -20,10 +20,9 @@ const PERMISSION_DIST: Record<string, number> = {
 
 // 상태 분포(%)
 const STATUS_DIST: Record<string, number> = {
-  PENDING: 45, // 대기중
-  APPROVED: 25, // 승인됨
-  REJECTED: 15, // 거절됨
-  COMPLETED: 15, // 완료됨
+  active: 45, // 활성
+  inactive: 25, // 비활성
+  withdrawn: 30, // 탈퇴요청
 }
 
 // 탈퇴 사유 분포(%) - 5가지로 수정
@@ -373,17 +372,15 @@ export const withdrawalsDb = {
     return this.withdrawals.filter((w) => w.permission === permission)
   },
 
-  stats() {
+  status() {
     const total = this.withdrawals.length
     return {
       total,
       byStatus: {
-        PENDING: this.withdrawals.filter((w) => w.status === 'PENDING').length,
-        APPROVED: this.withdrawals.filter((w) => w.status === 'APPROVED')
+        ACTIVE: this.withdrawals.filter((w) => w.status === 'ACTIVE').length,
+        INACTIVE: this.withdrawals.filter((w) => w.status === 'INACTIVE')
           .length,
-        REJECTED: this.withdrawals.filter((w) => w.status === 'REJECTED')
-          .length,
-        COMPLETED: this.withdrawals.filter((w) => w.status === 'COMPLETED')
+        WITHDRAWN: this.withdrawals.filter((w) => w.status === 'WITHDRAWN')
           .length,
       },
       byPermission: {

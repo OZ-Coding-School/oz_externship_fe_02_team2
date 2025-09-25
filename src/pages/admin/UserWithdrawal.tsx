@@ -49,10 +49,9 @@ function translateWithdrawalReason(reason: string): string {
 // 상태 번역 함수
 function translateWithdrawalStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    PENDING: '대기중',
-    APPROVED: '승인됨',
-    REJECTED: '거절됨',
-    COMPLETED: '완료됨',
+    active: '활성',
+    inactive: '비활성',
+    withdrawn: '탈퇴요청',
   }
   return statusMap[status] || status
 }
@@ -348,7 +347,7 @@ export default function UserWithdrawalPage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">회원 탈퇴 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">탈퇴 관리</h1>
       </div>
 
       {/* 에러 알림 */}
