@@ -13,22 +13,24 @@ import { BASE_PATH, like, paginate, sortByKey, toInt } from '@/mocks/utils'
 const V1 = `${BASE_PATH}/v1`
 const LEGACY = `${BASE_PATH}`
 
-type ListItem = {
+export type RecruitmentListItem = {
   id: number
   uuid: string
   title: string
-  img: string
+  img: string | null // null 허용
   expected_headcount: number
-  tags: string[]
-  close_at: string | null
+  lectures: { title: string; instructor: string }[]
+  tags: string[] // 목록은 문자열 배열이 스펙
+  close_at: string | null // null 허용
   views_count: number
   bookmarks_count: number
-  created_at: string
-  updated_at: string
+  created_at?: string // 목록에도 존재(스웨거/핸들러)
+  updated_at?: string | null // 목록에도 존재(스웨거/핸들러)
+  status?: 'OPEN' | 'CLOSED' //  핸들러에서 추가, 실서버 없으면 프런트에서 계산
 }
 
 // seed -> 목록 아이템
-function toListItem(seed: any): ListItem {
+function toListItem(seed: any): RecruitmentListItem {
   return {
     id: Number(seed.id),
     uuid: seed.uuid ?? String(seed.id),

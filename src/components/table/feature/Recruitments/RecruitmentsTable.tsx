@@ -42,48 +42,65 @@ export default function RecruitmentsTable({
         id: 'tags',
         header: '태그',
         width: '260px',
-        cell: ({ row }) => (
-          <div className="flex flex-wrap gap-1">
-            {row.tags.slice(0, 2).map((t) => (
-              <span
-                key={t.id}
-                className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
-              >
-                {t.name}
-              </span>
-            ))}
-            {row.tags.length > 2 && (
-              <span className="rounded-full bg-gray-50 px-2 py-0.5 text-xs text-gray-500">
-                +{row.tags.length - 2}
-              </span>
-            )}
-          </div>
-        ),
+        cell: ({ row }) => {
+          // ✅ 문자열[] | {id,name}[] 모두 지원
+          const tags = Array.isArray(row.tags)
+            ? row.tags.map((t: any) =>
+                typeof t === 'string' ? { id: t, name: t } : t
+              )
+            : []
+          return (
+            <div className="flex flex-wrap gap-1">
+              {tags.slice(0, 2).map((t) => (
+                <span
+                  key={t.id}
+                  className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                >
+                  {t.name}
+                </span>
+              ))}
+              {tags.length > 2 && (
+                <span className="rounded-full bg-gray-50 px-2 py-0.5 text-xs text-gray-500">
+                  +{tags.length - 2}
+                </span>
+              )}
+            </div>
+          )
+        },
       },
       {
-        id: 'deadline',
+        id: 'close_at', // ✅ 키 교체
         header: '마감 기한',
-        accessor: 'deadline',
+        accessor: 'close_at',
         width: '120px',
-        cell: ({ value }) => value ?? '-',
+        cell: ({ value }) =>
+          value ? new Date(value).toLocaleDateString() : '-',
       },
       {
         id: 'status',
         header: '상태',
         accessor: 'status',
         width: '100px',
-        cell: ({ value }) => (
-          <span
-            className={
-              'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ' +
-              (value === 'OPEN'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-600')
-            }
-          >
-            {STATUS_LABEL[value as 'OPEN' | 'CLOSED']}
-          </span>
-        ),
+        cell: ({ value, row }) => {
+          // ✅ 응답에 없으면 close_at 기준으로 계산
+          const v =
+            value ??
+            (row.close_at && new Date(row.close_at) < new Date()
+              ? 'CLOSED'
+              : 'OPEN')
+          const label = v === 'OPEN' ? '모집중' : '마감'
+          const cls =
+            v === 'OPEN'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-600'
+          return (
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
+            >
+              {label}
+            </span>
+          )
+        },
       },
       {
         id: 'views_count',
