@@ -51,7 +51,7 @@ function buildParams(p: UsersParams = {}): Record<string, string | number> {
 }
 
 /* ------------------ 엔드포인트 ------------------ */
-const BASE = '/admin/users'
+const BASE = '/v1/admin/users/'
 
 // 목록 조회(듀얼 모드)
 export async function getUsers(
