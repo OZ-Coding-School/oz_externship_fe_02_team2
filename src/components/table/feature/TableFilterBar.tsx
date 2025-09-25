@@ -41,6 +41,8 @@ export type TableFilterBarProps = {
   showFilters?: FilterVisibilityOptions
   /** 탈퇴사유 플레이스홀더 */
   withdrawalReasonPlaceholder?: string
+  /** 그리드 컬럼 수 직접 지정 (선택사항, 미지정시 자동 계산) */
+  gridColumns?: 1 | 2 | 3 | 4 | 5 | 6
 }
 
 export function TableFilterBar({
@@ -62,6 +64,7 @@ export function TableFilterBar({
     role: true,
     reason: false,
   },
+  gridColumns, // 새로 추가된 선택적 prop
 }: TableFilterBarProps) {
   const panelId = useId()
   // query.search를 사용
@@ -123,19 +126,21 @@ export function TableFilterBar({
     return filters
   }, [showFilters])
 
-  // 그리드 컬럼 수 계산 (필터 수 + 초기화 버튼)
+  // 그리드 컬럼 수 계산 (모든 필터 + 초기화 버튼은 항상 오른쪽 끝)
+  // gridCols 계산 수정: auto 컬럼 제거
   const gridCols = useMemo(() => {
-    const filterCount = visibleFilters.length
-    const colsMap = {
-      1: 'grid-cols-[1fr_auto]',
-      2: 'grid-cols-[1fr_1fr_auto]',
-      3: 'grid-cols-[1fr_1fr_1fr_auto]',
-      4: 'grid-cols-[1fr_1fr_1fr_1fr_auto]',
+    const count = gridColumns ?? visibleFilters.length
+    const safe = Math.min(Math.max(count, 1), 6) as 1 | 2 | 3 | 4 | 5 | 6
+    const colsMap: Record<1 | 2 | 3 | 4 | 5 | 6, string> = {
+      1: 'grid-cols-1',
+      2: 'grid-cols-2',
+      3: 'grid-cols-3',
+      4: 'grid-cols-4',
+      5: 'grid-cols-5',
+      6: 'grid-cols-6',
     }
-    return (
-      colsMap[filterCount as keyof typeof colsMap] || 'grid-cols-[1fr_auto]'
-    )
-  }, [visibleFilters.length])
+    return colsMap[safe]
+  }, [visibleFilters.length, gridColumns])
 
   const activeFilterCount = useMemo(() => countActiveFilters(query), [query])
 
@@ -174,7 +179,7 @@ export function TableFilterBar({
     >
       <div className="hidden items-end gap-4 sm:flex">
         {/* 동적 그리드 레이아웃 */}
-        <div className={cn('grid w-full gap-4 pb-2', gridCols)}>
+        <div className={cn('grid w-full flex-1 gap-4 pb-2', gridCols)}>
           {/* 검색 */}
           {showFilters.search && (
             <div>
@@ -294,37 +299,36 @@ export function TableFilterBar({
               </div>
             </div>
           )}
+        </div>
 
-          {/* 초기화 */}
-          <div className="shrink-0">
-            {showLabels && (
-              <div className="mb-2 block text-sm font-semibold text-gray-800 opacity-0">
-                {/* 빈 라벨로 높이 맞춤 */}
-                &nbsp;
-              </div>
+        {/* 초기화 */}
+        <div className="ml-auto shrink-0 pb-2">
+          {showLabels && (
+            <div className="mb-2 block text-sm font-semibold text-gray-800 opacity-0">
+              &nbsp;
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onQueryChange.reset}
+            className={cn(
+              'inline-flex items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-all duration-200',
+              'h-9',
+              activeFilterCount > 0
+                ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
+                : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
             )}
-            <button
-              type="button"
-              onClick={onQueryChange.reset}
-              className={cn(
-                'inline-flex items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition-all duration-200',
-                'h-9', // Input과 같은 높이로 고정
-                activeFilterCount > 0
-                  ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
-                  : 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100'
-              )}
-              aria-label={`${activeFilterCount}개 필터 초기화`}
-              disabled={activeFilterCount === 0}
-            >
-              <XIcon className="h-4 w-4" />
-              초기화
-              {activeFilterCount > 0 && (
-                <span className="min-w-[20px] rounded-full bg-red-100 px-2 py-0.5 text-center text-xs text-red-800">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
+            aria-label={`${activeFilterCount}개 필터 초기화`}
+            disabled={activeFilterCount === 0}
+          >
+            <XIcon className="h-4 w-4" />
+            초기화
+            {activeFilterCount > 0 && (
+              <span className="min-w-[20px] rounded-full bg-red-100 px-2 py-0.5 text-center text-xs text-red-800">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
