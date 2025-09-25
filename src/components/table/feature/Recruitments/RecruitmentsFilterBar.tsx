@@ -3,16 +3,16 @@ import { Input } from '@/components/ui/input/Input'
 import Dropdown from '@/components/ui/Dropdown/Dropdown'
 import { SearchIcon } from 'lucide-react'
 import { XIcon } from '@/components/ui/icons'
-import type {
-  RecruitmentStatusFilter,
-  SortKey,
-} from '@/pages/AdminRecruitments/AdminRecruitments.types'
-import { getRecruitmentTags } from '@/mocks/handlers'
+import {
+  getRecruitmentTags,
+  type SortKey,
+  type StatusFilter,
+} from '@/api/modules/recruitments'
 
 type Props = {
   value: {
     queryText: string
-    status: RecruitmentStatusFilter
+    status: StatusFilter
     sortKey: SortKey
     tagId?: string | null
   }
@@ -20,18 +20,30 @@ type Props = {
   className?: string
 }
 
-const STATUS_OPTIONS = [
+type Option = { value: string; label: string }
+
+// 상태 옵션(타입 안전 유지용 소스) → Dropdown용 Option으로 변환
+const STATUS_SRC = [
   { value: 'ALL', label: '전체' },
   { value: 'OPEN', label: '모집중' },
   { value: 'CLOSED', label: '마감' },
 ] as const
+const STATUS_OPTIONS: Option[] = STATUS_SRC.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+// 정렬 옵션(타입 안전 유지용 소스) → Dropdown용 Option으로 변환
+const SORT_SRC: { value: SortKey; label: string }[] = [
   { value: 'created_desc', label: '최신순' },
   { value: 'created_asc', label: '오래된 순' },
   { value: 'views_desc', label: '조회수 순' },
   { value: 'bookmarks_desc', label: '북마크 순' },
 ]
+const SORT_OPTIONS: Option[] = SORT_SRC.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
 
 export default function RecruitmentsFilterBar({
   value,
@@ -39,20 +51,20 @@ export default function RecruitmentsFilterBar({
   className,
 }: Props) {
   const [draft, setDraft] = useState(value.queryText)
-  const [tagOptions, setTagOptions] = useState<
-    { value: string; label: string }[]
-  >([{ value: '', label: '전체' }])
+  const [tagOptions, setTagOptions] = useState<Option[]>([
+    { value: '', label: '전체' },
+  ])
   const inputRef = useRef<HTMLInputElement>(null)
 
   // 외부 값 변경 시 동기화
   useEffect(() => setDraft(value.queryText), [value.queryText])
 
-  // 태그 옵션 로드 (MSW 켜져 있으면 mock 응답 사용)
+  // 태그 옵션 로드 (MSW 사용 시 옵션 없이 호출하면 mock 응답 사용)
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const list = await getRecruitmentTags({ mock: true })
+        const list = await getRecruitmentTags() // <-- { mock: true } 제거
         if (!mounted) return
         setTagOptions([
           { value: '', label: '전체' },
@@ -116,13 +128,9 @@ export default function RecruitmentsFilterBar({
             공고 상태
           </label>
           <Dropdown
-            options={
-              STATUS_OPTIONS as unknown as { value: string; label: string }[]
-            }
+            options={STATUS_OPTIONS}
             value={value.status}
-            onChange={(v) =>
-              onChange({ status: (v || 'ALL') as RecruitmentStatusFilter })
-            }
+            onChange={(v) => onChange({ status: (v || 'ALL') as StatusFilter })}
             placeholder="전체"
             classes={{ wrapper: 'w-full', button: 'w-full !min-w-0' }}
           />

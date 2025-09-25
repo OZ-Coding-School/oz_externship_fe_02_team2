@@ -8,7 +8,6 @@ import type {
 } from '@/pages/AdminRecruitments/AdminRecruitments.types'
 import RecruitmentsTable from '@/components/table/feature/Recruitments/RecruitmentsTable'
 import RecruitmentsFilterBar from '@/components/table/feature/Recruitments/RecruitmentsFilterBar'
-import { getRecruitments } from '@/mocks/handlers'
 
 // SortKey ↔ TableState.sort 매핑 -----------------------------
 function sortKeyToSortState(k: SortKey): TableState['sort'] {
@@ -109,7 +108,7 @@ export default function AdminRecruitmentsPage() {
         setLoading(true)
         setError(null)
 
-        const resp = await getRecruitments(
+        const resp = await getrec(
           {
             page: state.page,
             pageSize: state.pageSize,

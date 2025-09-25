@@ -1,83 +1,85 @@
-// src/pages/AdminRecruitments/RecruitmentsManage.tsx
 import { useEffect, useMemo, useState } from 'react'
-import type { TableState, Maybe } from '@/types/table'
+import type { TableState } from '@/types/table'
 import { useToast } from '@/hooks'
-import { ApiError } from '@/api/http'
-
 import RecruitmentsTable from '@/components/table/feature/Recruitments/RecruitmentsTable'
 import RecruitmentsFilterBar from '@/components/table/feature/Recruitments/RecruitmentsFilterBar'
+import { getRecruitments, type SortKey } from '@/api/modules/recruitments'
+import type { RecruitmentItem } from './AdminRecruitments.types'
 
-import type { RecruitmentItem as UiRow } from '@/pages/AdminRecruitments/AdminRecruitments.types'
-
-// 백엔드 API 모듈
-import {
-  getRecruitments,
-  type SortKey as ApiSortKey,
-  type RecruitmentListItem as ApiRow,
-} from '@/api/modules/recruitments'
-
-// UI 테이블 정렬 -> API ordering 매핑
-function toApiSortKey(sort: TableState['sort'] | null): ApiSortKey {
-  if (!sort) return 'created_desc'
-  const id = (sort as any)?.id ?? 'created_at'
-  const desc = !!(sort as any)?.desc
+// 정렬 키 ↔ 테이블 sort 매핑 -----------------------------
+function sortKeyToSortState(k: SortKey): TableState['sort'] {
+  switch (k) {
+    case 'created_asc':
+      return { id: 'created_at', desc: false }
+    case 'views_desc':
+      return { id: 'views_count', desc: true }
+    case 'bookmarks_desc':
+      return { id: 'bookmarks_count', desc: true }
+    case 'created_desc':
+    default:
+      return { id: 'created_at', desc: true }
+  }
+}
+function sortStateToSortKey(s: TableState['sort'] | null): SortKey {
+  if (!s) return 'created_desc'
+  const { id, desc } = s as any
   if (id === 'created_at') return desc ? 'created_desc' : 'created_asc'
   if (id === 'views_count') return 'views_desc'
   if (id === 'bookmarks_count') return 'bookmarks_desc'
   return 'created_desc'
 }
 
-// 목록 아이템(API) -> 테이블 로우(UI) 매핑
-function mapToUiRow(row: ApiRow): UiRow {
-  // 상태 계산: 마감일 지나면 CLOSED, 아니면 OPEN
-  const deadlineISO = row.close_at ?? null
-  const deadlineDateOnly = deadlineISO ? String(deadlineISO).slice(0, 10) : null
-  const isClosed = deadlineISO
-    ? new Date(deadlineISO).getTime() < Date.now()
-    : false
+// API → UI 행 매핑 ---------------------------------------
+function mapToUiRow(r: any): RecruitmentItem {
+  const now = Date.now()
+  const close = r?.close_at ? Date.parse(r.close_at) : NaN
+  const status: 'OPEN' | 'CLOSED' =
+    Number.isFinite(close) && close < now ? 'CLOSED' : 'OPEN'
 
   return {
-    id: String(row.id),
-    title: row.title,
-    tags: (row.tags ?? []).map((name) => ({ id: name, name })), // string[] -> Tag[]
-    deadline: deadlineDateOnly,
-    status: isClosed ? 'CLOSED' : 'OPEN',
-    views_count: row.views_count ?? 0,
-    bookmarks_count: row.bookmarks_count ?? 0,
-    created_at: '', // 스펙상 리스트엔 없음(표시는 유지)
-    updated_at: '', // 스펙상 리스트엔 없음(표시는 유지)
+    id: String(r.id), // ← 테이블 타입과 맞춤(문자열)
+    uuid: r.uuid,
+    title: r.title,
+    // 테이블은 string[] | {id,name}[] 둘 다 지원 → 그대로 string[] 사용
+    tags: Array.isArray(r?.tags) ? r.tags : [],
+    // 테이블 컬럼은 close_at을 쓰지만, 타입 호환 위해 deadline도 채워줌
+    close_at: r?.close_at ?? null,
+    deadline: r?.close_at ?? null, // ← ⭐️ 타입 에러 해결 포인트
+    status,
+    views_count: r?.views_count ?? 0,
+    bookmarks_count: r?.bookmarks_count ?? 0,
+    created_at: r?.created_at ?? '-',
+    updated_at: r?.updated_at ?? '-',
   }
 }
 
 export default function RecruitmentsManage() {
   const { triggerToast } = useToast()
 
-  // 테이블 상태
+  // 정렬/페이지는 여기만 단일 소스
   const [state, setState] = useState<TableState>({
     page: 1,
     pageSize: 10,
-    sort: { id: 'created_at', desc: true }, // 최신순
+    sort: { id: 'created_at', desc: true },
     search: '',
   })
 
-  // 필터바 상태 (status/role은 UI용, 서버 파라미터엔 없음)
-  const [query, setQuery] = useState<{
-    search: string
+  // 필터(정렬 제외 — 순환 업데이트 방지)
+  const [filters, setFilters] = useState<{
+    queryText: string
     status: 'ALL' | 'OPEN' | 'CLOSED'
-    role?: Maybe<string> // 미사용
+    tagId?: string | null
   }>({
-    search: '',
+    queryText: '',
     status: 'ALL',
-    role: undefined,
+    tagId: undefined,
   })
 
-  // 서버 데이터
-  const [rows, setRows] = useState<UiRow[]>([])
+  const [rows, setRows] = useState<RecruitmentItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 목록 로드
   useEffect(() => {
     const ac = new AbortController()
     ;(async () => {
@@ -85,34 +87,28 @@ export default function RecruitmentsManage() {
         setLoading(true)
         setError(null)
 
-        const { items, totalPages } = await getRecruitments(
-          {
-            page: state.page,
-            pageSize: state.pageSize,
-            search: query.search || undefined, // 서버 파라미터명: search
-            sortKey: toApiSortKey(state.sort),
-            // tag: '필요 시 사용',
-          },
-          { mock: true } // MSW 사용 시 true
-        )
+        const resp = await getRecruitments({
+          page: state.page,
+          pageSize: state.pageSize,
+          search: filters.queryText || undefined,
+          tag: filters.tagId || undefined,
+          sortKey: sortStateToSortKey(state.sort),
+        })
 
-        // API -> UI로 매핑
-        const mapped = items.map(mapToUiRow)
+        let items = (resp.items ?? []).map(mapToUiRow)
 
-        // (선택) 상태 필터는 서버 스펙에 없으므로 프론트에서 1페이지 데이터에 한해 적용
-        const filtered =
-          query.status === 'ALL'
-            ? mapped
-            : mapped.filter((r) => r.status === query.status)
+        if (filters.status !== 'ALL') {
+          items = items.filter((it) => it.status === filters.status)
+        }
 
-        setRows(filtered)
-        setTotalPages(totalPages)
+        setRows(items)
+        setTotalPages(resp.totalPages)
       } catch (e: unknown) {
         const msg =
-          e instanceof ApiError || e instanceof Error
-            ? e.message
-            : '목록을 불러오지 못했습니다.'
+          e instanceof Error ? e.message : '목록을 불러오지 못했습니다.'
         setError(msg)
+        // deps에서 빼야 하므로 아래 한 줄로 린트만 무시하세요.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         triggerToast('error', '로딩 실패', msg)
       } finally {
         setLoading(false)
@@ -122,29 +118,60 @@ export default function RecruitmentsManage() {
   }, [
     state.page,
     state.pageSize,
-    state.sort,
-    query.search,
-    query.status,
-    triggerToast,
+    state.sort?.id, // ✅ 객체 대신 원시값 추적
+    state.sort?.desc, // ✅ 객체 대신 원시값 추적
+    filters.queryText,
+    filters.status,
+    filters.tagId,
   ])
 
-  const data = useMemo(() => rows, [rows])
+  const handleStateChange = (next: Partial<TableState>) => {
+    setState((prev) => {
+      const incomingSort = next.sort ?? prev.sort
+      const sameSort =
+        !!prev.sort &&
+        !!incomingSort &&
+        prev.sort.id === incomingSort.id &&
+        prev.sort.desc === incomingSort.desc
+      return { ...prev, ...next, sort: sameSort ? prev.sort : incomingSort }
+    })
+  }
+
+  const filterBarValue = useMemo(
+    () => ({
+      queryText: filters.queryText,
+      status: filters.status,
+      tagId: filters.tagId,
+      sortKey: sortStateToSortKey(state.sort),
+    }),
+    [filters.queryText, filters.status, filters.tagId, state.sort]
+  )
 
   return (
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-semibold">스터디 구인 공고 관리</h1>
 
       <RecruitmentsTable
-        data={data}
+        data={rows} // ← 이제 RecruitmentItem[]로 맞음
         state={state}
-        onStateChange={(next) => setState((prev) => ({ ...prev, ...next }))}
+        onStateChange={handleStateChange}
         totalPages={totalPages}
         toolbar={
           <RecruitmentsFilterBar
-            tableState={state}
-            setTableState={setState}
-            query={query}
-            setQuery={setQuery}
+            value={filterBarValue}
+            onChange={(patch) => {
+              if ('sortKey' in patch && patch.sortKey) {
+                handleStateChange({ sort: sortKeyToSortState(patch.sortKey) })
+              }
+              const { queryText, status, tagId } = patch as any
+              if (
+                queryText !== undefined ||
+                status !== undefined ||
+                tagId !== undefined
+              ) {
+                setFilters((prev) => ({ ...prev, ...patch }))
+              }
+            }}
             className="mb-2"
           />
         }

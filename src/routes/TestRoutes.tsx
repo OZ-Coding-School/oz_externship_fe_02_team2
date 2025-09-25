@@ -11,6 +11,7 @@ import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import UserManagePage from '@/pages/admin/UserManage'
 import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
+import RecruitmentsManagePage from '@/pages/admin/RecruitmnetsManage'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -33,7 +34,7 @@ export default function TestRoutes() {
           <Route path={PATHS.STUDYGROUP} element={<PlaceHolderPage />} />
           <Route path={PATHS.REVIEW} element={<PlaceHolderPage />} />
 
-          <Route path={PATHS.POST} element={<PlaceHolderPage />} />
+          <Route path={PATHS.POST} element={<RecruitmentsManagePage />} />
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
           <Route path="*" element={<div className="p-6">Not Found</div>} />
         </Route>

@@ -1,7 +1,20 @@
 import React, { useMemo } from 'react'
 import type { Column, TableState } from '@/types/table'
-import type { RecruitmentItem } from '@/pages/AdminRecruitments/AdminRecruitments.types'
 import DataTable from '../../DataTable'
+
+/** 현재 화면(UI)에서 쓰는 로우 타입 – RecruitmentsManage의 mapToUiRow에 맞춤 */
+type RecruitmentItem = {
+  id: string
+  uuid: string
+  title: string
+  tags: { id: string; name: string }[]
+  deadline: string | null
+  status: 'OPEN' | 'CLOSED'
+  views_count: number
+  bookmarks_count: number
+  created_at: string
+  updated_at: string
+}
 
 type Props = {
   data: RecruitmentItem[]
@@ -11,10 +24,11 @@ type Props = {
   toolbar?: React.ReactNode
 }
 
-const STATUS_LABEL: Record<'OPEN' | 'CLOSED', string> = {
+const STATUS_LABEL = {
   OPEN: '모집중',
   CLOSED: '마감',
-}
+} as const
+type Status = keyof typeof STATUS_LABEL
 
 export default function RecruitmentsTable({
   data,
@@ -43,12 +57,8 @@ export default function RecruitmentsTable({
         header: '태그',
         width: '260px',
         cell: ({ row }) => {
-          // ✅ 문자열[] | {id,name}[] 모두 지원
-          const tags = Array.isArray(row.tags)
-            ? row.tags.map((t: any) =>
-                typeof t === 'string' ? { id: t, name: t } : t
-              )
-            : []
+          // 현재는 {id,name}[] 형태로 들어옴
+          const tags = Array.isArray(row.tags) ? row.tags : []
           return (
             <div className="flex flex-wrap gap-1">
               {tags.slice(0, 2).map((t) => (
@@ -69,9 +79,9 @@ export default function RecruitmentsTable({
         },
       },
       {
-        id: 'close_at', // ✅ 키 교체
+        id: 'deadline',
         header: '마감 기한',
-        accessor: 'close_at',
+        accessor: 'deadline',
         width: '120px',
         cell: ({ value }) =>
           value ? new Date(value).toLocaleDateString() : '-',
@@ -82,17 +92,22 @@ export default function RecruitmentsTable({
         accessor: 'status',
         width: '100px',
         cell: ({ value, row }) => {
-          // ✅ 응답에 없으면 close_at 기준으로 계산
-          const v =
-            value ??
-            (row.close_at && new Date(row.close_at) < new Date()
+          // value가 any로 들어올 수 있어 타입 가드로 키 좁히기
+          const isStatus = (x: unknown): x is Status =>
+            x === 'OPEN' || x === 'CLOSED'
+
+          const v: Status = isStatus(value)
+            ? value
+            : row.deadline && new Date(row.deadline) < new Date()
               ? 'CLOSED'
-              : 'OPEN')
-          const label = v === 'OPEN' ? '모집중' : '마감'
+              : 'OPEN'
+
+          const label = STATUS_LABEL[v]
           const cls =
             v === 'OPEN'
               ? 'bg-green-100 text-green-700'
               : 'bg-gray-100 text-gray-600'
+
           return (
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
@@ -112,7 +127,7 @@ export default function RecruitmentsTable({
         accessor: 'views_count',
         width: '100px',
         align: 'left',
-        sortable: true,
+        sortable: true, // 서버 정렬 키와 매핑됨
       },
       {
         id: 'bookmarks_count',
