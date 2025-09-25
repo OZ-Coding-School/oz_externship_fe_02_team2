@@ -8,7 +8,7 @@ import type {
 } from '@/pages/AdminRecruitments/AdminRecruitments.types'
 import RecruitmentsTable from '@/components/table/feature/Recruitments/RecruitmentsTable'
 import RecruitmentsFilterBar from '@/components/table/feature/Recruitments/RecruitmentsFilterBar'
-import { getRecruitments } from '@/api/modules/recruitments'
+import { getRecruitments } from '@/mocks/handlers'
 
 // SortKey ↔ TableState.sort 매핑 -----------------------------
 function sortKeyToSortState(k: SortKey): TableState['sort'] {

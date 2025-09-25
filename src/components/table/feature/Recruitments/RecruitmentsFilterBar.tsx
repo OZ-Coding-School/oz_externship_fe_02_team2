@@ -7,7 +7,7 @@ import type {
   RecruitmentStatusFilter,
   SortKey,
 } from '@/pages/AdminRecruitments/AdminRecruitments.types'
-import { getRecruitmentTags } from '@/api/modules/recruitments'
+import { getRecruitmentTags } from '@/mocks/handlers'
 
 type Props = {
   value: {
@@ -47,7 +47,7 @@ export default function RecruitmentsFilterBar({
   // 외부 값 변경 시 동기화
   useEffect(() => setDraft(value.queryText), [value.queryText])
 
-  // 태그 옵션 로드
+  // 태그 옵션 로드 (MSW 켜져 있으면 mock 응답 사용)
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -59,7 +59,7 @@ export default function RecruitmentsFilterBar({
           ...list.map((t) => ({ value: String(t.id), label: t.name })),
         ])
       } catch {
-        // 실패해도 '전체'만 보이도록 둠
+        // 실패 시 '전체'만 유지
       }
     })()
     return () => {
@@ -71,6 +71,7 @@ export default function RecruitmentsFilterBar({
 
   return (
     <section className={`w-full ${className ?? ''}`}>
+      {/* sm 이상에서 4등분, 모바일 1열 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         {/* 검색 */}
         <div>

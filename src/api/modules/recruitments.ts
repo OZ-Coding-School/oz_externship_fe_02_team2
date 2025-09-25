@@ -1,318 +1,161 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { http, withBypass } from '../http'
-import { decideBypass } from '../toggles/mockToggle'
+import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
+import { recruitmentSeeds } from '@/mocks/seeds/recruitment.seed'
+import { BASE_PATH, like, paginate, sortByKey, toInt } from '@/mocks/utils'
 
-export type SortOrder = 'asc' | 'desc'
+/**
+ * 관리자 "스터디 구인 공고 관리" 전용 MSW 핸들러
+ * - 목록(/api/recruitments, /api/v1/recruitments)
+ * - 태그(/api/recruitments/tags, /api/v1/recruitments/tags)
+ * - x-bypass-mock 헤더면 passthrough
+ */
+const V1 = `${BASE_PATH}/v1`
+const LEGACY = `${BASE_PATH}`
 
-/** Admin 테이블에서 쓰는 정렬 키 → 백엔드 ordering 매핑용 */
-export type SortKey =
-  | 'created_desc'
-  | 'created_asc'
-  | 'views_desc'
-  | 'bookmarks_desc'
-
-/** 목록 항목 (Swagger: RecruitmentList) */
-export type RecruitmentListItem = {
+type ListItem = {
   id: number
   uuid: string
   title: string
   img: string
   expected_headcount: number
-  lectures: { title: string; instructor: string }[]
   tags: string[]
-  close_at: string
+  close_at: string | null
   views_count: number
   bookmarks_count: number
-}
-
-/** 상세 (Swagger: RecruitmentDetail) */
-export type RecruitmentDetail = {
-  id: number
-  uuid: string
-  author: { id: number; nickname: string }
-  title: string
-  content: string
-  expected_headcount: number
-  estimated_fee: number
-  study_lectures: {
-    title: string
-    url_link: string
-    instructor: string
-    thumbnail_img_url?: string | null
-  }[]
-  tags: { id: number; name: string }[]
-  attachments: { id: number; file_name: string; file_url: string }[]
   created_at: string
-  updated_at: string | null
-  close_at: string
-  is_closed: boolean
-  views_count: number
-  bookmark_count: number
+  updated_at: string
 }
 
-export type PageResp<T> = {
-  items: T[]
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-  /** users 모듈과 맞추기 위해 제공 (ordering 역매핑 결과) */
-  sortBy?: string
-  sortOrder?: SortOrder
-}
-
-export type RecruitmentsParams = {
-  page?: number // 1-based (required in API, default 1)
-  pageSize?: number // API 'size'
-  search?: string // API 'search'
-  tag?: string // API 'tag'
-  sortKey?: SortKey // API 'ordering'로 변환
-}
-
-export type MyRecruitmentsParams = {
-  page?: number
-  pageSize?: number
-  is_closed?: boolean
-  ordering?: string // 필요 시 직접 지정 (예: "-created_at")
-}
-
-const DEFAULT_PAGE = 1
-const DEFAULT_PAGE_SIZE = 10 // Swagger 기본이 10개
-
-/** SortKey → ordering 매핑 */
-function toOrdering(k?: SortKey): string | undefined {
-  switch (k) {
-    case 'created_asc':
-      return 'created_at'
-    case 'views_desc':
-      return '-views_count'
-    case 'bookmarks_desc':
-      return '-bookmarks_count'
-    case 'created_desc':
-    default:
-      return '-created_at'
-  }
-}
-
-/** ordering → sortBy/sortOrder 역매핑 (PageResp 메타용) */
-function fromOrdering(ordering?: string): {
-  sortBy?: string
-  sortOrder?: SortOrder
-} {
-  if (!ordering) return {}
-  if (ordering.startsWith('-'))
-    return { sortBy: ordering.slice(1), sortOrder: 'desc' }
-  return { sortBy: ordering, sortOrder: 'asc' }
-}
-
-/** undefined/null/'' 제거 + 기본값 채우기 (목록 공용) */
-function buildListParams(p: RecruitmentsParams = {}) {
-  const params: Record<string, unknown> = {
-    page: p.page ?? DEFAULT_PAGE,
-    size: p.pageSize ?? DEFAULT_PAGE_SIZE,
-    search: p.search,
-    tag: p.tag,
-    ordering: toOrdering(p.sortKey),
-  }
-  Object.keys(params).forEach((k) => {
-    const v = (params as any)[k]
-    if (v === undefined || v === null || v === '') delete (params as any)[k]
-  })
-  return params
-}
-
-/** API 페이징 응답 → PageResp 정규화 */
-function normalizePage<T>(
-  api: { count: number; results: T[] },
-  page: number,
-  size: number,
-  ordering?: string
-): PageResp<T> {
-  const meta = fromOrdering(ordering)
+// seed -> 목록 아이템
+function toListItem(seed: any): ListItem {
   return {
-    items: api.results ?? [],
-    page,
-    pageSize: size,
-    total: api.count ?? 0,
-    totalPages: Math.max(
-      1,
-      Math.ceil((api.count ?? 0) / (size || DEFAULT_PAGE_SIZE))
-    ),
-    ...meta,
+    id: Number(seed.id),
+    uuid: seed.uuid ?? String(seed.id),
+    title: seed.title,
+    img: 'https://picsum.photos/seed/oz-recruit/640/360',
+    expected_headcount: Number(seed.expected_headcount ?? 5),
+    tags: (seed.tags ?? []).map((t: any) => t.name ?? String(t)),
+    close_at: seed.deadline ? new Date(seed.deadline).toISOString() : null,
+    views_count: Number(seed.views_count ?? 0),
+    bookmarks_count: Number(seed.bookmarks_count ?? 0),
+    created_at: seed.created_at
+      ? new Date(String(seed.created_at).replace(' ', 'T')).toISOString()
+      : new Date().toISOString(),
+    updated_at: seed.updated_at
+      ? new Date(String(seed.updated_at).replace(' ', 'T')).toISOString()
+      : new Date().toISOString(),
   }
 }
 
-/** 구인 공고 목록 조회 (듀얼 모드) - GET /api/v1/recruitments */
-export async function getRecruitments(
-  params: RecruitmentsParams = {},
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const built = buildListParams(params)
-  const res = await http.get<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: RecruitmentListItem[]
-  }>('/recruitments', withBypass({ params: built }, bypass))
-  const page = Number(built.page ?? DEFAULT_PAGE)
-  const size = Number(built.size ?? DEFAULT_PAGE_SIZE)
-  const ordering = (built.ordering as string | undefined) ?? undefined
-  return normalizePage(res.data, page, size, ordering)
+function mapOrdering(ordering?: string | null): {
+  key?: string
+  desc?: boolean
+} {
+  if (!ordering || ordering === '' || ordering === 'undefined') {
+    return { key: 'created_at', desc: true } // 기본: 최신순
+  }
+  const desc = ordering.startsWith('-')
+  const key = desc ? ordering.slice(1) : ordering
+  return { key, desc }
 }
 
-/** 구인 공고 상세 조회 (듀얼 모드) - GET /api/v1/recruitments/{recruitment_uuid} */
-export async function getRecruitmentDetail(
-  recruitment_uuid: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.get<RecruitmentDetail>(
-    `/recruitments/${recruitment_uuid}`,
-    withBypass({}, bypass)
-  )
-  return res.data
+function listResponse(url: URL) {
+  const page = toInt(url.searchParams.get('page'), 1)
+  const size = toInt(url.searchParams.get('size'), 10)
+  const q = (url.searchParams.get('search') || '').trim()
+  const tag = (url.searchParams.get('tag') || '').trim()
+  const ordering = url.searchParams.get('ordering')
+  // ✅ 상태 필터(와이어프레임): 'ALL' | 'OPEN' | 'CLOSED'
+  const status = (url.searchParams.get('status') || 'ALL').toUpperCase()
+  // 백엔드 호환: is_closed=true/false 도 지원
+  const isClosedParam = url.searchParams.get('is_closed')
+
+  let rows = recruitmentSeeds.map(toListItem)
+
+  // 검색/태그
+  if (q) rows = rows.filter((r) => like(r.title, q))
+  if (tag) rows = rows.filter((r) => r.tags.includes(tag))
+
+  // 상태 필터
+  const now = Date.now()
+  if (status === 'OPEN' || status === 'CLOSED') {
+    rows = rows.filter((r) => {
+      const closed = r.close_at ? new Date(r.close_at).getTime() < now : false
+      return status === 'OPEN' ? !closed : closed
+    })
+  }
+  if (isClosedParam !== null) {
+    const wantClosed = ['1', 'true', 'True'].includes(isClosedParam)
+    rows = rows.filter((r) => {
+      const closed = r.close_at ? new Date(r.close_at).getTime() < now : false
+      return wantClosed ? closed : !closed
+    })
+  }
+
+  // 정렬 (-views_count / -bookmarks_count / -created_at / created_at)
+  const { key, desc } = mapOrdering(ordering)
+  if (key) rows = sortByKey(rows, key, desc ? 'desc' : 'asc')
+
+  // 페이지네이션
+  const { items, total } = paginate(rows, page, size)
+  const mkLink = (p: number) => {
+    const base = url.origin + url.pathname
+    const sp = new URLSearchParams()
+    sp.set('page', String(p))
+    sp.set('size', String(size))
+    if (ordering) sp.set('ordering', ordering)
+    if (q) sp.set('search', q)
+    if (tag) sp.set('tag', tag)
+    if (status && status !== 'ALL') sp.set('status', status)
+    return `${base}?${sp.toString()}`
+  }
+
+  return {
+    count: total,
+    next: page * size < total ? mkLink(page + 1) : null,
+    previous: page > 1 ? mkLink(page - 1) : null,
+    results: items,
+  }
 }
 
-/** 구인 공고 부분 수정 (듀얼 모드) - PATCH /api/v1/recruitments/{recruitment_uuid} */
-export async function updateRecruitment(
-  recruitment_uuid: string,
-  patch: Partial<RecruitmentDetail>,
-  opts?: { mock?: boolean }
+function pair(
+  method: 'get' | 'post',
+  path: string,
+  handler: Parameters<typeof mswHttp.get>[1]
 ) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.patch<RecruitmentDetail>(
-    `/recruitments/${recruitment_uuid}`,
-    patch,
-    withBypass({}, bypass)
-  )
-  return res.data
+  const h1 = (mswHttp as any)[method](`${LEGACY}${path}`, handler)
+  const h2 = (mswHttp as any)[method](`${V1}${path}`, handler)
+  return [h1, h2]
 }
 
-/** 구인 공고 삭제 (듀얼 모드) - DELETE /api/v1/recruitments/{recruitment_uuid} */
-export async function deleteRecruitment(
-  recruitment_uuid: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.delete<void>(
-    `/recruitments/${recruitment_uuid}`,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
+export const recruitmentHandlers = [
+  // 목록
+  ...pair('get', '/recruitments', async ({ request }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+    await delay(120)
+    const url = new URL(request.url)
+    const body = listResponse(url)
+    console.log('[MSW] 구인공고 목록', Object.fromEntries(url.searchParams))
+    return HttpResponse.json(body)
+  }),
 
-/** 내가 등록한 공고 목록 (듀얼 모드) - GET /api/v1/recruitments/me */
-export async function getMyRecruitments(
-  params: MyRecruitmentsParams = {},
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const page = params.page ?? DEFAULT_PAGE
-  const size = params.pageSize ?? DEFAULT_PAGE_SIZE
-  const res = await http.get<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: RecruitmentListItem[]
-  }>(
-    '/recruitments/me',
-    withBypass(
-      {
-        params: {
-          page,
-          size,
-          is_closed: params.is_closed,
-          ordering: params.ordering, // 필요 시 '-created_at' 등 직접 지정
-        },
-      },
-      bypass
-    )
-  )
-  return normalizePage(res.data, page, size, params.ordering)
-}
-
-/** 태그 목록 - GET /api/v1/recruitments/tags */
-export async function getRecruitmentTags(opts?: { mock?: boolean }) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.get<{ id: number; name: string }[]>(
-    '/recruitments/tags',
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-/** 태그 생성 - POST /api/v1/recruitments/tags */
-export async function createRecruitmentTag(
-  name: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.post<{ id: number; name: string }>(
-    '/recruitments/tags',
-    { name },
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-/** 첨부 업로드 - POST /api/v1/recruitments/attachments (multipart/form-data) */
-export async function uploadRecruitmentAttachment(
-  file: File,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const form = new FormData()
-  form.append('file', file)
-  const res = await http.post<{ file_url: string }>(
-    '/recruitments/attachments',
-    form,
-    withBypass({ headers: { 'Content-Type': 'multipart/form-data' } }, bypass)
-  )
-  return res.data
-}
-
-/** 이미지 업로드 - POST /api/v1/recruitments/images (multipart/form-data) */
-export async function uploadRecruitmentImage(
-  file: File,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const form = new FormData()
-  form.append('image', file)
-  const res = await http.post<{ image_url: string }>(
-    '/recruitments/images',
-    form,
-    withBypass({ headers: { 'Content-Type': 'multipart/form-data' } }, bypass)
-  )
-  return res.data
-}
-
-/** 지원자 목록 - GET /api/v1/recruitments/{recruitment_uuid}/applications */
-export async function getRecruitmentApplications(
-  recruitment_uuid: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  // 스펙은 200 with no schema라 any로 둠 (실제 백엔드 스키마 확정되면 타입 대체)
-  const res = await http.get<any>(
-    `/recruitments/${recruitment_uuid}/applications`,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-/** 지원서 생성 - POST /api/v1/recruitments/{recruitment_uuid}/applications */
-export async function createRecruitmentApplication(
-  recruitment_uuid: string,
-  payload: any,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.post<any>(
-    `/recruitments/${recruitment_uuid}/applications`,
-    payload,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
+  // 태그 목록
+  ...pair('get', '/recruitments/tags', async ({ request }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+    await delay(60)
+    const m = new Map<string, string>()
+    recruitmentSeeds.forEach((r: any) => {
+      ;(r.tags ?? []).forEach((t: any) => {
+        const id = String(t.id ?? t.name)
+        const name = t.name ?? String(t)
+        m.set(id, name)
+      })
+    })
+    const tags = Array.from(m.entries()).map(([id, name], i) => ({
+      id: id || String(i + 1),
+      name,
+    }))
+    return HttpResponse.json(tags)
+  }),
+]
