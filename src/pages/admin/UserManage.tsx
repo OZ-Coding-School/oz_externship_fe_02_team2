@@ -94,7 +94,7 @@ export default function UserManagePage() {
           ...(query.role && { role: query.role }),
         }
 
-        const data = await getUsers(apiParams, { mock: true })
+        const data = await getUsers(apiParams, { mock: false })
 
         setTableData(data.items.map(mapToRow))
         setTotal(data.total)
