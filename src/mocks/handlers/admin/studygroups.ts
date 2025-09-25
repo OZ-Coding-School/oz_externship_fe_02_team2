@@ -211,7 +211,7 @@ export const studyGroupHandlers = [
     })
   }),
 
-  // GET /api/admin/studygroups/:id - 상세 조회
+  // GET /api/v1/admin/studygroups/:id - 상세 조회
   mswHttp.get(`${ADMIN}/studygroups/:id`, async ({ request, params }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
 
@@ -232,7 +232,7 @@ export const studyGroupHandlers = [
     return HttpResponse.json(found)
   }),
 
-  // GET /api/admin/studygroups/uuid/:uuid - UUID로 상세 조회
+  // GET /api/v1/admin/studygroups/uuid/:uuid - UUID로 상세 조회
   mswHttp.get(
     `${ADMIN}/studygroups/uuid/:uuid`,
     async ({ request, params }) => {
@@ -256,7 +256,7 @@ export const studyGroupHandlers = [
     }
   ),
 
-  // PATCH /api/admin/studygroups/:id - 스터디 그룹 수정
+  // PATCH /api/v1/admin/studygroups/:id - 스터디 그룹 수정
   mswHttp.patch(`${ADMIN}/studygroups/:id`, async ({ request, params }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
 
@@ -297,7 +297,7 @@ export const studyGroupHandlers = [
     }
   }),
 
-  // DELETE /api/admin/studygroups/:id - 스터디 그룹 삭제
+  // DELETE /api/v1/admin/studygroups/:id - 스터디 그룹 삭제
   mswHttp.delete(`${ADMIN}/studygroups/:id`, async ({ request, params }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
 
@@ -327,7 +327,7 @@ export const studyGroupHandlers = [
     )
   }),
 
-  // GET /api/admin/studygroups/search/autocomplete - 검색 자동완성
+  // GET /api/v1/admin/studygroups/search/autocomplete - 검색 자동완성 해보고 싶다. 시간 될때 구현 ㄱㄱ
   mswHttp.get(
     `${ADMIN}/studygroups/search/autocomplete`,
     async ({ request }) => {
@@ -363,7 +363,7 @@ export const studyGroupHandlers = [
     }
   ),
 
-  // GET /api/admin/studygroups/statistics - 통계 정보
+  // GET /api/v1/admin/studygroups/statistics - 통계 정보
   mswHttp.get(`${ADMIN}/studygroups/statistics`, async ({ request }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
 
@@ -384,7 +384,7 @@ export const studyGroupHandlers = [
     })
   }),
 
-  // POST /api/admin/study-groups - 새 스터디 그룹 생성 (추가 기능)
+  // POST /api/v1/admin/study-groups - 새 스터디 그룹 생성 (추가 기능)
   mswHttp.post(`${ADMIN}/studygroups`, async ({ request }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
 
@@ -430,7 +430,7 @@ export const studyGroupHandlers = [
     }
   }),
 
-  // PUT /api/admin/studygroups/:id/status - 스터디 상태 변경
+  // PUT /api/v1/admin/studygroups/:id/status - 스터디 상태 변경
   mswHttp.put(
     `${ADMIN}/studygroups/:id/status`,
     async ({ request, params }) => {
@@ -471,7 +471,7 @@ export const studyGroupHandlers = [
     }
   ),
 
-  // POST /api/admin/studygroups/:id/members - 멤버 추가
+  // POST /api/v1/admin/studygroups/:id/members - 멤버 추가
   mswHttp.post(
     `${ADMIN}/studygroups/:id/members`,
     async ({ request, params }) => {
@@ -534,7 +534,7 @@ export const studyGroupHandlers = [
     }
   ),
 
-  // DELETE /api/admin/studygroups/:id/members/:memberId - 멤버 제거
+  // DELETE /api/v1/admin/studygroups/:id/members/:memberId - 멤버 제거
   mswHttp.delete(
     `${ADMIN}/studygroups/:id/members/:memberId`,
     async ({ request, params }) => {
