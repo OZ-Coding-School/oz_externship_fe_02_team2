@@ -1,4 +1,4 @@
-import type { StudyGroupRow, UserRow } from '@/components/table/Table.types'
+import type { StudyGroupRow, UserRow } from '@/components/table/table.types'
 
 export type Tone =
   | 'purple'
