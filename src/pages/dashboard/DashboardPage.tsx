@@ -1,11 +1,11 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { getPage } from '@/lib'
+import { getDashboardTab } from '@/lib'
 import { PAGE_TITLE } from '@/routes/constants'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
 export default function DashboardPage() {
   const { pathname } = useLocation()
-  const tab = getPage(pathname)
+  const tab = getDashboardTab(pathname)
 
   return (
     <div className="flex w-full flex-col gap-13">
