@@ -21,19 +21,19 @@ function WithdrawalInfoViewBase({ form }: Props) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field
             label="탈퇴요청 고유 ID"
-            value={form.withdrawalRequestId ?? ''}
+            value={String(form.id)}
             editing={false}
             onChange={() => {}}
           />
           <Field
             label="탈퇴요청 일시"
-            value={formatDateTime(form.requestedAt)}
+            value={formatDateTime(form.created_at)}
             editing={false}
             onChange={() => {}}
           />
           <Field
             label="삭제 예정 일시"
-            value={formatDateTime(form.scheduledDeletionAt)}
+            value={formatDateTime(form.due_date)}
             editing={false}
             onChange={() => {}}
           />
@@ -49,7 +49,7 @@ function WithdrawalInfoViewBase({ form }: Props) {
       <div className="px-6 pt-0 pb-6">
         <Field
           label="탈퇴 상세 사유"
-          value={form.reasonDetail || '-'}
+          value={form.reason_detail || '-'} /* reasonDetail → reason_detail */
           editing={false}
           onChange={() => {}}
         />

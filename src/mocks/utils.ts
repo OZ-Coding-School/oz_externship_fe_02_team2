@@ -49,5 +49,5 @@ export function paginate<T>(
   return { items, page, pageSize, total, totalPages }
 }
 
-export const BASE_PATH = '/api'
+export const BASE_PATH = '/api/v1'
 export const ADMIN = `${BASE_PATH}/admin`

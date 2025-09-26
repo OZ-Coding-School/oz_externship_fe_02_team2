@@ -12,6 +12,16 @@ import { getUserDetail, getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
 import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 
+// 상태 번역 함수
+function translateWithdrawalStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    active: '활성',
+    inactive: '비활성',
+    withdrawn: '탈퇴요청',
+  }
+  return statusMap[status] || status
+}
+
 // API 응답 → 테이블 로우 매핑
 function mapToRow(u: UserDetailType): UserRow {
   return {
@@ -21,7 +31,7 @@ function mapToRow(u: UserDetailType): UserRow {
     name: u.name,
     birth: u.birth ?? '',
     role: u.role ?? '',
-    status: (u.status ?? '활성') as UserRow['status'],
+    status: translateWithdrawalStatus(u.status ?? '활성') as UserRow['status'],
     joinedAt: u.joinedAt ?? '',
     withdrawnAt: null,
   }
@@ -40,7 +50,7 @@ const SORT_KEY_MAP: Record<string, string> = {
   withdrawnAt: 'withdrawnAt',
 }
 
-export default function UsersManagePage() {
+export default function UserManagePage() {
   const { triggerToast } = useToast()
 
   // 테이블 데이터 상태
@@ -166,9 +176,15 @@ export default function UsersManagePage() {
 
       try {
         const userData = await getUserDetail(userId, { mock: true })
+
+        // 모달 표시 데이터도 번역
+        const translatedUserData = {
+          ...userData,
+          status: translateWithdrawalStatus(userData.status),
+        }
         setModalState((prev) => ({
           ...prev,
-          detail: userData,
+          detail: translatedUserData,
           detailLoading: false,
         }))
       } catch (e: unknown) {
@@ -327,7 +343,7 @@ export default function UsersManagePage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">유저 관리</h1>
       </div>
 
       {/* 에러 알림 */}
