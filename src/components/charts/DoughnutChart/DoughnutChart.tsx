@@ -31,6 +31,7 @@ const LABELS = [
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'] as const
 
+// TODO: 실제 API 연결하여 데이터 받아오기
 const VALUES = [35, 25, 20, 15, 5] as const // 명
 
 export default function DoughnutChart() {

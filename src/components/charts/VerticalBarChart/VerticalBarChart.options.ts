@@ -16,6 +16,8 @@ ChartJS.register(
   rightEdgeGridPlugin
 )
 
+// TODO: y축 눈금: data 배열 max 값이 2 초과 → 1 단위 && 2 이하 → 0.5 단위
+
 export const COMMON_BAR_OPTIONS: ChartOptions<'bar'> = {
   responsive: true,
   maintainAspectRatio: false,
