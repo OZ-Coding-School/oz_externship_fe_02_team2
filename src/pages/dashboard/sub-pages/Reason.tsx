@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import Section from '../common/Section'
-import { DROPDOWN_REASON_OPTIONS } from '../common/constants'
+import { Section, DROPDOWN_REASON_OPTIONS } from './common'
 import type { DropdownProps } from '@components/ui/Dropdown/Dropdown.types'
 import DoughnutChart from '@components/charts/DoughnutChart/DoughnutChart'
 import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
