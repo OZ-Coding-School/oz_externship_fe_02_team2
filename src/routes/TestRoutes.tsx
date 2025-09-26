@@ -11,6 +11,7 @@ import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import UserManagePage from '@/pages/admin/UserManage'
 import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
+import StudyGroupPage from '@/pages/admin/StudyManage'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -30,7 +31,7 @@ export default function TestRoutes() {
           <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
 
           <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
-          <Route path={PATHS.STUDYGROUP} element={<PlaceHolderPage />} />
+          <Route path={PATHS.STUDYGROUP} element={<StudyGroupPage />} />
           <Route path={PATHS.REVIEW} element={<PlaceHolderPage />} />
 
           <Route path={PATHS.POST} element={<PlaceHolderPage />} />

@@ -1,60 +1,58 @@
 import { useCallback, useState } from 'react'
 import { useTableFilters } from '@/hooks/useTableFilters'
-import UsersTable from '@/components/table/feature/Users/UsersTable'
-import UserDetail from '@/components/ui/Modal/feature/User/UserDetail'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
-import type { UserDetail as UserDetailType } from '@/components/ui/Modal/feature/User/User.types'
-import type { UserRow } from '@/components/table/Table.types'
-import type { TableQuery } from '@/types/table'
+import type { StudyGroupRow } from '@/components/table/Table.types'
 import type { SortOrder } from '@/mocks/utils'
-import { getUserDetail, getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
-import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
+import type { EnhancedQueryChangeHandlers, EnhancedTableQuery } from '@/types'
+import type { StudyGroupDetail } from '@/components/ui/Modal/feature/Study/Study.types'
+import StudyGroupsTable from '@/components/table/feature/StudyGroups/StudyGroupsTable'
+import StudyGroupDetailModal from '@/components/ui/Modal/feature/Study/StudyGroupDetailModal'
+import { getStudyGroupDetail, getStudyGroups } from '@/api/modules/studygroups'
+import StudyGroupsFilterBar from '@/components/table/feature/StudyGroups/StudyGroupsFilterBar'
 
 // 상태 번역 함수
-function translateWithdrawalStatus(status: string): string {
+function translateStudygroupStatus(status: string): string {
   const statusMap: Record<string, string> = {
-    active: '활성',
-    inactive: '비활성',
-    withdrawn: '탈퇴요청',
+    대기중: '대기중',
+    진행중: '진행중',
+    종료됨: '종료됨',
   }
   return statusMap[status] || status
 }
 
-// API 응답 → 테이블 로우 매핑
-function mapToRow(u: UserDetailType): UserRow {
+// API 응답 → 테이블 로우 매핑 (수정됨)
+function mapToRow(s: StudyGroupDetail): StudyGroupRow {
   return {
-    memberId: u.id,
-    email: u.email,
-    nickname: u.nickname ?? '',
-    name: u.name,
-    birth: u.birth ?? '',
-    role: u.role ?? '',
-    status: translateWithdrawalStatus(u.status ?? '활성') as UserRow['status'],
-    joinedAt: u.joinedAt ?? '',
-    withdrawnAt: null,
+    id: s.id,
+    title: s.title,
+    capacity: s.capacity,
+    enrolled: s.enrolled,
+    period: s.period, // 실제 데이터 사용
+    status: translateStudygroupStatus(s.status), // 번역 적용
+    createdAt: s.createdAt, // 실제 데이터 사용
+    updatedAt: s.updatedAt, // 실제 데이터 사용
+    ...(s.coverImageUrl && { coverImageUrl: s.coverImageUrl }), // optional 처리
   }
 }
 
-// 정렬 키 매핑
+// 정렬 키 매핑 (스터디 그룹용으로 수정)
 const SORT_KEY_MAP: Record<string, string> = {
-  memberId: 'id',
-  email: 'email',
-  nickname: 'nickname',
-  name: 'name',
-  birth: 'birth',
-  role: 'role',
+  id: 'id',
+  title: 'title',
+  capacity: 'capacity',
+  enrolled: 'enrolled',
   status: 'status',
-  joinedAt: 'joinedAt',
-  withdrawnAt: 'withdrawnAt',
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 }
 
-export default function UserManagePage() {
+export default function StudyGroupPage() {
   const { triggerToast } = useToast()
 
   // 테이블 데이터 상태
-  const [tableData, setTableData] = useState<UserRow[]>([])
+  const [tableData, setTableData] = useState<StudyGroupRow[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -62,15 +60,15 @@ export default function UserManagePage() {
 
   // 모달 상태
   const [modalState, setModalState] = useState({
-    detailId: null as string | null,
-    detail: null as UserDetailType | null,
+    detailId: null as number | null,
+    detail: null as StudyGroupDetail | null,
     detailLoading: false,
     detailError: null as string | null,
   })
 
-  // 서버에서 사용자 데이터 로드
+  // 서버에서 스터디 그룹 데이터 로드
   const loadTableData = useCallback(
-    async (query: TableQuery) => {
+    async (query: EnhancedTableQuery) => {
       setLoading(true)
       setError(null)
 
@@ -78,7 +76,7 @@ export default function UserManagePage() {
         // 정렬 파라미터 변환
         const sortBy = query.sortBy
           ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
-          : 'joinedAt'
+          : 'created_at'
         const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
 
         const q = (query.search ?? '').trim()
@@ -89,14 +87,13 @@ export default function UserManagePage() {
           pageSize: query.pageSize,
           sortBy,
           sortOrder,
-          ...(q && { q }), // ← 바뀐 부분
-          ...(query.status && { status: query.status }),
-          ...(query.role && { role: query.role }),
+          ...(q && { q }),
+          ...(query.status && { status: query.status }), // reason → status로 변경
         }
 
-        const data = await getUsers(apiParams, { mock: true })
+        const data = await getStudyGroups(apiParams, { mock: true })
 
-        setTableData(data.items.map(mapToRow))
+        setTableData((data.items as StudyGroupDetail[]).map(mapToRow))
         setTotal(data.total)
         setTotalPages(data.totalPages)
       } catch (e: unknown) {
@@ -114,15 +111,14 @@ export default function UserManagePage() {
     [triggerToast]
   )
 
-  // 테이블 필터 훅 사용
+  // 테이블 필터 훅 사용 (초기값 수정)
   const tableFilters = useTableFilters({
     initialQuery: {
       page: 1,
       pageSize: 10,
       search: '',
-      status: undefined,
-      role: undefined,
-      sortBy: 'joinedAt',
+      status: undefined, // reason → status
+      sortBy: 'created_at',
       sortDir: 'desc',
     },
     syncUrl: true,
@@ -164,27 +160,29 @@ export default function UserManagePage() {
   )
 
   // 모달 열기 (상세 데이터 로드)
-  const openUserDetail = useCallback(
-    async (userId: string) => {
+  const openStudyGroupDetail = useCallback(
+    async (groupId: number) => {
+      // userId → groupId로 변경
       setModalState((prev) => ({
         ...prev,
-        detailId: userId,
+        detailId: groupId,
         detail: null,
         detailError: null,
         detailLoading: true,
       }))
 
       try {
-        const userData = await getUserDetail(userId, { mock: true })
+        const groupData = await getStudyGroupDetail(groupId, { mock: true }) // userData → groupData
 
-        // 모달 표시 데이터도 번역
-        const translatedUserData = {
-          ...userData,
-          status: translateWithdrawalStatus(userData.status),
+        // 모달에 표시할 데이터도 번역 처리
+        const translatedGroupData = {
+          ...groupData,
+          status: translateStudygroupStatus(groupData.status),
         }
+
         setModalState((prev) => ({
           ...prev,
-          detail: translatedUserData,
+          detail: translatedGroupData,
           detailLoading: false,
         }))
       } catch (e: unknown) {
@@ -215,53 +213,24 @@ export default function UserManagePage() {
     })
   }, [])
 
-  // 유저 업데이트 핸들러
-  const handleUserUpdated = useCallback(
-    (updatedUser: UserDetailType) => {
-      setTableData((prev) =>
-        prev.map((row) =>
-          row.memberId === updatedUser.id ? mapToRow(updatedUser) : row
-        )
-      )
-
-      setModalState((prev) => ({
-        ...prev,
-        detail: prev.detail?.id === updatedUser.id ? updatedUser : prev.detail,
-      }))
-
-      triggerToast(
-        'success',
-        '업데이트 완료',
-        '회원 정보가 성공적으로 업데이트되었습니다.'
-      )
-    },
-    [triggerToast]
-  )
-
-  // 유저 삭제 핸들러
-  const handleUserDeleted = useCallback(
-    (deletedUserId: string) => {
-      setTableData((prev) =>
-        prev.map((row) =>
-          row.memberId === deletedUserId
-            ? { ...row, status: '비활성' as const }
-            : row
-        )
-      )
-
-      closeDetail()
-      triggerToast('success', '삭제 완료', '회원이 비활성화되었습니다.')
-    },
-    [closeDetail, triggerToast]
-  )
-
   // 테이블 로우 클릭 핸들러
   const handleRowClick = useCallback(
-    (row: UserRow) => {
-      void openUserDetail(row.memberId)
+    (row: StudyGroupRow) => {
+      void openStudyGroupDetail(row.id)
     },
-    [openUserDetail]
+    [openStudyGroupDetail]
   )
+
+  // 쿼리 변경 핸들러 (수정됨)
+  const enhancedOnQueryChange: EnhancedQueryChangeHandlers = {
+    ...tableFilters.onQueryChange,
+    setStatus: (status) => {
+      // setWithdrawalReason → setStatus
+      const newQuery = { ...tableFilters.query, status: status }
+      tableFilters.updateQuery(newQuery)
+      loadTableData(newQuery)
+    },
+  }
 
   // 새로고침 핸들러
   const refreshTable = useCallback(() => {
@@ -272,7 +241,8 @@ export default function UserManagePage() {
   const LoadingModal = () => (
     <Modal open onClose={closeDetail}>
       <Modal.Header>
-        <Modal.Title>회원 상세 정보</Modal.Title>
+        <Modal.Title>스터디 그룹 상세 정보</Modal.Title>{' '}
+        {/* 회원 → 스터디 그룹 */}
       </Modal.Header>
       <div className="border-b border-gray-200" />
       <Modal.Body>
@@ -330,7 +300,7 @@ export default function UserManagePage() {
         <button
           className="btn btn-primary"
           onClick={() =>
-            modalState.detailId && openUserDetail(modalState.detailId)
+            modalState.detailId && openStudyGroupDetail(modalState.detailId)
           }
         >
           다시 시도
@@ -341,9 +311,9 @@ export default function UserManagePage() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* 헤더 */}
+      {/* 헤더 (수정됨) */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">유저 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">스터디 그룹 관리</h1>
       </div>
 
       {/* 에러 알림 */}
@@ -384,22 +354,18 @@ export default function UserManagePage() {
       {/* 테이블 */}
       <div className="rounded-lg bg-white shadow">
         {/* 필터 바 */}
-        <UsersFilterBar
-          query={tableFilters.query}
-          onQueryChange={tableFilters.onQueryChange}
-          density="compact" // 밀도 낮추기
-          tone="elevated" // 살짝 떠 보이는 톤
-          stickyTop={64} // 상단 64px 고정 (예: 헤더 높이)
-          // config로 옵션 일부만 덮어쓰기 가능
-          // config={{ statusOptions: [...], roleOptions: [...] }}
-        >
-          {/* 오른쪽/아래쪽에 붙일 유저 전용 컨트롤들 */}
-          {/* <button className="btn btn-primary btn-sm ml-auto">일괄 처리</button> */}
-        </UsersFilterBar>
+        <StudyGroupsFilterBar
+          query={tableFilters.query as EnhancedTableQuery}
+          onQueryChange={enhancedOnQueryChange}
+          density="compact"
+          tone="elevated"
+          stickyTop={64}
+        />
       </div>
+
       <div className="mt-7">
         {/* 테이블 */}
-        <UsersTable
+        <StudyGroupsTable
           rows={tableData}
           total={total}
           loading={loading}
@@ -419,12 +385,10 @@ export default function UserManagePage() {
           {!modalState.detailLoading &&
             !modalState.detailError &&
             modalState.detail && (
-              <UserDetail
+              <StudyGroupDetailModal
                 open
                 onClose={closeDetail}
                 data={modalState.detail}
-                onEdit={handleUserUpdated}
-                onDeletedWithId={handleUserDeleted}
               />
             )}
         </>

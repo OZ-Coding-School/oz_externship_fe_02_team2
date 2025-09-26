@@ -25,13 +25,13 @@ export type CourseRow = {
 
 export type StudyGroupRow = {
   /** 스터디 그룹 관리 */
-  id: number | string
-  cover?: string
+  id: number
+  coverImageUrl?: string
   title: string
-  capacity: number
   enrolled: number
+  capacity: number
   period: { start: string; end: string }
-  status: '대기중' | '진행중' | '종료됨'
+  status: string
   createdAt: string
   updatedAt: string
 }
