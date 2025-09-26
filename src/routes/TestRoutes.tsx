@@ -7,11 +7,11 @@ import MainPage from '@/pages/main/MainPage'
 import { PATHS } from './constants'
 import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
 import LoginPage from '@/pages/auth/LoginPage'
-
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import UserManagePage from '@/pages/admin/UserManage'
 import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
 import StudyGroupPage from '@/pages/admin/StudyManage'
+import { Join, Leave, Reason } from '@/pages/dashboard/sub-pages'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -24,11 +24,19 @@ export default function TestRoutes() {
         {/* 지금은 테스트용으로 루트경로/login으로 둠 */}
         <Route path={PATHS.LOGIN} element={<LoginPage />} />
         <Route path={PATHS.APP} element={<MainPage />}>
-          {/* /app 진입 시 + 로그인 한 경우 -> 대시보드 페이지로 */}
+          {/* /app 진입 시 + 로그인 한 경우 -> 대시보드 페이지 + 회원가입 추세로 */}
           <Route index element={<Navigate to={PATHS.DASHBOARD} replace />} />
           <Route path={PATHS.USER} element={<UserManagePage />} />
           <Route path={PATHS.WITHDRAWAL} element={<UserWithdrawalPage />} />
-          <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
+
+          {/* /dashboard/:tab */}
+          <Route path={PATHS.DASHBOARD} element={<DashboardPage />}>
+            <Route index element={<Navigate to="join" replace />} />
+            <Route path="join" element={<Join />} />
+            <Route path="leave" element={<Leave />} />
+            <Route path="reason" element={<Reason />} />
+            <Route path="*" element={<Navigate to="join" replace />} />
+          </Route>
 
           <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
           <Route path={PATHS.STUDYGROUP} element={<StudyGroupPage />} />

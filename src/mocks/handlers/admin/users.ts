@@ -19,17 +19,16 @@ export const usersHandlers = [
       active: usersDb.users.filter((u) => u.status === '활성').length,
       inactive: usersDb.users.filter((u) => u.status === '비활성').length,
       withdrawn: usersDb.users.filter((u) => u.status === '탈퇴요청').length,
-
       roles: {
         일반회원: usersDb.users.filter((u) => u.role === '일반회원').length,
         스태프: usersDb.users.filter((u) => u.role === '스태프').length,
         관리자: usersDb.users.filter((u) => u.role === '관리자').length,
       },
     }
-
     console.log('[MSW] 유저 통계 조회:', stats)
     return HttpResponse.json(stats)
   }),
+
   // GET /api/admin/users - 목록 조회 (필터링/정렬/페이지네이션)
   mswHttp.get(`${ADMIN}/users`, async ({ request }) => {
     // 바이패스 헤더가 있으면 실서버로 통과

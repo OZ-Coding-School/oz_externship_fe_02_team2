@@ -9,7 +9,7 @@ type RightEdgeGridOpts = {
 declare module 'chart.js' {
   /** 각 차트 타입별 plugin 옵션에 rightEdgeGrid 추가 */
   interface PluginOptionsByType<TType extends ChartType = ChartType> {
-    rightEdgeGrid?: TType extends 'bar' ? RightEdgeGridOpts : never
+    rightEdgeGrid?: TType extends 'bar' ? RightEdgeGridOpts : false | undefined
   }
 }
 
