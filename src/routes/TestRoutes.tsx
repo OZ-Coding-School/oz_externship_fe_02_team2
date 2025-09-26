@@ -10,6 +10,8 @@ import LoginPage from '@/pages/auth/LoginPage'
 
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import UsersManagePage from '@/pages/admin/UserManage'
+import CourseManagementTest from '@/pages/admin/CourseManagement'
+import ReviewManagement from '@/pages/admin/Review'
 
 // TODO: 로그인 O -> MainPage && 로그인 X -> LoginPage 라우팅 가드
 
@@ -28,9 +30,10 @@ export default function TestRoutes() {
           <Route path={PATHS.WITHDRAWAL} element={<PlaceHolderPage />} />
           <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
 
-          <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
+          <Route path={PATHS.LECTURE} element={<CourseManagementTest />} />
           <Route path={PATHS.STUDYGROUP} element={<PlaceHolderPage />} />
-          <Route path={PATHS.REVIEW} element={<PlaceHolderPage />} />
+          {/* ✅ 리뷰 관리 페이지 연결 */}
+          <Route path={PATHS.REVIEW} element={<ReviewManagement />} />
 
           <Route path={PATHS.POST} element={<PlaceHolderPage />} />
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
