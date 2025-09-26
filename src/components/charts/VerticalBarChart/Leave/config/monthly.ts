@@ -1,5 +1,6 @@
 import type { ChartData } from 'chart.js'
 
+// TODO: API 받아와서 맞추기
 const MONTHLY_LEAVE_LABELS = [
   '01월',
   '02월',
@@ -16,11 +17,13 @@ const MONTHLY_LEAVE_LABELS = [
 ]
 
 export const MONTHLY_LEAVE_DATA: ChartData<'bar'> = {
+  // TODO: API 받아와서 맞추기
   labels: MONTHLY_LEAVE_LABELS,
   datasets: [
     {
       label: '회원탈퇴 인원 수',
-      data: [12, 20, 18, 30, 24, 19, 22, 27, 33, 20, 16, 29],
+      // TODO: API 받아와서 맞추기
+      data: [2, 1, 3, 4, 2, 1, 3, 2, 4, 3, 1, 2],
       backgroundColor: '#EF4444',
       borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
       borderSkipped: false,
