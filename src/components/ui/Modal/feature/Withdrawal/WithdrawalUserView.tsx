@@ -22,7 +22,7 @@ function WithdrawalUserViewBase({ form }: Props) {
           {/* 상단 프로필 */}
           <div className="mb-5 flex items-center gap-4">
             <img
-              src={form.avatarUrl || 'https://placehold.co/80x80?text=👤'}
+              src={form.profile_img_url || 'https://placehold.co/80x80?text=👤'}
               alt={`${form.name ?? ''} 프로필 이미지`}
               className="size-20 rounded-full object-cover"
             />
@@ -60,7 +60,7 @@ function WithdrawalUserViewBase({ form }: Props) {
             />
             <Field
               label="권한"
-              value={form.role ?? ''}
+              value={form.permission ?? ''}
               editing={false}
               onChange={() => {}}
             />
@@ -72,7 +72,7 @@ function WithdrawalUserViewBase({ form }: Props) {
             />
             <Field
               label="회원가입 일시"
-              value={formatDateTime(form.joinedAt)}
+              value={formatDateTime(form.user_joined_at)}
               editing={false}
               onChange={() => {}}
             />

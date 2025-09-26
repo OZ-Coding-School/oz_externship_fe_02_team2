@@ -49,3 +49,9 @@ export const studyToTone: Record<StudyGroupRow['status'], Tone> = {
   진행중: 'green',
   종료됨: 'gray',
 }
+
+export const cusToTone: Record<string,Tone> = {
+  초급: 'green',
+  중급: 'yellow',
+  상급: 'red'
+}

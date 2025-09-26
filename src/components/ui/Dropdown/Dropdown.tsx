@@ -146,7 +146,6 @@ export default function Dropdown({
         type="button"
         disabled={disabled}
         aria-haspopup="listbox"
-        aria-expanded={open}
         aria-controls={listId}
         className={cn(
           BUTTON_BASE,

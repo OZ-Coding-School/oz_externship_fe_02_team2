@@ -1,16 +1,50 @@
 import { useCallback, useState } from 'react'
 import { useTableFilters } from '@/hooks/useTableFilters'
-import UsersTable from '@/components/table/feature/Users/UsersTable'
-import UserDetail from '@/components/ui/Modal/feature/User/UserDetail'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
-import type { UserDetail as UserDetailType } from '@/components/ui/Modal/feature/User/User.types'
-import type { UserRow } from '@/components/table/Table.types'
-import type { TableQuery } from '@/types/table'
+import type { WithdrawalRow } from '@/components/table/Table.types'
 import type { SortOrder } from '@/mocks/utils'
-import { getUserDetail, getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
-import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
+import type { WithdrawalDetail } from '@/components/ui/Modal/feature/Withdrawal/Withdrawal.types'
+import {
+  getWithdrawalDetail,
+  getWithdrawals,
+  type WithdrawalListItem,
+} from '@/api/modules/withdrawals'
+import WithdrawalsTable from '@/components/table/feature/Withdrawals/withdrawalsTable'
+import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
+import WithdrawalsFilterBar from '@/components/table/feature/Withdrawals/WithdrawalsFilterBar'
+import type { EnhancedQueryChangeHandlers, EnhancedTableQuery } from '@/types'
+
+// 권한 번역 함수
+function translatePermission(permission: string): string {
+  const permissionMap: Record<string, string> = {
+    admin: '관리자',
+    staff: '스태프',
+    general: '일반회원',
+  }
+  return permissionMap[permission] || permission
+}
+
+// 탈퇴 사유 번역 함수
+function translateWithdrawalReason(reason: string): string {
+  const reasonMap: Record<string, string> = {
+    SERVICE_DISSATISFACTION: '서비스 불만족',
+    PRIVACY_CONCERN: '개인정보 우려',
+    LOW_USAGE: '사용 빈도 낮음',
+    COMPETITOR_SERVICE: '경쟁 서비스 이용',
+    OTHER: '기타',
+    // 기존 영어 사유들도 지원 (호환성)
+    NO_LONGER_NEEDED: '사용 빈도 낮음',
+    LACK_OF_INTEREST: '사용 빈도 낮음',
+    TOO_DIFFICULT: '서비스 불만족',
+    FOUND_BETTER_SERVICE: '경쟁 서비스 이용',
+    POOR_SERVICE_QUALITY: '서비스 불만족',
+    TECHNICAL_ISSUES: '서비스 불만족',
+    LACK_OF_CONTENT: '서비스 불만족',
+  }
+  return reasonMap[reason] || reason
+}
 
 // 상태 번역 함수
 function translateWithdrawalStatus(status: string): string {
@@ -23,38 +57,35 @@ function translateWithdrawalStatus(status: string): string {
 }
 
 // API 응답 → 테이블 로우 매핑
-function mapToRow(u: UserDetailType): UserRow {
+function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   return {
-    memberId: u.id,
-    email: u.email,
-    nickname: u.nickname ?? '',
-    name: u.name,
-    birth: u.birth ?? '',
-    role: u.role ?? '',
-    status: translateWithdrawalStatus(u.status ?? '활성') as UserRow['status'],
-    joinedAt: u.joinedAt ?? '',
-    withdrawnAt: null,
+    id: w.id,
+    email: w.email,
+    name: w.name,
+    permission: translatePermission(w.permission ?? ''),
+    // 생년월일 처리 - null이나 undefined면 빈 문자열로
+    birthday: (('birthday' in w ? w.birthday : undefined) ?? '') || '',
+    reason: translateWithdrawalReason(w.reason ?? ''),
+    created_at: w.created_at ?? '',
   }
 }
 
-// 정렬 키 매핑
+// 정렬 키 매핑 ( 프론트: 서버 )
 const SORT_KEY_MAP: Record<string, string> = {
-  memberId: 'id',
+  withdrawalRequestId: 'id',
   email: 'email',
-  nickname: 'nickname',
   name: 'name',
-  birth: 'birth',
-  role: 'role',
-  status: 'status',
-  joinedAt: 'joinedAt',
-  withdrawnAt: 'withdrawnAt',
+  role: 'permission',
+  birthday: 'birthday',
+  withdrawalReason: 'reason',
+  created_at: 'created_at',
 }
 
-export default function UserManagePage() {
+export default function UserWithdrawalPage() {
   const { triggerToast } = useToast()
 
   // 테이블 데이터 상태
-  const [tableData, setTableData] = useState<UserRow[]>([])
+  const [tableData, setTableData] = useState<WithdrawalRow[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -62,15 +93,15 @@ export default function UserManagePage() {
 
   // 모달 상태
   const [modalState, setModalState] = useState({
-    detailId: null as string | null,
-    detail: null as UserDetailType | null,
+    detailId: null as number | null,
+    detail: null as WithdrawalDetail | null,
     detailLoading: false,
     detailError: null as string | null,
   })
 
   // 서버에서 사용자 데이터 로드
   const loadTableData = useCallback(
-    async (query: TableQuery) => {
+    async (query: EnhancedTableQuery) => {
       setLoading(true)
       setError(null)
 
@@ -78,7 +109,7 @@ export default function UserManagePage() {
         // 정렬 파라미터 변환
         const sortBy = query.sortBy
           ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
-          : 'joinedAt'
+          : 'created_at'
         const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
 
         const q = (query.search ?? '').trim()
@@ -89,12 +120,12 @@ export default function UserManagePage() {
           pageSize: query.pageSize,
           sortBy,
           sortOrder,
-          ...(q && { q }), // ← 바뀐 부분
-          ...(query.status && { status: query.status }),
-          ...(query.role && { role: query.role }),
+          ...(q && { q }),
+          ...(query.reason && { reason: query.reason }),
+          ...(query.role && { permission: query.role }),
         }
 
-        const data = await getUsers(apiParams, { mock: false })
+        const data = await getWithdrawals(apiParams, { mock: true })
 
         setTableData(data.items.map(mapToRow))
         setTotal(data.total)
@@ -120,9 +151,9 @@ export default function UserManagePage() {
       page: 1,
       pageSize: 10,
       search: '',
-      status: undefined,
+      reason: undefined,
       role: undefined,
-      sortBy: 'joinedAt',
+      sortBy: 'created_at',
       sortDir: 'desc',
     },
     syncUrl: true,
@@ -164,8 +195,8 @@ export default function UserManagePage() {
   )
 
   // 모달 열기 (상세 데이터 로드)
-  const openUserDetail = useCallback(
-    async (userId: string) => {
+  const openWithdrawalDetail = useCallback(
+    async (userId: number) => {
       setModalState((prev) => ({
         ...prev,
         detailId: userId,
@@ -175,13 +206,16 @@ export default function UserManagePage() {
       }))
 
       try {
-        const userData = await getUserDetail(userId, { mock: true })
+        const userData = await getWithdrawalDetail(userId, { mock: true })
 
-        // 모달 표시 데이터도 번역
+        // 모달에 표시할 데이터도 번역 처리
         const translatedUserData = {
           ...userData,
+          permission: translatePermission(userData.permission),
+          reason: translateWithdrawalReason(userData.reason),
           status: translateWithdrawalStatus(userData.status),
         }
+
         setModalState((prev) => ({
           ...prev,
           detail: translatedUserData,
@@ -215,53 +249,23 @@ export default function UserManagePage() {
     })
   }, [])
 
-  // 유저 업데이트 핸들러
-  const handleUserUpdated = useCallback(
-    (updatedUser: UserDetailType) => {
-      setTableData((prev) =>
-        prev.map((row) =>
-          row.memberId === updatedUser.id ? mapToRow(updatedUser) : row
-        )
-      )
-
-      setModalState((prev) => ({
-        ...prev,
-        detail: prev.detail?.id === updatedUser.id ? updatedUser : prev.detail,
-      }))
-
-      triggerToast(
-        'success',
-        '업데이트 완료',
-        '회원 정보가 성공적으로 업데이트되었습니다.'
-      )
-    },
-    [triggerToast]
-  )
-
-  // 유저 삭제 핸들러
-  const handleUserDeleted = useCallback(
-    (deletedUserId: string) => {
-      setTableData((prev) =>
-        prev.map((row) =>
-          row.memberId === deletedUserId
-            ? { ...row, status: '비활성' as const }
-            : row
-        )
-      )
-
-      closeDetail()
-      triggerToast('success', '삭제 완료', '회원이 비활성화되었습니다.')
-    },
-    [closeDetail, triggerToast]
-  )
-
   // 테이블 로우 클릭 핸들러
   const handleRowClick = useCallback(
-    (row: UserRow) => {
-      void openUserDetail(row.memberId)
+    (row: WithdrawalRow) => {
+      void openWithdrawalDetail(row.id)
     },
-    [openUserDetail]
+    [openWithdrawalDetail]
   )
+
+  // 쿼리 변경 핸들러
+  const enhancedOnQueryChange: EnhancedQueryChangeHandlers = {
+    ...tableFilters.onQueryChange,
+    setWithdrawalReason: (reason) => {
+      const newQuery = { ...tableFilters.query, reason: reason }
+      tableFilters.updateQuery(newQuery)
+      loadTableData(newQuery)
+    },
+  }
 
   // 새로고침 핸들러
   const refreshTable = useCallback(() => {
@@ -330,7 +334,7 @@ export default function UserManagePage() {
         <button
           className="btn btn-primary"
           onClick={() =>
-            modalState.detailId && openUserDetail(modalState.detailId)
+            modalState.detailId && openWithdrawalDetail(modalState.detailId)
           }
         >
           다시 시도
@@ -343,7 +347,7 @@ export default function UserManagePage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">유저 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">탈퇴 관리</h1>
       </div>
 
       {/* 에러 알림 */}
@@ -384,9 +388,9 @@ export default function UserManagePage() {
       {/* 테이블 */}
       <div className="rounded-lg bg-white shadow">
         {/* 필터 바 */}
-        <UsersFilterBar
-          query={tableFilters.query}
-          onQueryChange={tableFilters.onQueryChange}
+        <WithdrawalsFilterBar
+          query={tableFilters.query as EnhancedTableQuery}
+          onQueryChange={enhancedOnQueryChange}
           density="compact" // 밀도 낮추기
           tone="elevated" // 살짝 떠 보이는 톤
           stickyTop={64} // 상단 64px 고정 (예: 헤더 높이)
@@ -395,11 +399,11 @@ export default function UserManagePage() {
         >
           {/* 오른쪽/아래쪽에 붙일 유저 전용 컨트롤들 */}
           {/* <button className="btn btn-primary btn-sm ml-auto">일괄 처리</button> */}
-        </UsersFilterBar>
+        </WithdrawalsFilterBar>
       </div>
       <div className="mt-7">
         {/* 테이블 */}
-        <UsersTable
+        <WithdrawalsTable
           rows={tableData}
           total={total}
           loading={loading}
@@ -419,12 +423,11 @@ export default function UserManagePage() {
           {!modalState.detailLoading &&
             !modalState.detailError &&
             modalState.detail && (
-              <UserDetail
+              <WithdrawalModal
                 open
                 onClose={closeDetail}
                 data={modalState.detail}
-                onEdit={handleUserUpdated}
-                onDeletedWithId={handleUserDeleted}
+                //onRequestRestore={handleUserRestored}
               />
             )}
         </>
