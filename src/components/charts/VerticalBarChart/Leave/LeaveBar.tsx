@@ -8,6 +8,7 @@ type LeaveBarProps = {
 }
 
 export default function LeaveBar({ period }: LeaveBarProps) {
+  // TODO: 드롭다운 선택 바뀌면 쿼리 다르게 요청, 데이터 받아오기
   switch (period) {
     case 'MONTHLY':
       return <Bar options={COMMON_BAR_OPTIONS} data={MONTHLY_LEAVE_DATA} />

@@ -9,8 +9,8 @@ import {
 } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { Doughnut } from 'react-chartjs-2'
-import { labelLinePlugin } from './plugin'
-import { rightEdgeGridPlugin } from '../VerticalBarChart/plugin'
+import { labelLinePlugin } from './DoughnutChart.plugin'
+import { rightEdgeGridPlugin } from '../VerticalBarChart/VerticalBarChart.plugin'
 
 ChartJS.register(
   ArcElement,
