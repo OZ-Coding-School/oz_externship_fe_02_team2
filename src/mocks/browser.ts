@@ -1,4 +1,12 @@
 import { setupWorker } from 'msw/browser'
-import { usersHandlers, withdrawalHandlers } from './handlers'
+import {
+  usersHandlers,
+  withdrawalHandlers,
+  studyGroupHandlers,
+} from './handlers'
 
-export const worker = setupWorker(...usersHandlers, ...withdrawalHandlers)
+export const worker = setupWorker(
+  ...usersHandlers,
+  ...withdrawalHandlers,
+  ...studyGroupHandlers
+)

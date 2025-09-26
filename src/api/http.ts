@@ -46,7 +46,21 @@ export const http: AxiosInstance = axios.create({
 
 // 요청 인터셉터: 필요 시 관리자 키/토큰 등 삽입
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // 예) config.headers.set('X-ADMIN-KEY', '...')  // AxiosHeaders 사용 시
+  //config.headers.set('X-ADMIN-KEY', '...')  // AxiosHeaders 사용 시
+  // 실서버로 나갈 때는 x-bypass-mock 제거
+  const url = (config.baseURL ?? '') + (config.url ?? '')
+  const isProdApi = url.includes('api.ozcoding.site')
+
+  if (isProdApi) {
+    // 헤더 키 대/소문자 혼재 대비
+    delete (config.headers as any)['x-bypass-mock']
+    delete (config.headers as any)['X-Bypass-Mock']
+  }
+  const token = localStorage.getItem('access_token') // 로그인 시 저장해둔 값
+  if (token) {
+    config.headers = config.headers ?? {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
   return config
 })
 

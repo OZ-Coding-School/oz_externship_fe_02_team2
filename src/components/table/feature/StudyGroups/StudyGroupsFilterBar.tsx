@@ -4,7 +4,7 @@ import { TableFilterBar } from '../TableFilterBar'
 import { cn } from '@/lib/cn'
 
 /** 유저 전용 필터바: 미세 CSS/여백/톤 조절용 래퍼 */
-export type UsersFilterBarProps = {
+export type StudyGroupsFilterBarProps = {
   /** 상위에서 관리되는 쿼리 상태 */
   query: TableQuery
   /** 상위에서 내려주는 쿼리 변경 핸들러 */
@@ -33,24 +33,18 @@ export type UsersFilterBarProps = {
 /** 유저 도메인 기본 옵션 */
 const defaultUsersConfig: TableFilterConfig = {
   mode: 'server',
-  searchPlaceholder: '이름, 닉네임, 이름, ID 검색...',
+  searchPlaceholder: '그룹명 검색...',
   statusPlaceholder: '전체',
-  rolePlaceholder: '전체',
   statusOptions: [
-    { label: '활성', value: 'active' },
-    { label: '비활성', value: 'inactive' },
-    { label: '탈퇴요청', value: 'withdrawn' },
-  ],
-  roleOptions: [
-    { label: '관리자', value: '관리자' },
-    { label: '스태프', value: '스태프' },
-    { label: '일반회원', value: '일반회원' },
+    { label: '진행중', value: '진행중' },
+    { label: '대기중', value: '대기중' },
+    { label: '종료됨', value: '종료됨' },
   ],
   debounceMs: 200,
 }
 
 /** tone별 외곽 스타일 */
-function toneBox(tone: UsersFilterBarProps['tone']) {
+function toneBox(tone: StudyGroupsFilterBarProps['tone']) {
   switch (tone) {
     case 'soft':
       return 'bg-gray-50 border-gray-200'
@@ -63,7 +57,7 @@ function toneBox(tone: UsersFilterBarProps['tone']) {
 }
 
 /** density별 padding/높이 조절 */
-function densityBox(density: UsersFilterBarProps['density']) {
+function densityBox(density: StudyGroupsFilterBarProps['density']) {
   if (density === 'compact') {
     // 입력/버튼들이 조금 더 낮은 높이를 갖도록 wrapper만 타이트하게
     return 'p-2 sm:p-3 [&_.btn]:h-9 [&_input]:h-9'
@@ -71,7 +65,7 @@ function densityBox(density: UsersFilterBarProps['density']) {
   return 'p-3 sm:p-4'
 }
 
-export default function UsersFilterBar({
+export default function StudyGroupsFilterBar({
   query,
   onQueryChange,
   config,
@@ -80,7 +74,7 @@ export default function UsersFilterBar({
   stickyTop,
   tone = 'neutral',
   className,
-}: UsersFilterBarProps) {
+}: StudyGroupsFilterBarProps) {
   const mergedConfig: TableFilterConfig = {
     ...defaultUsersConfig,
     ...config,
@@ -105,13 +99,14 @@ export default function UsersFilterBar({
           densityBox(density)
         )}
         showLabels
-        labels={{ search: '검색', status: '상태', role: '권한' }}
+        labels={{ search: '검색', status: '스터디 상태' }}
         showFilters={{
           search: true,
           status: true,
-          role: true,
+          role: false,
           reason: false, // 사용자 관리에서는 탈퇴사유 숨김
         }}
+        gridColumns={3}
       >
         {/* 하단 커스텀 영역: 필요 시 버튼/토글/설명 배치 */}
         {children}

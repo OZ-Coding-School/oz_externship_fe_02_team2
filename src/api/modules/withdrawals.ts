@@ -120,7 +120,7 @@ function buildServerParams(
 
 /* ------------------ 엔드포인트 ------------------ */
 /** 프로젝트 내 URL 컨벤션 유지(Users와 맞춤) */
-const BASE = '/admin/withdrawals'
+const BASE = '/v1/admin/withdrawals'
 
 /** 목록(듀얼 모드) */
 export async function getWithdrawals(
