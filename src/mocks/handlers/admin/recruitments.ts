@@ -1,11 +1,15 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
 import { BASE_PATH, like, paginate, sortByKey, toInt } from '@/mocks/utils'
-import recruitmentsHandlers from '@/mocks/seeds/recruitment.seed'
+import {
+  recruitmentsDb,
+  type RecruitmentRow,
+} from '@/mocks/seeds/recruitment.seed'
 
 const V1 = `${BASE_PATH}/v1`
 const LEGACY = `${BASE_PATH}`
+
+// 한 번만 초기화
+recruitmentsDb.init()
 
 /** 고정 태그 풀 (id/name 매핑용) */
 const TAG_POOL: { id: string; name: string }[] = [
@@ -43,7 +47,7 @@ type ListItem = {
   title: string
   img: string | null
   expected_headcount: number
-  tags: string[] // 목록 응답은 문자열 배열 유지
+  tags: string[] // 목록 응답은 문자열 배열 유지(표시는 name)
   close_at: string | null
   views_count: number
   bookmarks_count: number
@@ -55,41 +59,26 @@ type ListItem = {
 const isClosed = (iso: string | null) =>
   iso ? new Date(iso).getTime() < Date.now() : false
 
-const normalizeTagParam = (tag: string): { id: string; name: string } => {
-  const hit = TAG_POOL.find((t) => t.id === tag || t.name === tag)
-  if (hit) return hit
-  // seeds에 name만 들어있고 param이 id로 들어올 수도 있으므로 양쪽 다 시도
-  return { id: tag, name: tag }
-}
-
-// seed -> 목록 아이템
-function toListItem(seed: any): ListItem {
-  const closeAtISO = seed.close_at
-    ? new Date(seed.close_at).toISOString()
-    : seed.deadline
-      ? new Date(seed.deadline).toISOString()
-      : null
-
-  const closed = isClosed(closeAtISO)
-
+// DB row -> 목록 아이템(태그를 name 문자열로 통일)
+function rowToListItem(row: RecruitmentRow): ListItem {
+  const closeAtISO = row.close_at ? new Date(row.close_at).toISOString() : null
+  const tagsAsNames = (row.tags ?? []).map((t) => {
+    const hit = TAG_POOL.find((x) => x.id === t || x.name === t)
+    return hit ? hit.name : String(t)
+  })
   return {
-    id: Number(seed.id),
-    uuid: seed.uuid ?? String(seed.id),
-    title: seed.title,
-    img: seed.img ?? 'https://picsum.photos/seed/oz-recruit/640/360',
-    expected_headcount: Number(seed.expected_headcount ?? 5),
-    // seed.tags가 문자열/객체 혼재 가능 → 문자열(name) 배열로 통일
-    tags: (seed.tags ?? []).map((t: any) => t.name ?? String(t)),
+    id: Number(row.id),
+    uuid: row.uuid,
+    title: row.title,
+    img: row.img ?? 'https://picsum.photos/seed/oz-recruit/640/360',
+    expected_headcount: Number(row.expected_headcount ?? 5),
+    tags: tagsAsNames,
     close_at: closeAtISO,
-    views_count: Number(seed.views_count ?? 0),
-    bookmarks_count: Number(seed.bookmarks_count ?? 0),
-    created_at: seed.created_at
-      ? new Date(String(seed.created_at).replace(' ', 'T')).toISOString()
-      : new Date().toISOString(),
-    updated_at: seed.updated_at
-      ? new Date(String(seed.updated_at).replace(' ', 'T')).toISOString()
-      : null,
-    status: closed ? 'CLOSED' : 'OPEN',
+    views_count: Number(row.views_count ?? 0),
+    bookmarks_count: Number(row.bookmarks_count ?? 0),
+    created_at: row.created_at,
+    updated_at: row.updated_at ?? null,
+    status: isClosed(closeAtISO) ? 'CLOSED' : 'OPEN',
   }
 }
 
@@ -98,7 +87,7 @@ function mapOrdering(ordering?: string | null): {
   desc?: boolean
 } {
   if (!ordering || ordering === '' || ordering === 'undefined') {
-    return { key: 'created_at', desc: true } // 기본: 최신순
+    return { key: 'created_at', desc: true }
   }
   const desc = ordering.startsWith('-')
   const key = desc ? ordering.slice(1) : ordering
@@ -114,20 +103,17 @@ function listResponse(url: URL, opts?: { excludeClosed?: boolean }) {
   const status = (url.searchParams.get('status') || 'ALL').toUpperCase()
   const isClosedParam = url.searchParams.get('is_closed')
 
-  let rows = recruitmentsHandlers.map(toListItem)
+  // ✅ 항상 DB에서 가져오기
+  let rows = recruitmentsDb.rows.map(rowToListItem)
 
-  // 공개 목록은 기본적으로 마감된 공고 제외 (스펙)
-  if (opts?.excludeClosed) {
-    rows = rows.filter((r) => r.status === 'OPEN')
-  }
-
+  if (opts?.excludeClosed) rows = rows.filter((r) => r.status === 'OPEN')
   if (q) rows = rows.filter((r) => like(r.title, q))
 
   if (tagParam) {
-    const { id, name } = normalizeTagParam(tagParam)
-    rows = rows.filter(
-      (r) => r.tags.includes(name) || r.tags.includes(id) // id/name 모두 허용
-    )
+    const hit = TAG_POOL.find((t) => t.id === tagParam || t.name === tagParam)
+    const name = hit ? hit.name : tagParam
+    const id = hit ? hit.id : tagParam
+    rows = rows.filter((r) => r.tags.includes(name) || r.tags.includes(id))
   }
 
   if (status === 'OPEN') rows = rows.filter((r) => r.status === 'OPEN')
@@ -185,16 +171,13 @@ export const recruitmentHandlers = [
     return HttpResponse.json(body)
   }),
 
-  // 태그 목록: 고정 태그 풀 반환
+  // 태그 목록
   ...pair('get', '/recruitments/tags', async ({ request }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
     await delay(60)
-    // id/name 보장 + 정렬(가독)
     const tags = TAG_POOL.map((t) => ({ id: t.id, name: t.name })).sort(
       (a, b) => a.name.localeCompare(b.name)
     )
     return HttpResponse.json(tags)
   }),
 ]
-
-// ⛔️ 여기(핸들러 파일)에 axios/fetch 호출 함수 넣지 말 것
