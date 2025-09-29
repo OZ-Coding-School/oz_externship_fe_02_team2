@@ -41,14 +41,17 @@ export default function ApplyToStudyDetailView({
   return (
     <>
       <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
-        <ApplyToStudyRecruitmentView form={form} />
+        {/* 왼쪽 칸: 섹션을 div로 감싸 '단일 그리드 아이템'으로 만든다 */}
+        <div>
+          <ApplyToStudyRecruitmentView form={form} />
+        </div>
+        {/* 오른쪽 칸은 이미 div로 감싸져 있어 OK */}
         <div>
           <ApplyToStudyUserView form={form} />
           <div className="my-4 border-b border-gray-200" />
           <ApplyToStudyInfoView form={form} />
         </div>
       </div>
-      <div className="border-b border-gray-200" />
     </>
   )
 }
