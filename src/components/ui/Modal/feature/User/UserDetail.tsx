@@ -65,7 +65,7 @@ export default function UserDetailModal({
       const updatedUser = await updateUserPermission(
         form.uuid,
         { permission: nextRole },
-        { mock: true }
+        { mock: false }
       )
 
       // 로컬 상태 업데이트
