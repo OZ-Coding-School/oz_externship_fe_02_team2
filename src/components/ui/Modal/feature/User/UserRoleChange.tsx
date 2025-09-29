@@ -10,8 +10,8 @@ type UserRoleProps = {
   open: boolean
   /** 현재 권한 */
   value: UserRole
-  /** 해당 롤 누를 시, 선택 권한 전달 */
-  onConfirm: (nextRole: UserRole) => void
+  /** 권한 변경 확정 (비동기 가능) */
+  onConfirm: (nextRole: UserRole) => Promise<void> | void
   /** 닫기 */
   onClose: () => void
   /** 저장 중 로딩 상태 */
@@ -65,10 +65,12 @@ export default function UserRoleChange({
                   isSelected ? ROLE_SELECTED.selected : ROLE_SELECTED.default
                 )}
                 disabled={confirming}
-                onClick={() => {
+                onClick={async () => {
                   setSelected(roleValue)
-                  onConfirm(roleValue)
-                  onClose()
+                  // onConfirm이 완료될 때까지 대기
+                  await Promise.resolve(onConfirm(roleValue))
+                  // onConfirm이 성공한 후에만 닫기
+                  // onClose()는 여기서 호출하지 않음 (부모에서 처리)
                 }}
               />
             )

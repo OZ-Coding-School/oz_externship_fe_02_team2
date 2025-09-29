@@ -6,7 +6,7 @@ import UserDelete from './UserDelete'
 import type { UserDetail } from '../../../../../types/User.types'
 import UserDetailView from './UserDetailView'
 import { useToast } from '@/hooks'
-import { updateUserPermission } from '@/api/modules/users'
+import { getUserDetail, updateUserPermission } from '@/api/modules/users'
 import { useUserFormHandlers } from './useUserFormHandlers'
 
 interface UserDetailModalProps {
@@ -52,34 +52,36 @@ export default function UserDetailModal({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [roleChanging, setRoleChanging] = useState(false)
 
-  // data prop이 바뀔 때 form 동기화
+  // data prop이 바뀔 때만 form 동기화 (editing 중이 아닐 때만)
   useEffect(() => {
-    resetForm(data)
-  }, [data, resetForm])
+    if (!editing) {
+      resetForm(data)
+    }
+  }, [data, editing, resetForm])
 
   // 권한 변경 처리
   const handleRoleChange = async (nextRole: UserRole) => {
     setRoleChanging(true)
     try {
-      // 실제 API 호출을 통한 권한 변경
-      const updatedUser = await updateUserPermission(
+      await updateUserPermission(
         form.uuid,
         { permission: nextRole },
-        { mock: true }
+        { mock: false }
       )
 
-      // 로컬 상태 업데이트
-      setForm(updatedUser)
+      // 최신 데이터 다시 조회
+      const latest = await getUserDetail(form.uuid, { mock: false })
 
-      // 부모 컴포넌트에 변경사항 알림
-      onEdit?.(updatedUser)
+      // 상태 업데이트
+      setForm(latest)
+      onEdit?.(latest)
 
-      // 성공 토스트
       triggerToast(
         'success',
         '권한 변경 완료',
         `권한이 ${nextRole}로 변경되었습니다.`
       )
+
       setRoleModalOpen(false)
     } catch (error) {
       console.error('권한 변경 실패:', error)

@@ -14,9 +14,9 @@ import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 // 상태 번역 함수
 function translateStatus(status: string): UserRow['status'] {
   const statusMap: Record<string, UserRow['status']> = {
-    ACTIVE: '활성',
-    INACTIVE: '비활성',
-    WITHDRAWN: '탈퇴요청',
+    활성화: '활성',
+    비활성화: '비활성',
+    탈퇴진행중: '탈퇴요청',
   }
   return statusMap[status] ?? '활성'
 }
@@ -272,7 +272,7 @@ export default function UserManagePage() {
       setTableData((prev) =>
         prev.map((row) =>
           row.memberId === deletedUserId
-            ? { ...row, status: '비활성' as const }
+            ? { ...row, status: '비활성화' as const }
             : row
         )
       )
