@@ -46,7 +46,7 @@ export const studyApplicationsHandlers = [
    * - sort: latest|oldest (기본 latest)
    * - q: 문자열 (공고명/닉네임/이메일 부분검색)
    */
-  http.get('/api/v1/admin/study-applications', ({ request }) => {
+  http.get('/api/v1/admin/studyassistance', ({ request }) => {
     studyAppsDb.init()
 
     const url = new URL(request.url)
@@ -65,7 +65,7 @@ export const studyApplicationsHandlers = [
    * 상세 조회
    * GET /api/v1/admin/study-applications/:id
    */
-  http.get('/api/v1/admin/study-applications/:id', ({ params }) => {
+  http.get('/api/v1/admin/studyassistance/:id', ({ params }) => {
     studyAppsDb.init()
     const id = String(params.id)
     const found = studyAppsDb.getById(id)
