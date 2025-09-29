@@ -97,12 +97,14 @@ export const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL1,
   timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 15000),
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // 쿠키 포함 (리프레시 토큰용)
 })
 
 export const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 15000),
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // 쿠키 포함
 })
 
 // ───────────────────────────────────────────────
@@ -120,11 +122,32 @@ function installInterceptors(instance: AxiosInstance) {
       delete (config.headers as any)['X-Bypass-Mock']
     }
 
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      config.headers = config.headers ?? {}
-      ;(config.headers as any).Authorization = `Bearer ${token}`
+    // 로그인/회원가입 등 인증이 필요 없는 엔드포인트 제외
+    const isAuthEndpoint =
+      config.url?.includes('/auth/email/login') ||
+      config.url?.includes('/auth/email/signup') ||
+      config.url?.includes('/auth/email/send-code') ||
+      config.url?.includes('/auth/email/verify') ||
+      config.url?.includes('/auth/phone/send-code') ||
+      config.url?.includes('/auth/phone/verify') ||
+      config.url?.includes('/auth/kakao/callback') ||
+      config.url?.includes('/auth/naver/callback')
+
+    // 인증이 필요한 엔드포인트에만 토큰 추가
+    if (!isAuthEndpoint) {
+      const token = localStorage.getItem('access_token')
+      if (token) {
+        config.headers.set('Authorization', `Bearer ${token}`)
+      }
     }
+
+    // 디버깅용 로그 (개발 중에만)
+    if (import.meta.env.DEV) {
+      console.log('Request URL:', finalUrl)
+      console.log('Is Auth Endpoint:', isAuthEndpoint)
+      console.log('Authorization:', config.headers.get('Authorization'))
+    }
+
     return config
   })
 
