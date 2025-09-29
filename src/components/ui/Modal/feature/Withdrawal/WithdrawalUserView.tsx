@@ -1,8 +1,9 @@
 import { formatDateTime } from '@/lib/datetime'
 import Field from '../../fields/Field'
 import Modal from '../../Modal'
-import type { WithdrawalDetail } from './Withdrawal.types'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
 import { memo } from 'react'
+import { translateGender } from '@/lib/userDisplayHelpers'
 
 type Props = {
   form: WithdrawalDetail
@@ -22,7 +23,7 @@ function WithdrawalUserViewBase({ form }: Props) {
           {/* 상단 프로필 */}
           <div className="mb-5 flex items-center gap-4">
             <img
-              src={form.profile_img_url || 'https://placehold.co/80x80?text=👤'}
+              src={form.profileImgUrl || 'https://placehold.co/80x80?text=👤'}
               alt={`${form.name ?? ''} 프로필 이미지`}
               className="size-20 rounded-full object-cover"
             />
@@ -42,7 +43,7 @@ function WithdrawalUserViewBase({ form }: Props) {
             />
             <Field
               label="성별"
-              value={form.gender ?? '미기입'}
+              value={translateGender(form.gender ?? '미기입')}
               editing={false}
               onChange={() => {}}
             />
@@ -72,7 +73,7 @@ function WithdrawalUserViewBase({ form }: Props) {
             />
             <Field
               label="회원가입 일시"
-              value={formatDateTime(form.user_joined_at)}
+              value={formatDateTime(form.userJoinedAt)}
               editing={false}
               onChange={() => {}}
             />
