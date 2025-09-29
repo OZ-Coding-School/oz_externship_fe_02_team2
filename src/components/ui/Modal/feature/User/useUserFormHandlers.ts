@@ -88,9 +88,28 @@ export function useUserFormHandlers(
         serverPatch.profile_img_url = patch.profileImgUrl
       }
 
-      // status 매핑: 한글 그대로 서버로 전송 (서버가 '활성화' 형식으로 받음)
+      // status 매핑: API 스키마에 따르면 소문자 영문으로 전송
       if ('status' in patch && !readOnlyFields.includes('status')) {
-        serverPatch.status = patch.status
+        const statusValue = patch.status as string
+
+        // 한글 → 영문 변환 (API 스키마: 'active' | 'inactive')
+        const statusMap: Record<string, string> = {
+          활성: 'active',
+          비활성: 'inactive',
+          탈퇴요청: 'inactive', // WITHDRAWN은 enum에 없으므로 inactive로 처리
+          ACTIVE: 'active',
+          INACTIVE: 'inactive',
+          WITHDRAWN: 'inactive',
+          active: 'active',
+          inactive: 'inactive',
+        }
+
+        serverPatch.status = statusMap[statusValue] ?? statusValue
+
+        console.log('🔍 Status 변환:', {
+          원본: statusValue,
+          서버전송값: serverPatch.status,
+        })
       }
 
       console.log('📤 서버로 전송할 데이터:', serverPatch)
