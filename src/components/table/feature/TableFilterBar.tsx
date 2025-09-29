@@ -3,6 +3,7 @@ import type {
   EnhancedTableQuery,
   EnhancedTableFilterConfig,
   EnhancedQueryChangeHandlers,
+  FilterVisibilityOptions,
 } from '@/types/table'
 import { XIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
@@ -109,6 +110,7 @@ export function TableFilterBar({
     () => withAllOption(roleOptions, '전체'),
     [roleOptions]
   )
+
   const withdrawalDropdownOptions = useMemo(
     () => withAllOption(withdrawalReasonOptions, '전체'),
     [withdrawalReasonOptions]
@@ -176,93 +178,125 @@ export function TableFilterBar({
       aria-label="테이블 필터"
     >
       <div className="hidden items-end gap-4 sm:flex">
-
         {/* 동적 그리드 레이아웃 */}
         <div className={cn('grid w-full flex-1 gap-4 pb-2', gridCols)}>
           {/* 검색 */}
-          <div>
-            {showLabels && (
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                {labels.search ?? '검색'}
-              </label>
-            )}
-            <div className="relative">
-              <Input
-                ref={inputRef}
-                type="text"
-                value={draft}
-                onChange={onChange}
-                onKeyDown={handleKeyDown}
-                onCompositionEnd={(e) =>
-                  onQueryChange.setSearch(
-                    (e.currentTarget as HTMLInputElement).value,
-                    false
-                  )
-                }
-                onBlur={(e) =>
-                  commitNow((e.currentTarget as HTMLInputElement).value)
-                }
-                placeholder={searchPlaceholder}
-                enterKeyHint="search"
-                leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
-                size="md"
-                className="w-full pr-10"
-                aria-label="검색어 입력"
-              />
-              {draft && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  aria-label="검색어 지우기"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
+          {showFilters.search && (
+            <div>
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.search ?? '검색'}
+                </label>
               )}
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  value={draft}
+                  onChange={onChange}
+                  onKeyDown={handleKeyDown}
+                  onCompositionEnd={(e) =>
+                    onQueryChange.setSearch(
+                      (e.currentTarget as HTMLInputElement).value,
+                      false
+                    )
+                  }
+                  onBlur={(e) =>
+                    commitNow((e.currentTarget as HTMLInputElement).value)
+                  }
+                  placeholder={searchPlaceholder}
+                  enterKeyHint="search"
+                  leftIcon={<SearchIcon className="h-4 w-4 text-gray-400" />}
+                  size="md"
+                  className="w-full border-gray-300 bg-gray-50 pr-10 transition-colors duration-200 focus:border-blue-500 focus:bg-white"
+                  aria-label="검색어 입력"
+                />
+                {draft && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    aria-label="검색어 지우기"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors duration-200 hover:text-gray-600"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* 탈퇴사유 */}
+          {showFilters.reason && (
+            <div className="w-full">
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.withdrawalReason ?? '탈퇴사유'}
+                </label>
+              )}
+              <div className="w-full">
+                <Dropdown
+                  options={withdrawalDropdownOptions}
+                  value={query.reason || ''}
+                  onChange={handleWithdrawalReasonChange}
+                  placeholder={withdrawalReasonPlaceholder}
+                  classes={{
+                    wrapper: 'w-full',
+                    button:
+                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
+                  }}
+                  aria-label="탈퇴사유 필터"
+                />
+              </div>
+            </div>
+          )}
 
           {/* 상태 */}
-          <div className="w-full">
-            {showLabels && (
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                {labels.status ?? '상태'}
-              </label>
-            )}
+          {showFilters.status && (
             <div className="w-full">
-              <Dropdown
-                options={statusDropdownOptions}
-                value={query.status || ''}
-                onChange={handleStatusChange}
-                placeholder={statusPlaceholder}
-                classes={{
-                  wrapper: 'w-full',
-                  button: 'w-full !min-w-0 !bg-gray-100',
-                }}
-                aria-label="상태 필터"
-              />
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.status ?? '상태'}
+                </label>
+              )}
+              <div className="w-full">
+                <Dropdown
+                  options={statusDropdownOptions}
+                  value={query.status || ''}
+                  onChange={handleStatusChange}
+                  placeholder={statusPlaceholder}
+                  classes={{
+                    wrapper: 'w-full',
+                    button:
+                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
+                  }}
+                  aria-label="상태 필터"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 권한 */}
-          <div className="w-full">
-            {showLabels && (
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                {labels.role ?? '권한'}
-              </label>
-            )}
+          {showFilters.role && (
             <div className="w-full">
-              <Dropdown
-                options={roleDropdownOptions}
-                value={query.role || ''}
-                onChange={handleRoleChange}
-                placeholder={rolePlaceholder}
-                classes={{
-                  wrapper: 'w-full',
-                  button: 'w-full !min-w-0 !bg-gray-100',
-                }}
-                aria-label="권한 필터"
-              />
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.role ?? '권한'}
+                </label>
+              )}
+              <div className="w-full">
+                <Dropdown
+                  options={roleDropdownOptions}
+                  value={query.role || ''}
+                  onChange={handleRoleChange}
+                  placeholder={rolePlaceholder}
+                  classes={{
+                    wrapper: 'w-full',
+                    button:
+                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
+                  }}
+                  aria-label="권한 필터"
+                />
+              </div>
             </div>
           )}
         </div>
@@ -306,31 +340,40 @@ export function TableFilterBar({
           mobileOpen ? 'block' : 'hidden'
         )}
       >
-        {statusDropdownOptions.length > 0 && (
+        {showFilters.reason && (
+          <Dropdown
+            options={withdrawalDropdownOptions}
+            value={query.reason || ''}
+            onChange={handleWithdrawalReasonChange}
+            placeholder={withdrawalReasonPlaceholder}
+            classes={{ button: 'w-full !bg-gray-50' }}
+            aria-label="탈퇴사유 필터(모바일)"
+          />
+        )}
+        {showFilters.status && statusDropdownOptions.length > 0 && (
           <Dropdown
             options={statusDropdownOptions}
             value={query.status || ''}
             onChange={handleStatusChange}
             placeholder={statusPlaceholder}
-            classes={{ button: 'w-full' }}
+            classes={{ button: 'w-full !bg-gray-50' }}
             aria-label="상태 필터(모바일)"
           />
         )}
-        {roleDropdownOptions.length > 0 && (
+        {showFilters.role && roleDropdownOptions.length > 0 && (
           <Dropdown
             options={roleDropdownOptions}
             value={query.role || ''}
             onChange={handleRoleChange}
             placeholder={rolePlaceholder}
-            classes={{ button: 'w-full' }}
+            classes={{ button: 'w-full !bg-gray-50' }}
             aria-label="권한 필터(모바일)"
           />
         )}
       </div>
-
       {children && (
-        <div className="mt-2 border-t border-gray-200 pt-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {children}
           </div>
         </div>
