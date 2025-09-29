@@ -58,7 +58,6 @@ const TAG_POOL = [
   'ml',
 ] as const
 
-const pick = <T>(arr: readonly T[]) => arr[Math.floor(rnd() * arr.length)]
 const pickN = <T>(arr: readonly T[], nMin = 1, nMax = 3) => {
   const n = Math.floor(rnd() * (nMax - nMin + 1)) + nMin
   const pool = [...arr]
