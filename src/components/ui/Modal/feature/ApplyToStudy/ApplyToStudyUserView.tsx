@@ -2,6 +2,7 @@ import Badge from '@/components/ui/Badge/Badge'
 import Modal from '../../Modal'
 import type { ApplyToStudyDetail } from './ApplyToStudy.types'
 import { formatYmdHms } from '@/lib'
+import { genderLabel } from '@/lib/label'
 
 function LabeledCard({
   label,
@@ -60,7 +61,9 @@ export default function ApplyToStudyUserView({
                 {u.nickname ?? '-'}
               </div>
               <div className="text-gray-500">{u.email ?? '-'}</div>
-              {u.gender && <div className="text-gray-500">{u.gender}</div>}
+              {u.gender && (
+                <div className="text-gray-500">{genderLabel(u.gender)}</div>
+              )}
             </div>
           </div>
 
