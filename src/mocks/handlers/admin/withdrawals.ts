@@ -1,66 +1,61 @@
+// ────────────────────────────────────────────────────────────────────────────
+// MSW Withdrawals Handlers - 최신 API 스키마 반영
+// OpenAPI Path: /api/v1/admin/withdrawals
+// ────────────────────────────────────────────────────────────────────────────
+
 /* eslint-disable no-console */
-import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
-import { ADMIN, like, paginate, sortByKey, toInt } from '../../utils'
+import { http, HttpResponse, delay, passthrough } from 'msw'
 import { withdrawalsDb } from '@/mocks/seeds/withdrawals.seed'
-
 import type {
-  WithdrawalListItem,
-  WithdrawalDetail,
-  WithdrawalsParams,
-} from '@/api/modules/withdrawals'
+  ServerWithdrawalListItem,
+  ServerWithdrawalDetail,
+  DjangoPageResponse,
+  PermissionType,
+} from '@/types/Withdrawal.types'
 
-interface RejectRequestBody {
-  reason?: string
+// ────────────────────────────────────────────────────────────────────────────
+// 설정
+// ────────────────────────────────────────────────────────────────────────────
+const BASE_URL = '/api/v1/admin/withdrawals'
+
+// ────────────────────────────────────────────────────────────────────────────
+// 타입 정의
+// ────────────────────────────────────────────────────────────────────────────
+interface QueryParams {
+  page?: number
+  page_size?: number
+  ordering?: string
+  search?: string
+  permission?: PermissionType
 }
 
-// DB 초기화
-withdrawalsDb.init()
+// ────────────────────────────────────────────────────────────────────────────
+// 유틸리티 함수
+// ────────────────────────────────────────────────────────────────────────────
 
-// DRF 스타일 파라미터를 FE 스타일로 변환
-function parseParams(url: URL): WithdrawalsParams {
-  // FE 스타일 파라미터 우선, DRF 스타일을 fallback으로 사용
-  const page = toInt(url.searchParams.get('page'), 1)
-  const pageSize = toInt(
-    url.searchParams.get('pageSize') || url.searchParams.get('page_size'),
-    20
-  )
-  const sortBy =
-    url.searchParams.get('sortBy') ||
-    parseOrderingField(url.searchParams.get('ordering'))
-  const sortOrder = (url.searchParams.get('sortOrder') ||
-    parseOrderingDirection(url.searchParams.get('ordering'))) as
-    | 'asc'
-    | 'desc'
+/**
+ * URL에서 쿼리 파라미터 추출
+ */
+function parseParams(url: URL): QueryParams {
+  const page = parseInt(url.searchParams.get('page') || '1', 10)
+  const page_size = parseInt(url.searchParams.get('page_size') || '20', 10)
+  const ordering = url.searchParams.get('ordering') || undefined
+  const search = url.searchParams.get('search') || undefined
+  const permission = (url.searchParams.get('permission') || undefined) as
+    | PermissionType
     | undefined
-  const q =
-    url.searchParams.get('q') || url.searchParams.get('search') || undefined
-  const permission = url.searchParams.get('permission') as string | undefined
 
-  // 탈퇴사유 파라미터 추가
-  const reason = url.searchParams.get('reason') as string | undefined
-
-  return { page, pageSize, sortBy, sortOrder, q, permission, reason }
+  return { page, page_size, ordering, search, permission }
 }
 
-// DRF ordering 파라미터 파싱
-function parseOrderingField(ordering: string | null): string | undefined {
-  if (!ordering) return undefined
-  return ordering.startsWith('-') ? ordering.slice(1) : ordering
-}
-
-function parseOrderingDirection(
-  ordering: string | null
-): 'asc' | 'desc' | undefined {
-  if (!ordering) return undefined
-  return ordering.startsWith('-') ? 'desc' : 'asc'
-}
-
-// WithdrawalDetail을 WithdrawalListItem으로 변환
-function toListItem(detail: WithdrawalDetail): WithdrawalListItem {
+/**
+ * Detail → ListItem 변환
+ */
+function toListItem(detail: ServerWithdrawalDetail): ServerWithdrawalListItem {
   return {
     id: detail.id,
-    name: detail.name,
     email: detail.email,
+    name: detail.name,
     permission: detail.permission,
     birthday: detail.birthday,
     reason: detail.reason,
@@ -68,240 +63,252 @@ function toListItem(detail: WithdrawalDetail): WithdrawalListItem {
   }
 }
 
-// 검색 및 필터링 함수
-function searchAndFilter(
-  withdrawals: WithdrawalDetail[],
-  params: WithdrawalsParams
-): WithdrawalDetail[] {
-  let results = [...withdrawals]
+/**
+ * 검색 기능 (이름, 이메일, 닉네임 검색)
+ */
+function searchFilter(
+  items: ServerWithdrawalDetail[],
+  searchTerm?: string
+): ServerWithdrawalDetail[] {
+  if (!searchTerm) return items
 
-  // 검색어 필터
-  if (params.q) {
-    results = results.filter((w) =>
-      like(`${w.name} ${w.email} ${w.nickname} ${w.id}`, params.q!)
-    )
-  }
-
-  // 권한 필터
-  if (params.permission) {
-    results = results.filter((w) => w.permission === params.permission)
-  }
-
-  // 탈퇴사유 필터링 로직 추가
-  if (params.reason) {
-    results = results.filter((w) => {
-      // 대소문자 구분 없이 비교
-      const reason = w.reason?.toLowerCase()
-      const filterReason = params.reason?.toLowerCase()
-      return reason === filterReason
-    })
-  }
-
-  return results
+  const term = searchTerm.toLowerCase()
+  return items.filter((item) => {
+    const searchableText =
+      `${item.name} ${item.email} ${item.nickname} ${item.id}`.toLowerCase()
+    return searchableText.includes(term)
+  })
 }
 
-export const withdrawalHandlers = [
-  // GET /api/admin/withdrawals - 목록 조회
-  mswHttp.get(`${ADMIN}/withdrawals`, async ({ request }) => {
-    // 바이패스 헤더가 있으면 실서버로 통과
-    if (request.headers.get('x-bypass-mock')) return passthrough()
+/**
+ * 권한 필터링
+ */
+function permissionFilter(
+  items: ServerWithdrawalDetail[],
+  permission?: PermissionType
+): ServerWithdrawalDetail[] {
+  if (!permission) return items
+  return items.filter((item) => item.permission === permission)
+}
 
+/**
+ * 정렬 (ordering 파라미터 기준)
+ * - 'created_at': 오래된순
+ * - '-created_at': 최신순 (기본값)
+ */
+function sortItems(
+  items: ServerWithdrawalDetail[],
+  ordering?: string
+): ServerWithdrawalDetail[] {
+  if (!ordering) return items
+
+  const isDescending = ordering.startsWith('-')
+  const field = isDescending ? ordering.slice(1) : ordering
+
+  return [...items].sort((a, b) => {
+    let aVal: unknown = a[field as keyof ServerWithdrawalDetail]
+    let bVal: unknown = b[field as keyof ServerWithdrawalDetail]
+
+    // 날짜 필드 처리
+    if (field === 'created_at' || field === 'user_joined_at') {
+      aVal = new Date(aVal as string).getTime()
+      bVal = new Date(bVal as string).getTime()
+    }
+
+    // 문자열 비교
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return isDescending ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal)
+    }
+
+    // 숫자 비교
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return isDescending ? bVal - aVal : aVal - bVal
+    }
+
+    return 0
+  })
+}
+
+/**
+ * DRF 스타일 페이지네이션
+ */
+function paginate<T>(
+  items: T[],
+  page: number,
+  pageSize: number,
+  baseUrl: string
+): DjangoPageResponse<T> {
+  const start = (page - 1) * pageSize
+  const end = start + pageSize
+  const results = items.slice(start, end)
+
+  const hasNext = end < items.length
+  const hasPrevious = page > 1
+
+  return {
+    count: items.length,
+    next: hasNext ? `${baseUrl}?page=${page + 1}` : null,
+    previous: hasPrevious ? `${baseUrl}?page=${page - 1}` : null,
+    results,
+  }
+}
+
+/**
+ * 바이패스 체크
+ */
+function shouldBypass(request: Request): boolean {
+  return request.headers.get('X-Mock-Bypass') === 'true'
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// MSW 핸들러
+// ────────────────────────────────────────────────────────────────────────────
+
+// DB 초기화
+withdrawalsDb.init()
+
+export const withdrawalHandlers = [
+  /**
+   * GET /api/v1/admin/withdrawals/ - 탈퇴 요청 목록 조회
+   */
+  http.get(`${BASE_URL}/`, async ({ request }) => {
+    if (shouldBypass(request)) return passthrough()
     await delay(150 + Math.random() * 100)
 
     const url = new URL(request.url)
     const params = parseParams(url)
 
-    console.log('🔍 [MSW] Withdrawals 요청 파라미터:', params)
+    // ✅ reason 파라미터 여러 이름 모두 지원
+    const reasonParam =
+      url.searchParams.get('reason') ??
+      url.searchParams.get('withdrawal_reason') ??
+      url.searchParams.get('reasonCode') ??
+      url.searchParams.get('withdrawalReason')
 
-    // 검색 및 필터링
-    let results = searchAndFilter(withdrawalsDb.withdrawals, params)
-
-    // 정렬
-    if (params.sortBy) {
-      results = sortByKey(
-        results as unknown as Record<string, unknown>[],
-        params.sortBy,
-        params.sortOrder || 'desc'
-      ) as unknown as WithdrawalDetail[]
+    // ✅ 코드/동의어 정규화
+    const canonReason = (v?: string | null) => {
+      if (!v) return ''
+      const x = v.toUpperCase().replace(/\s+/g, '_')
+      const alias: Record<string, string> = {
+        NO_LONGER_NEEDED: 'LOW_USAGE',
+        LACK_OF_INTEREST: 'LOW_USAGE',
+        TOO_DIFFICULT: 'SERVICE_DISSATISFACTION',
+        POOR_SERVICE_QUALITY: 'SERVICE_DISSATISFACTION',
+        TECHNICAL_ISSUES: 'SERVICE_DISSATISFACTION',
+        LACK_OF_CONTENT: 'SERVICE_DISSATISFACTION',
+        FOUND_BETTER_SERVICE: 'COMPETITOR_SERVICE',
+        // 한글 라벨 대비(옵션)
+        서비스_불만족: 'SERVICE_DISSATISFACTION',
+        개인정보_우려: 'PRIVACY_CONCERNS',
+        사용_빈도_낮음: 'LOW_USAGE',
+        경쟁_서비스_이용: 'COMPETITOR_SERVICE',
+      }
+      return alias[x] ?? x
     }
 
-    // 페이지네이션
-    const pageData = paginate(
-      results.map(toListItem),
+    console.log('📋 [MSW] GET /api/v1/admin/withdrawals/', {
+      ...params,
+      reasonParam,
+    })
+
+    // 검색/필터/정렬
+    let items = withdrawalsDb.withdrawals
+    items = searchFilter(items, params.search)
+    items = permissionFilter(items, params.permission)
+
+    // ✅ reason 필터 적용 (요청에 들어온 경우에만)
+    if (reasonParam) {
+      const want = canonReason(reasonParam)
+      items = items.filter((it: any) => canonReason(it.reason) === want)
+    }
+
+    // 정렬 (기본값: -created_at)
+    items = sortItems(items, params.ordering || '-created_at')
+
+    // 목록 아이템 변환 + 페이지네이션
+    const listItems = items.map(toListItem)
+    const response = paginate(
+      listItems,
       params.page || 1,
-      params.pageSize || 20
+      params.page_size || 10,
+      BASE_URL
     )
 
     console.log(
-      `[MSW] Withdrawals 목록 조회: ${results.length}개 결과, 페이지 ${pageData.page}/${pageData.totalPages}`
+      `✅ [MSW] Withdrawals 목록: ${response.count}개 (페이지 ${params.page})`
     )
-
-    return HttpResponse.json({
-      ...pageData,
-      sortBy: params.sortBy,
-      sortOrder: params.sortOrder,
-    })
+    return HttpResponse.json(response)
   }),
 
-  // GET /api/admin/withdrawals/:id - 상세 조회
-  mswHttp.get(`${ADMIN}/withdrawals/:id`, async ({ request, params }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
+  /**
+   * GET /api/v1/admin/withdrawals/{id}/ - 탈퇴 요청 상세 조회
+   */
+  http.get(`${BASE_URL}/:id/`, async ({ request, params }) => {
+    if (shouldBypass(request)) return passthrough()
 
     await delay(80 + Math.random() * 40)
 
-    const id = parseInt(params.id as string)
-    const found = withdrawalsDb.find(id)
+    const id = parseInt(params.id as string, 10)
+    const item = withdrawalsDb.find(id)
 
-    if (!found) {
-      console.log(`[MSW] Withdrawal ${id} not found`)
+    console.log(`🔍 [MSW] GET /api/v1/admin/withdrawals/${id}/`)
+
+    if (!item) {
+      console.log(`❌ [MSW] Withdrawal ${id} not found`)
       return HttpResponse.json(
-        { message: 'Withdrawal not found' },
+        { detail: 'Withdrawal not found' },
         { status: 404 }
       )
     }
 
-    console.log(`[MSW] Withdrawal ${id} 상세 조회:`, found.name)
-    return HttpResponse.json(found)
+    console.log(`✅ [MSW] Withdrawal ${id} 상세:`, item.name)
+    return HttpResponse.json(item)
   }),
 
-  // PATCH /api/admin/withdrawals/:id - 상태 변경 등
-  mswHttp.patch(`${ADMIN}/withdrawals/:id`, async ({ request, params }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
+  /**
+   * POST /api/v1/admin/withdrawals/{id}/restore/ - 탈퇴 회원 복구
+   */
+  http.post(`${BASE_URL}/:id/restore/`, async ({ request, params }) => {
+    if (shouldBypass(request)) return passthrough()
 
-    await delay(120 + Math.random() * 60)
+    await delay(150 + Math.random() * 50)
 
-    try {
-      const body = (await request.json()) as Partial<WithdrawalDetail>
-      const id = parseInt(params.id as string)
+    const id = parseInt(params.id as string, 10)
+    const item = withdrawalsDb.find(id)
 
-      const updated = withdrawalsDb.patch(id, body)
+    console.log(`🔄 [MSW] POST /api/v1/admin/withdrawals/${id}/restore/`)
 
-      if (!updated) {
-        console.log(`[MSW] Withdrawal ${id} not found for update`)
-        return HttpResponse.json(
-          { message: 'Withdrawal not found' },
-          { status: 404 }
-        )
-      }
-
-      console.log(`[MSW] Withdrawal ${id} 수정 완료:`, {
-        name: updated.name,
-        changes: Object.keys(body).join(', '),
-      })
-
-      return HttpResponse.json(updated)
-    } catch (error) {
-      console.error('[MSW] Withdrawal update error:', error)
+    if (!item) {
+      console.log(`❌ [MSW] Withdrawal ${id} not found`)
       return HttpResponse.json(
-        { message: 'Invalid request data' },
-        { status: 400 }
-      )
-    }
-  }),
-
-  // DELETE /api/admin/withdrawals/:id - 탈퇴 요청 취소/삭제
-  mswHttp.delete(`${ADMIN}/withdrawals/:id`, async ({ request, params }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(100 + Math.random() * 50)
-
-    const id = parseInt(params.id as string)
-    const found = withdrawalsDb.find(id)
-
-    if (!found) {
-      console.log(`[MSW] Withdrawal ${id} not found for deletion`)
-      return HttpResponse.json(
-        { message: 'Withdrawal not found' },
+        { detail: 'Withdrawal not found' },
         { status: 404 }
       )
     }
 
-    // 실제 삭제 대신 상태를 CANCELLED로 변경
-    withdrawalsDb.patch(id, { status: 'CANCELLED' })
+    // 상태를 'ACTIVE'로 변경하고 탈퇴 요청 삭제 (실제로는 DB에서 제거)
+    withdrawalsDb.remove(id)
 
-    console.log(`[MSW] Withdrawal ${id} 취소/삭제:`, found.name)
+    console.log(`✅ [MSW] Withdrawal ${id} 복구 완료:`, item.name)
 
-    return new HttpResponse(null, { status: 204 })
+    return HttpResponse.json({
+      message: '유저 복구가 완료 되었습니다.',
+    })
   }),
 
-  // POST /api/admin/withdrawals/:id/approve - 탈퇴 승인
-  mswHttp.post(
-    `${ADMIN}/withdrawals/:id/approve`,
-    async ({ request, params }) => {
-      if (request.headers.get('x-bypass-mock')) return passthrough()
-
-      await delay(150)
-
-      const id = parseInt(params.id as string)
-      const approved = withdrawalsDb.patch(id, { status: 'APPROVED' })
-
-      if (!approved) {
-        console.log(`[MSW] Withdrawal ${id} not found for approval`)
-        return HttpResponse.json(
-          { message: 'Withdrawal not found' },
-          { status: 404 }
-        )
-      }
-
-      console.log(`[MSW] Withdrawal ${id} 승인:`, approved.name)
-      return HttpResponse.json(approved)
-    }
-  ),
-
-  // POST /api/admin/withdrawals/:id/reject - 탈퇴 거절
-  mswHttp.post(
-    `${ADMIN}/withdrawals/:id/reject`,
-    async ({ request, params }) => {
-      if (request.headers.get('x-bypass-mock')) return passthrough()
-
-      await delay(150)
-
-      try {
-        const body = (await request.json()) as RejectRequestBody
-        const id = parseInt(params.id as string)
-
-        const rejected = withdrawalsDb.patch(id, {
-          status: 'REJECTED',
-          reason_detail: body.reason || '관리자에 의한 거절',
-        })
-
-        if (!rejected) {
-          console.log(`[MSW] Withdrawal ${id} not found for rejection`)
-          return HttpResponse.json(
-            { message: 'Withdrawal not found' },
-            { status: 404 }
-          )
-        }
-
-        console.log(`[MSW] Withdrawal ${id} 거절:`, rejected.name, body.reason)
-        return HttpResponse.json(rejected)
-      } catch (error) {
-        console.error('[MSW] Withdrawal rejection error:', error)
-        return HttpResponse.json(
-          { message: 'Invalid request data' },
-          { status: 400 }
-        )
-      }
-    }
-  ),
-
-  // GET /api/admin/withdrawals/stats - 통계 정보
-  mswHttp.get(`${ADMIN}/withdrawals/stats`, async ({ request }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
+  /**
+   * GET /api/v1/admin/withdrawals/stats/ - 통계 (선택적)
+   */
+  http.get(`${BASE_URL}/stats/`, async ({ request }) => {
+    if (shouldBypass(request)) return passthrough()
 
     await delay(50)
 
     const stats = withdrawalsDb.status()
 
-    console.log('[MSW] 탈퇴 요청 통계 조회:', stats)
-    return HttpResponse.json({
-      total: stats.total,
-      active: stats.byStatus.ACTIVE,
-      inactive: stats.byStatus.INACTIVE,
-      withdrawn: stats.byStatus.WITHDRAWN,
-      permissions: stats.byPermission,
-      topReasons: stats.byReason,
-    })
+    console.log('📊 [MSW] GET /api/v1/admin/withdrawals/stats/', stats)
+
+    return HttpResponse.json(stats)
   }),
 ]
 
