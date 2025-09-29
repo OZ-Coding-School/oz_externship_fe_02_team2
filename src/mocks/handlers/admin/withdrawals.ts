@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ────────────────────────────────────────────────────────────────────────────
 // MSW Withdrawals Handlers - 최신 API 스키마 반영
 // OpenAPI Path: /api/v1/admin/withdrawals

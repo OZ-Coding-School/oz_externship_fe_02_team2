@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { http, shouldUseMock, withBypass } from '../http'
 import type {
   ServerWithdrawalListItem,
