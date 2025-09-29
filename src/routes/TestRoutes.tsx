@@ -12,6 +12,7 @@ import CourseManagementTest from '@/pages/admin/CourseManagement'
 import ReviewManagement from '@/pages/admin/Review'
 import UserManagePage from '@/pages/admin/UserManage'
 import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
+import RecruitmentsManagePage from '@/pages/admin/RecruitmnetsManage'
 import StudyGroupPage from '@/pages/admin/StudyManage'
 import { Join, Leave, Reason } from '@/pages/dashboard/sub-pages'
 
@@ -39,11 +40,12 @@ export default function TestRoutes() {
             <Route path="reason" element={<Reason />} />
             <Route path="*" element={<Navigate to="join" replace />} />
           </Route>
-
+  
           <Route path={PATHS.LECTURE} element={<CourseManagementTest />} />
           <Route path={PATHS.STUDYGROUP} element={<StudyGroupPage />} />
           <Route path={PATHS.REVIEW} element={<ReviewManagement />} />
-          <Route path={PATHS.POST} element={<PlaceHolderPage />} />
+          <Route path={PATHS.POST} element={<RecruitmentsManagePage />} />
+
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
           <Route path="*" element={<div className="p-6">Not Found</div>} />
         </Route>
