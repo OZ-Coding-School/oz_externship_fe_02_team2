@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef } from 'react'
 import { useFormHandlers } from '@/hooks/useFormHandlers'
 import type { UserDetail } from '@type/User.types'
@@ -53,15 +54,27 @@ export function useUserFormHandlers(
         serverPatch.name = patch.name
       }
 
-      // gender 매핑: '남성'/'여성' → 'male'/'female'
+      // gender 매핑: API 스키마에 따르면 한글 그대로 전송
       if ('gender' in patch && !readOnlyFields.includes('gender')) {
+        const genderValue = patch.gender as string
+
+        // 정규화: 영문을 한글로 변환 (프론트에서 영문으로 저장된 경우 대비)
         const genderMap: Record<string, string> = {
-          남성: 'male',
-          여성: 'female',
-          male: 'male',
-          female: 'female',
+          남성: '남성',
+          여성: '여성',
+          male: '남성',
+          female: '여성',
+          Male: '남성',
+          Female: '여성',
         }
-        serverPatch.gender = genderMap[patch.gender as string] ?? patch.gender
+
+        // 한글로 정규화하여 전송
+        serverPatch.gender = genderMap[genderValue] ?? genderValue
+
+        console.log('🔍 Gender 변환:', {
+          원본: genderValue,
+          서버전송값: serverPatch.gender,
+        })
       }
 
       if ('nickname' in patch && !readOnlyFields.includes('nickname')) {
@@ -82,13 +95,25 @@ export function useUserFormHandlers(
 
       console.log('📤 서버로 전송할 데이터:', serverPatch)
       console.log('📝 변경된 필드:', Object.keys(patch))
+      console.log('🔍 전체 draft 객체:', draft)
 
       if (Object.keys(serverPatch).length === 0) {
         console.log('⚠️ 전송할 수정 가능한 필드가 없습니다')
         return
       }
 
-      await updateUser(draft.uuid, serverPatch, { mock: false })
+      try {
+        await updateUser(draft.uuid, serverPatch, { mock: false })
+      } catch (error) {
+        console.error('❌ 서버 업데이트 실패:', error)
+        // 에러 응답의 상세 정보 출력
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as any
+          console.error('서버 응답:', axiosError.response?.data)
+          console.error('상태 코드:', axiosError.response?.status)
+        }
+        throw error
+      }
     },
 
     /** 저장 완료 후: 최신 데이터로 동기화 + 부모 통지 + 토스트 */
