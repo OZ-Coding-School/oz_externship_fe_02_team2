@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isPronunciationQuery, toPronunciation } from '@/lib/koreanSearch'
 import type { TableData, TableQuery } from '@/types'
 

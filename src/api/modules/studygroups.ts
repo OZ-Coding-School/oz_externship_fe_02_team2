@@ -1,5 +1,5 @@
 import type { StudyGroupRow } from '@/components/table/Table.types'
-import { http, withBypass } from '../http'
+import { http, shouldUseMock, withBypass } from '../http'
 import { decideBypass } from '../toggles/mockToggle'
 import type { StudyGroupDetail } from '@/components/ui/Modal/feature/Study/Study.types'
 
@@ -47,7 +47,7 @@ export type StudyGroupSuggestion = {
 }
 
 const DEFAULT_PAGE = 1
-const DEFAULT_PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 10
 
 // undefined/null 제거 + 기본값 채우기
 function buildParams(
@@ -85,10 +85,10 @@ export async function getStudyGroups(
   params: StudyGroupsParams = {},
   opts?: { mock?: boolean }
 ) {
-  const bypass = decideBypass(opts?.mock)
+  const useMock = shouldUseMock(opts?.mock)
   const res = await http.get<PageResp<StudyGroupRow>>(
     BASE,
-    withBypass({ params: buildParams(params) }, bypass)
+    withBypass({ params: buildParams(params) }, useMock)
   )
   return res.data
 }
@@ -98,10 +98,10 @@ export async function getStudyGroupDetail(
   id: string | number,
   opts?: { mock?: boolean }
 ) {
-  const bypass = decideBypass(opts?.mock)
+  const useMock = shouldUseMock(opts?.mock)
   const res = await http.get<StudyGroupDetail>(
     `${BASE}/${id}`,
-    withBypass({}, bypass)
+    withBypass({}, useMock)
   )
   return res.data
 }
@@ -111,116 +111,10 @@ export async function getStudyGroupByUuid(
   uuid: string,
   opts?: { mock?: boolean }
 ) {
-  const bypass = decideBypass(opts?.mock)
+  const useMock = shouldUseMock(opts?.mock)
   const res = await http.get<StudyGroupDetail>(
     `${BASE}/uuid/${uuid}`,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 부분 수정(듀얼 모드)
-export async function updateStudyGroup(
-  id: string | number,
-  patch: Partial<StudyGroupDetail>,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.patch<StudyGroupDetail>(
-    `${BASE}/${id}`,
-    patch,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 스터디 그룹 생성(듀얼 모드)
-export async function createStudyGroup(
-  data: Partial<StudyGroupDetail>,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.post<StudyGroupDetail>(
-    BASE,
-    data,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 삭제(듀얼 모드)
-export async function deleteStudyGroup(
-  id: string | number,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.delete<void>(`${BASE}/${id}`, withBypass({}, bypass))
-  return res.data // axios는 void면 undefined 반환 → 호출부에선 await만 하면 됨
-}
-
-// 상태 변경(듀얼 모드)
-export async function updateStudyGroupStatus(
-  id: string | number,
-  status: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.put<StudyGroupDetail>(
-    `${BASE}/${id}/status`,
-    { status },
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 멤버 추가(듀얼 모드)
-export async function addStudyGroupMember(
-  id: string | number,
-  memberData: { memberId: string; memberName: string },
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.post<StudyGroupDetail>(
-    `${BASE}/${id}/members`,
-    memberData,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 멤버 제거(듀얼 모드)
-export async function removeStudyGroupMember(
-  id: string | number,
-  memberId: string,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.delete<StudyGroupDetail>(
-    `${BASE}/${id}/members/${memberId}`,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 검색 자동완성(듀얼 모드)
-export async function getStudyGroupSuggestions(
-  query: string,
-  limit: number = 10,
-  opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.get<StudyGroupSuggestion[]>(
-    `${BASE}/search/autocomplete`,
-    withBypass(
-      {
-        params: {
-          query,
-          q: query, // MSW에서 둘 다 지원
-          limit,
-        },
-      },
-      bypass
-    )
+    withBypass({}, useMock)
   )
   return res.data
 }

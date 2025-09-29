@@ -3,10 +3,10 @@ import { Button } from '../../../Button'
 import { useEffect, useState } from 'react'
 import UserRoleChange, { type UserRole } from './UserRoleChange'
 import UserDelete from './UserDelete'
-import type { UserDetail } from './User.types'
+import type { UserDetail } from '../../../../../types/User.types'
 import UserDetailView from './UserDetailView'
 import { useToast } from '@/hooks'
-import { updateUser } from '@/api/modules/users'
+import { updateUserPermission } from '@/api/modules/users'
 import { useUserFormHandlers } from './useUserFormHandlers'
 
 interface UserDetailModalProps {
@@ -62,9 +62,9 @@ export default function UserDetailModal({
     setRoleChanging(true)
     try {
       // 실제 API 호출을 통한 권한 변경
-      const updatedUser = await updateUser(
-        form.id,
-        { role: nextRole },
+      const updatedUser = await updateUserPermission(
+        form.uuid,
+        { permission: nextRole },
         { mock: true }
       )
 
@@ -131,7 +131,7 @@ export default function UserDetailModal({
 
           <UserRoleChange
             open={roleModalOpen}
-            value={(form.role as UserRole) || '일반회원'}
+            value={(form.permission as UserRole) || 'GENERAL'}
             onClose={() => setRoleModalOpen(false)}
             onConfirm={handleRoleChange}
             confirming={roleChanging}
@@ -176,7 +176,7 @@ export default function UserDetailModal({
 
       <UserDelete
         open={deleteOpen}
-        userId={form.id}
+        userId={form.uuid}
         deleteUser={async () => {
           await handleDelete()
         }}
