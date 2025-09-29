@@ -4,8 +4,24 @@ import { formatDateTime } from '@/lib/datetime'
 
 import { memo } from 'react'
 import type { ApplyToStudyDetail } from './ApplyToStudy.types'
+import Badge from '@/components/ui/Badge/Badge'
 
 function ApplicationInfoViewBase({ form }: { form: ApplyToStudyDetail }) {
+  // Badge는 variant를 직접 주는 게 타입 충돌 없음
+  const STATUS_BADGE: Record<
+    string,
+    { label: string; variant: 'success' | 'danger' | 'secondary' | 'warning' }
+  > = {
+    APPROVED: { label: '승인', variant: 'success' },
+    REJECTED: { label: '거절', variant: 'danger' },
+    PENDING: { label: '대기중', variant: 'secondary' },
+    REVIEWING: { label: '검토중', variant: 'warning' },
+    UNDER_REVIEW: { label: '검토중', variant: 'warning' }, // 백엔드 키워드 예비
+  }
+  const sb = STATUS_BADGE[form.status] ?? {
+    label: String(form.status),
+    variant: 'secondary' as const,
+  }
   return (
     <>
       <Modal.Header className="pb-2">
@@ -67,29 +83,22 @@ function ApplicationInfoViewBase({ form }: { form: ApplyToStudyDetail }) {
             editing={false}
             onChange={() => {}}
           />
-          <Field
-            label="지원 상태"
-            value={mapStatus(form.status)}
-            editing={false}
-            onChange={() => {}}
-          />
+          <div>
+            <div className="body-sm mb-1 font-medium text-gray-700">
+              지원 상태
+            </div>
+            <Badge
+              variant={sb.variant}
+              size="lg"
+              aria-label={`지원 상태: ${sb.label}`}
+            >
+              {sb.label}
+            </Badge>
+          </div>
         </div>
       </Modal.Body>
     </>
   )
 }
-function mapStatus(s: ApplyToStudyDetail['status']) {
-  switch (s) {
-    case 'APPROVED':
-      return '승인'
-    case 'PENDING':
-      return '대기'
-    case 'REJECTED':
-      return '거절'
-    case 'INREVIEW':
-      return '검토 중'
-    default:
-      return s
-  }
-}
+
 export default memo(ApplicationInfoViewBase)
