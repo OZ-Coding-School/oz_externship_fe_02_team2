@@ -12,8 +12,8 @@ function LabeledCard({
 }) {
   return (
     <div>
-      <div className="body-sm mb-2 font-semibold text-gray-900">{label}</div>
-      <div className="rounded-2xl bg-gray-50 px-5 py-4 whitespace-pre-wrap text-black">
+      <div className="body-sm mb-2 font-semibold text-gray-600">{label}</div>
+      <div className="rounded-2xl bg-gray-50 px-5 py-4 text-black">
         {children ?? '-'}
       </div>
     </div>
@@ -83,16 +83,20 @@ export default function ApplyToStudyUserView({
           {/* 지원일시 / 수정일시 (2열 카드) */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <LabeledCard label="지원일시">
-              {formatYmdHms(form.createdAt)}
+              <span className="whitespace-nowrap">
+                {formatYmdHms(form.createdAt)}
+              </span>
             </LabeledCard>
             <LabeledCard label="수정일시">
-              {formatYmdHms(form.updatedAt)}
+              <span className="whitespace-nowrap">
+                {formatYmdHms(form.updatedAt)}
+              </span>
             </LabeledCard>
           </div>
 
           {/* 지원 상태 뱃지 */}
           <div>
-            <div className="body-sm mb-2 font-semibold text-gray-900">
+            <div className="body-sm mb-2 font-semibold text-gray-700">
               지원 상태
             </div>
             <Badge
