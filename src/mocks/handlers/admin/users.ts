@@ -1,198 +1,150 @@
-/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { http as mswHttp, HttpResponse, delay, passthrough } from 'msw'
-import { ADMIN, like, paginate, sortByKey, toInt } from '../../utils'
-import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
+import { like, sortByKey } from '../../utils'
+import type { UserDetail } from '@type/User.types'
 import { usersDb } from '@/mocks/seeds/users.seed'
 
 // MSW 시작 시 DB 초기화
 usersDb.init()
 
+const MSW_BASE = '/api/v1/admin/users'
+
+// ────────────────────────────────────────────────────────────────────────────
+// 매퍼: DB(카멜) → 서버(스네이크)
+// ────────────────────────────────────────────────────────────────────────────
+
+function toServerUserList(u: UserDetail) {
+  return {
+    uuid: u.uuid,
+    email: u.email,
+    nickname: u.nickname,
+    name: u.name,
+    birthday: u.birthday,
+    permission: u.permission,
+    permission_display: u.permissionDisplay ?? null,
+    status: u.status,
+    created_at: u.createdAt,
+    withdrawals_request_date: u.withdrawalsRequestDate ?? null,
+  }
+}
+
+function toServerUserDetail(u: UserDetail) {
+  return {
+    uuid: u.uuid,
+    name: u.name,
+    gender: u.gender ?? '남성',
+    nickname: u.nickname,
+    birthday: u.birthday,
+    phone_number: u.phoneNumber ?? null,
+    email: u.email,
+    permission: u.permission,
+    status: u.status,
+    created_at: u.createdAt,
+    profile_img_url: u.profileImgUrl ?? null,
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// MSW 핸들러
+// ────────────────────────────────────────────────────────────────────────────
+
 export const usersHandlers = [
-  // GET /api/admin/users/stats - 통계 정보 (추가 기능)
-  mswHttp.get(`${ADMIN}/users/stats`, async ({ request }) => {
+  // ──────────────────────────────────────────────────────────────────────────
+  // GET /api/v1/admin/users/ - 목록 조회
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.get(`${MSW_BASE}/`, async ({ request }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(50)
-
-    const stats = {
-      total: usersDb.users.length,
-      active: usersDb.users.filter((u) => u.status === '활성').length,
-      inactive: usersDb.users.filter((u) => u.status === '비활성').length,
-      withdrawn: usersDb.users.filter((u) => u.status === '탈퇴요청').length,
-
-      roles: {
-        일반회원: usersDb.users.filter((u) => u.role === '일반회원').length,
-        스태프: usersDb.users.filter((u) => u.role === '스태프').length,
-        관리자: usersDb.users.filter((u) => u.role === '관리자').length,
-      },
-    }
-
-    console.log('[MSW] 유저 통계 조회:', stats)
-    return HttpResponse.json(stats)
-  }),
-  // GET /api/admin/users - 목록 조회 (필터링/정렬/페이지네이션)
-  mswHttp.get(`${ADMIN}/users`, async ({ request }) => {
-    // 바이패스 헤더가 있으면 실서버로 통과
-    if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(150 + Math.random() * 100) // 실제 서버처럼 약간의 지연
+    await delay(120 + Math.random() * 80)
 
     const url = new URL(request.url)
-    const page = toInt(url.searchParams.get('page'), 1)
-    const pageSize = toInt(url.searchParams.get('pageSize'), 20)
-    const sortBy = url.searchParams.get('sortBy') ?? 'joinedAt'
-    const sortOrder = (url.searchParams.get('sortOrder') ?? 'desc') as
-      | 'asc'
-      | 'desc'
-    const q = url.searchParams.get('q') ?? ''
-    const role = url.searchParams.get('role')
-    const status = url.searchParams.get('status')
+    console.log('[MSW] 🔵 Users 목록 요청:', url.search)
 
-    // 시드 DB에서 현재 데이터 가져오기
+    // 페이지네이션
+    const page = Math.max(1, Number(url.searchParams.get('page') ?? 1))
+    const pageSize = Math.max(
+      1,
+      Number(url.searchParams.get('page_size') ?? 20)
+    )
+
+    // 검색/필터
+    const search = url.searchParams.get('search') ?? ''
+    const permission = url.searchParams.get('permission') ?? undefined
+    const status = url.searchParams.get('status') ?? undefined
+    const ordering = url.searchParams.get('ordering') ?? '-created_at'
+
+    // 데이터 필터링
     let rows = [...usersDb.users]
 
-    // 검색 필터
-    if (q) {
-      rows = rows.filter((r) =>
-        like(`${r.name} ${r.email} ${r.nickname ?? ''} ${r.id}`, q)
+    if (search) {
+      rows = rows.filter((u) =>
+        like(`${u.name} ${u.email} ${u.nickname}`, search)
       )
     }
-
-    // 역할 필터
-    if (role) {
-      rows = rows.filter((r) => (r.role ?? '') === role)
+    if (permission) {
+      rows = rows.filter((u) => u.permission === permission)
     }
-
-    // 상태 필터
     if (status) {
-      rows = rows.filter((r) => (r.status ?? '') === status)
+      rows = rows.filter((u) => u.status === status)
     }
 
     // 정렬
+    const isDesc = ordering.startsWith('-')
+    const orderField = isDesc ? ordering.slice(1) : ordering
+    // created_at → createdAt 매핑
+    const sortKey = orderField === 'created_at' ? 'createdAt' : orderField
+
     rows = sortByKey(
       rows as Record<string, unknown>[],
-      sortBy,
-      sortOrder
+      sortKey,
+      isDesc ? 'desc' : 'asc'
     ) as UserDetail[]
 
     // 페이지네이션
-    const pageData = paginate<UserDetail>(rows, page, pageSize)
+    const start = (page - 1) * pageSize
+    const pageRows = rows.slice(start, start + pageSize)
+    const count = rows.length
 
     console.log(
-      `[MSW] Users 목록 조회: ${rows.length}개 결과, 페이지 ${page}/${pageData.totalPages}`
+      `[MSW] Users 목록: page=${page} size=${pageSize} count=${count}`
     )
 
     return HttpResponse.json({
-      ...pageData,
-      sortBy,
-      sortOrder,
+      count,
+      next: start + pageSize < count ? `?page=${page + 1}` : null,
+      previous: page > 1 ? `?page=${page - 1}` : null,
+      results: pageRows.map(toServerUserList),
     })
   }),
 
-  // GET /api/admin/users/:id - 상세 조회
-  mswHttp.get(`${ADMIN}/users/:id`, async ({ request, params }) => {
+  // ──────────────────────────────────────────────────────────────────────────
+  // GET /api/v1/admin/users/:uuid/ - 상세 조회
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.get(`${MSW_BASE}/:uuid/`, async ({ request, params }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
+    await delay(60 + Math.random() * 40)
 
-    await delay(80 + Math.random() * 40)
+    const { uuid } = params
+    const found = usersDb.users.find((u) => u.uuid === uuid)
 
-    const found = usersDb.users.find(
-      (u: { id: string | readonly string[] | undefined }) => u.id === params.id
-    )
     if (!found) {
-      console.log(`[MSW] User ${params.id} not found`)
-      return HttpResponse.json({ message: 'User not found' }, { status: 404 })
+      console.log(`[MSW] ❌ User ${uuid} not found`)
+      return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
     }
 
-    console.log(`[MSW] User ${params.id} 상세 조회:`, found.name)
-    return HttpResponse.json(found)
+    console.log(`[MSW] User 상세 조회: ${uuid}`)
+    return HttpResponse.json(toServerUserDetail(found))
   }),
 
-  // PATCH /api/admin/users/:id - 부분 수정 (권한 변경 포함)
-  mswHttp.patch(`${ADMIN}/users/:id`, async ({ request, params }) => {
+  // ──────────────────────────────────────────────────────────────────────────
+  // POST /api/v1/admin/users/ - 생성
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.post(`${MSW_BASE}/`, async ({ request }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(120 + Math.random() * 60)
+    await delay(160)
 
     try {
-      const body = (await request.json()) as Partial<UserDetail>
-      const userId = params.id as string
+      const body = (await request.json()) as any
 
-      // 시드 DB에서 업데이트
-      const updated = usersDb.patch(userId, body)
-
-      if (!updated) {
-        console.log(`[MSW] User ${userId} not found for update`)
-        return HttpResponse.json({ message: 'User not found' }, { status: 404 })
-      }
-
-      console.log(`[MSW] User ${userId} 수정 완료:`, {
-        name: updated.name,
-        changes: Object.keys(body).join(', '),
-      })
-
-      return HttpResponse.json(updated)
-    } catch (error) {
-      console.error('[MSW] User update error:', error)
-      return HttpResponse.json(
-        { message: 'Invalid request data' },
-        { status: 400 }
-      )
-    }
-  }),
-
-  // DELETE /api/admin/users/:id - 소프트 삭제 (상태를 '비활성'으로)
-  mswHttp.delete(`${ADMIN}/users/:id`, async ({ request, params }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(100 + Math.random() * 50)
-
-    const userId = params.id as string
-
-    // 실제 삭제 대신 상태를 '비활성'으로 변경
-    const updated = usersDb.patch(userId, { status: '비활성' })
-
-    if (!updated) {
-      console.log(`[MSW] User ${userId} not found for deletion`)
-      return HttpResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    console.log(`[MSW] User ${userId} 소프트 삭제 (비활성화):`, updated.name)
-
-    // 하드 삭제를 원한다면 아래 코드 사용:
-    // const deleted = usersDb.remove(userId)
-    // if (!deleted) return HttpResponse.json({ message: 'User not found' }, { status: 404 })
-
-    return new HttpResponse(null, { status: 204 })
-  }),
-
-  // POST /api/admin/users/:id/restore - 복구 (상태를 '활성'으로)
-  mswHttp.post(`${ADMIN}/users/:id/restore`, async ({ request, params }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(100)
-
-    const userId = params.id as string
-    const restored = usersDb.patch(userId, { status: '활성' })
-
-    if (!restored) {
-      console.log(`[MSW] User ${userId} not found for restore`)
-      return HttpResponse.json({ message: 'User not found' }, { status: 404 })
-    }
-
-    console.log(`[MSW] User ${userId} 복구 완료:`, restored.name)
-    return HttpResponse.json(restored)
-  }),
-
-  // POST /api/admin/users - 새 유저 생성 (필요시)
-  mswHttp.post(`${ADMIN}/users`, async ({ request }) => {
-    if (request.headers.get('x-bypass-mock')) return passthrough()
-
-    await delay(200)
-
-    try {
-      const body = (await request.json()) as Partial<UserDetail>
-
-      // 필수 필드 검증
       if (!body.name || !body.email) {
         return HttpResponse.json(
           { message: 'Name and email are required' },
@@ -200,38 +152,35 @@ export const usersHandlers = [
         )
       }
 
-      // 이메일 중복 체크
-      const existingUser = usersDb.users.find(
-        (u: { email: string | undefined }) => u.email === body.email
-      )
-      if (existingUser) {
+      const duplicate = usersDb.users.find((u) => u.email === body.email)
+      if (duplicate) {
         return HttpResponse.json(
           { message: 'Email already exists' },
           { status: 409 }
         )
       }
 
-      // 새 유저 생성
       const newUser: UserDetail = {
-        id: `u_${Date.now()}`,
-        name: body.name,
+        uuid: crypto.randomUUID(),
         email: body.email,
-        gender: body.gender || '남성',
-        nickname: body.nickname || '',
-        birth: body.birth || '',
-        phone: body.phone || '',
-        role: body.role || '일반회원',
-        status: body.status || '활성',
-        joinedAt: new Date().toISOString(),
-        avatarUrl: body.avatarUrl || '',
+        nickname: body.nickname ?? '',
+        name: body.name,
+        birthday: body.birthday ?? '2000-01-01',
+        permission: 'GENERAL',
+        permissionDisplay: '일반회원',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        withdrawalsRequestDate: null,
+        gender: '남성',
+        phoneNumber: null,
+        profileImgUrl: null,
       }
 
       usersDb.add(newUser)
-
-      console.log(`[MSW] 새 유저 생성:`, newUser.name)
-      return HttpResponse.json(newUser, { status: 201 })
-    } catch (error) {
-      console.error('[MSW] User creation error:', error)
+      console.log(`[MSW] User 생성: ${newUser.uuid}`)
+      return HttpResponse.json(toServerUserList(newUser), { status: 201 })
+    } catch (e) {
+      console.error('[MSW] User creation error:', e)
       return HttpResponse.json(
         { message: 'Invalid request data' },
         { status: 400 }
@@ -239,36 +188,160 @@ export const usersHandlers = [
     }
   }),
 
-  // PUT /api/admin/users/:id - 전체 교체 (필요시)
-  mswHttp.put(`${ADMIN}/users/:id`, async ({ request, params }) => {
+  // ──────────────────────────────────────────────────────────────────────────
+  // PATCH /api/v1/admin/users/:uuid/ - 부분 수정
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.patch(`${MSW_BASE}/:uuid/`, async ({ request, params }) => {
     if (request.headers.get('x-bypass-mock')) return passthrough()
+    await delay(120)
 
+    try {
+      const { uuid } = params
+      const body = (await request.json()) as any
+
+      const patch: Partial<UserDetail> = {}
+      if ('name' in body) patch.name = body.name
+      if ('gender' in body) patch.gender = body.gender
+      if ('nickname' in body) patch.nickname = body.nickname
+      if ('phone_number' in body) patch.phoneNumber = body.phone_number
+      if ('profile_img_url' in body) patch.profileImgUrl = body.profile_img_url
+
+      // status 매핑: 소문자 → 대문자
+      if ('status' in body) {
+        const statusMap: Record<string, UserDetail['status']> = {
+          active: 'ACTIVE',
+          inactive: 'INACTIVE',
+        }
+        patch.status = statusMap[body.status] ?? body.status
+      }
+
+      const updated = usersDb.patch(uuid as string, patch)
+
+      if (!updated) {
+        return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
+      }
+
+      console.log(`[MSW] User 수정: ${uuid}`)
+      return HttpResponse.json(toServerUserDetail(updated))
+    } catch (e) {
+      console.error('[MSW] User update error:', e)
+      return HttpResponse.json(
+        { message: 'Invalid request data' },
+        { status: 400 }
+      )
+    }
+  }),
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // PUT /api/v1/admin/users/:uuid/ - 전체 교체
+  // ──────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
+  // PUT /api/v1/admin/users/:uuid/ - 전체 교체
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.put(`${MSW_BASE}/:uuid/`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
     await delay(150)
 
     try {
-      const body = (await request.json()) as UserDetail
-      const userId = params.id as string
+      const { uuid } = params
+      const body = (await request.json()) as any
 
-      // 기존 유저가 있는지 확인
-      const existingIndex = usersDb.users.findIndex(
-        (u: { id: string }) => u.id === userId
-      )
-      if (existingIndex === -1) {
-        return HttpResponse.json({ message: 'User not found' }, { status: 404 })
+      const idx = usersDb.users.findIndex((u) => u.uuid === uuid)
+      if (idx < 0) {
+        return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
       }
 
-      // ID는 변경하지 않음
-      const updatedUser = { ...body, id: userId }
-      usersDb.users[existingIndex] = updatedUser
+      const patch: Partial<UserDetail> = {}
+      if ('name' in body) patch.name = body.name
+      if ('gender' in body) patch.gender = body.gender
+      if ('nickname' in body) patch.nickname = body.nickname
+      if ('phone_number' in body) patch.phoneNumber = body.phone_number
+      if ('profile_img_url' in body) patch.profileImgUrl = body.profile_img_url
+      if ('status' in body) {
+        const statusMap: Record<string, UserDetail['status']> = {
+          active: 'ACTIVE',
+          inactive: 'INACTIVE',
+        }
+        patch.status = statusMap[body.status] ?? body.status
+      }
 
-      console.log(`[MSW] User ${userId} 전체 교체:`, updatedUser.name)
-      return HttpResponse.json(updatedUser)
-    } catch (error) {
-      console.error('[MSW] User replacement error:', error)
+      const updated = { ...usersDb.users[idx], ...patch }
+      usersDb.users[idx] = updated
+
+      console.log(`[MSW] User 전체 교체: ${uuid}`)
+      return HttpResponse.json(toServerUserDetail(updated))
+    } catch (e) {
+      console.error('[MSW] User replacement error:', e)
       return HttpResponse.json(
         { message: 'Invalid request data' },
         { status: 400 }
       )
     }
   }),
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // DELETE /api/v1/admin/users/:uuid/ - 삭제
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.delete(`${MSW_BASE}/:uuid/`, async ({ request, params }) => {
+    if (request.headers.get('x-bypass-mock')) return passthrough()
+    await delay(100)
+
+    const { uuid } = params
+    const removed = usersDb.remove(uuid as string)
+
+    if (!removed) {
+      return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
+    }
+
+    console.log(`[MSW] User 삭제: ${uuid}`)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // PATCH /api/v1/admin/users/:uuid/permission/ - 권한 수정
+  // ──────────────────────────────────────────────────────────────────────────
+  mswHttp.patch(
+    `${MSW_BASE}/:uuid/permission/`,
+    async ({ request, params }) => {
+      if (request.headers.get('x-bypass-mock')) return passthrough()
+      await delay(120)
+
+      try {
+        const { uuid } = params
+        const body = (await request.json()) as any
+
+        if (!body.permission) {
+          return HttpResponse.json(
+            { message: 'Permission is required' },
+            { status: 400 }
+          )
+        }
+
+        const permissionDisplay =
+          body.permission === 'ADMIN'
+            ? '관리자'
+            : body.permission === 'STAFF'
+              ? '스태프'
+              : '일반회원'
+
+        const updated = usersDb.patch(uuid as string, {
+          permission: body.permission,
+          permissionDisplay,
+        })
+
+        if (!updated) {
+          return HttpResponse.json({ detail: 'Not found' }, { status: 404 })
+        }
+
+        console.log(`[MSW] User 권한 수정: ${uuid} → ${body.permission}`)
+        return HttpResponse.json(toServerUserDetail(updated))
+      } catch (e) {
+        console.error('[MSW] Permission update error:', e)
+        return HttpResponse.json(
+          { message: 'Invalid request data' },
+          { status: 400 }
+        )
+      }
+    }
+  ),
 ]

@@ -3,25 +3,21 @@ import { useTableFilters } from '@/hooks/useTableFilters'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
 import type { WithdrawalRow } from '@/components/table/Table.types'
-import type { SortOrder } from '@/mocks/utils'
 import { ApiError } from '@/api/http'
-import type { WithdrawalDetail } from '@/components/ui/Modal/feature/Withdrawal/Withdrawal.types'
-import {
-  getWithdrawalDetail,
-  getWithdrawals,
-  type WithdrawalListItem,
-} from '@/api/modules/withdrawals'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
+import { getWithdrawalDetail, getWithdrawals } from '@/api/modules/withdrawals'
 import WithdrawalsTable from '@/components/table/feature/Withdrawals/withdrawalsTable'
 import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
 import WithdrawalsFilterBar from '@/components/table/feature/Withdrawals/WithdrawalsFilterBar'
 import type { EnhancedQueryChangeHandlers, EnhancedTableQuery } from '@/types'
+import type { WithdrawalListItem } from '@/types/Withdrawal.types'
 
 // 권한 번역 함수
 function translatePermission(permission: string): string {
   const permissionMap: Record<string, string> = {
-    admin: '관리자',
-    staff: '스태프',
-    general: '일반회원',
+    ADMIN: '관리자',
+    STAFF: '스태프',
+    GENERAL: '일반회원',
   }
   return permissionMap[permission] || permission
 }
@@ -30,7 +26,7 @@ function translatePermission(permission: string): string {
 function translateWithdrawalReason(reason: string): string {
   const reasonMap: Record<string, string> = {
     SERVICE_DISSATISFACTION: '서비스 불만족',
-    PRIVACY_CONCERN: '개인정보 우려',
+    PRIVACY_CONCERNS: '개인정보 우려',
     LOW_USAGE: '사용 빈도 낮음',
     COMPETITOR_SERVICE: '경쟁 서비스 이용',
     OTHER: '기타',
@@ -56,6 +52,53 @@ function translateWithdrawalStatus(status: string): string {
   return statusMap[status] || status
 }
 
+// UI 값(한글/소문자/기존 영어 라벨) → API 코드로 정규화
+const toPermissionCode = (
+  v?: string | null
+): 'ADMIN' | 'STAFF' | 'GENERAL' | undefined => {
+  if (!v) return undefined
+  const map: Record<string, 'ADMIN' | 'STAFF' | 'GENERAL'> = {
+    관리자: 'ADMIN',
+    스태프: 'STAFF',
+    일반회원: 'GENERAL',
+    admin: 'ADMIN',
+    staff: 'STAFF',
+    general: 'GENERAL',
+  }
+  const upper = v.toUpperCase()
+  if (upper === 'ADMIN' || upper === 'STAFF' || upper === 'GENERAL')
+    return upper
+  return map[v] ?? map[upper]
+}
+
+const toReasonCode = (v?: string | null): string | undefined => {
+  if (!v) return undefined
+  // 백엔드 사유 코드 스펙에 맞춰 매핑
+  const map: Record<string, string> = {
+    서비스불만족: 'SERVICE_DISSATISFACTION',
+    '서비스 불만족': 'SERVICE_DISSATISFACTION',
+    개인정보우려: 'PRIVACY_CONCERNS',
+    '개인정보 우려': 'PRIVACY_CONCERNS',
+    사용빈도낮음: 'LOW_USAGE',
+    '사용 빈도 낮음': 'LOW_USAGE',
+    경쟁서비스이용: 'COMPETITOR_SERVICE',
+    '경쟁 서비스 이용': 'COMPETITOR_SERVICE',
+    기타: 'OTHER',
+
+    // 레거시 영어 라벨도 호환
+    NO_LONGER_NEEDED: 'LOW_USAGE',
+    LACK_OF_INTEREST: 'LOW_USAGE',
+    TOO_DIFFICULT: 'SERVICE_DISSATISFACTION',
+    FOUND_BETTER_SERVICE: 'COMPETITOR_SERVICE',
+    POOR_SERVICE_QUALITY: 'SERVICE_DISSATISFACTION',
+    TECHNICAL_ISSUES: 'SERVICE_DISSATISFACTION',
+    LACK_OF_CONTENT: 'SERVICE_DISSATISFACTION',
+  }
+  const upper = v.toUpperCase().replace(/\s+/g, '_')
+  // 이미 코드면 그대로, 아니면 매핑
+  return map[v] ?? map[upper] ?? upper // 마지막 upper는 이미 코드값일 수도 있으니 허용
+}
+
 // API 응답 → 테이블 로우 매핑
 function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
   return {
@@ -66,7 +109,7 @@ function mapToRow(w: WithdrawalDetail | WithdrawalListItem): WithdrawalRow {
     // 생년월일 처리 - null이나 undefined면 빈 문자열로
     birthday: (('birthday' in w ? w.birthday : undefined) ?? '') || '',
     reason: translateWithdrawalReason(w.reason ?? ''),
-    created_at: w.created_at ?? '',
+    created_at: w.createdAt ?? '',
   }
 }
 
@@ -110,19 +153,26 @@ export default function UserWithdrawalPage() {
         const sortBy = query.sortBy
           ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
           : 'created_at'
-        const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
 
-        const q = (query.search ?? '').trim()
+        // DRF ordering 형식으로 변환: '-created_at' 또는 'created_at'
+        const ordering = query.sortDir === 'desc' ? `-${sortBy}` : sortBy
+        const search = (query.search ?? '').trim()
+
+        const reasonCode = toReasonCode(query.reason)
 
         // API 호출 파라미터 구성
         const apiParams = {
           page: query.page,
           pageSize: query.pageSize,
           sortBy,
-          sortOrder,
-          ...(q && { q }),
-          ...(query.reason && { reason: query.reason }),
-          ...(query.role && { permission: query.role }),
+          ordering,
+          ...(search && { search }),
+          ...(reasonCode && {
+            reason: reasonCode, // A: 서버가 reason 사용
+            withdrawal_reason: reasonCode, // B: 서버/핸들러가 snake_case 사용
+            reasonCode: reasonCode, // C: 혹시 camel 케이스 사용하는 핸들러 대비
+          }),
+          ...(query.role && { permission: toPermissionCode(query.role) }),
         }
 
         const data = await getWithdrawals(apiParams, { mock: true })

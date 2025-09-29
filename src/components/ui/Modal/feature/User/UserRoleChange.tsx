@@ -2,22 +2,22 @@ import { useEffect, useState } from 'react'
 import Modal from '../../Modal'
 import { Button } from '../../../Button'
 import { cn } from '@/lib'
+import { PERMISSION_OPTIONS } from '@lib/userDisplayHelpers'
 
-export type UserRole = '관리자' | '스태프' | '일반회원'
+export type UserRole = 'ADMIN' | 'STAFF' | 'GENERAL'
 
 type UserRoleProps = {
   open: boolean
   /** 현재 권한 */
   value: UserRole
-  /** 해당 롤 누를 시, 선택 권한 전달 */
-  onConfirm: (nextRole: UserRole) => void
+  /** 권한 변경 확정 (비동기 가능) */
+  onConfirm: (nextRole: UserRole) => Promise<void> | void
   /** 닫기 */
   onClose: () => void
-  /** 저장 중 로딩 상태 ( 쓸 일 거의 없을 거 같음 ) */
+  /** 저장 중 로딩 상태 */
   confirming?: boolean
 }
 
-const ROLE_OPTIONS: UserRole[] = ['관리자', '스태프', '일반회원']
 const ROLE_SELECTED = {
   base: 'w-full justify-start rounded-2xl px-5 py-4',
   default:
@@ -52,23 +52,25 @@ export default function UserRoleChange({
 
       <Modal.Body className="py-0">
         <div className="space-y-3">
-          {ROLE_OPTIONS.map((role) => {
-            const isSelected = selected === role
+          {PERMISSION_OPTIONS.map(({ label, value: roleValue }) => {
+            const isSelected = selected === roleValue
             return (
               <Button
-                key={role}
+                key={roleValue}
                 btnStyle="secondary"
                 btnSize="large"
-                btnText={role}
+                btnText={label}
                 className={cn(
                   ROLE_SELECTED.base,
                   isSelected ? ROLE_SELECTED.selected : ROLE_SELECTED.default
                 )}
                 disabled={confirming}
-                onClick={() => {
-                  setSelected(role)
-                  onConfirm(role)
-                  onClose()
+                onClick={async () => {
+                  setSelected(roleValue)
+                  // onConfirm이 완료될 때까지 대기
+                  await Promise.resolve(onConfirm(roleValue))
+                  // onConfirm이 성공한 후에만 닫기
+                  // onClose()는 여기서 호출하지 않음 (부모에서 처리)
                 }}
               />
             )

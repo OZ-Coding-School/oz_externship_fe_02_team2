@@ -5,7 +5,7 @@ import {
   getMockMode,
   type MockMode,
 } from '@/api/toggles/mockToggle'
-import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
+import type { UserDetail } from '@/types/User.types'
 import type { SortOrder } from '@/mocks/utils'
 import { getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
@@ -16,14 +16,14 @@ import type { UserRow } from '@/components/table/Table.types'
 // API 응답(UserDetail[]) → 테이블 로우(UserRow)로 매핑
 function mapToRow(u: UserDetail): UserRow {
   return {
-    memberId: u.id,
+    memberId: u.uuid,
     email: u.email,
     nickname: u.nickname ?? '', // 필수 보장
     name: u.name,
-    birth: u.birth ?? '',
-    role: u.role ?? '',
+    birth: u.birthday ?? '',
+    role: u.permission ?? '',
     status: (u.status ?? '활성') as UserRow['status'], // 테이블 enum에 맞춰 기본값
-    joinedAt: u.joinedAt ?? '',
+    joinedAt: u.createdAt ?? '',
     withdrawnAt: null, // 테이블이 string 필수면 ''로
   }
 }
@@ -74,7 +74,7 @@ export default function UsersAdminTestPage() {
 
     void getUsers({
       page: params.page,
-      pageSize: params.pageSize,
+      page_size: params.pageSize,
       sortBy,
       sortOrder,
     })

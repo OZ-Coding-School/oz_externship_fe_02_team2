@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef } from 'react'
 import { useFormHandlers } from '@/hooks/useFormHandlers'
-import type { UserDetail } from './User.types'
+import type { UserDetail } from '@type/User.types'
 import {
   deleteUser as deleteUserApi,
   getUserDetail,
-  restoreUser,
   updateUser,
-} from '@/api/modules/users'
+} from '@api/modules/users'
 import { useToast } from '@/hooks'
 
-// 변경 필드만 추출 (any 금지)
+// 변경 필드만 추출
 export function makePatch<T extends Record<string, unknown>>(prev: T, next: T) {
   const patch: Partial<T> = {}
   for (const k of Object.keys(next) as Array<keyof T>) {
@@ -34,31 +34,120 @@ export function useUserFormHandlers(
     onEdit: async (draft) => {
       const patch = makePatch<UserDetail>(initialRef.current, draft)
       if (Object.keys(patch).length === 0) return
-      await updateUser(draft.id, patch, { mock: true })
+
+      // 수정 불가능한 필드는 제외
+      const readOnlyFields = [
+        'uuid',
+        'email',
+        'birthday',
+        'phoneNumber',
+        'createdAt',
+        'permission',
+        'permissionDisplay',
+        'withdrawalsRequestDate',
+      ]
+
+      // 클라이언트 필드 → 서버 필드 매핑 (수정 가능한 필드만)
+      const serverPatch: Record<string, unknown> = {}
+
+      if ('name' in patch && !readOnlyFields.includes('name')) {
+        serverPatch.name = patch.name
+      }
+
+      // gender 매핑: API 스키마에 따르면 한글 그대로 전송
+      if ('gender' in patch && !readOnlyFields.includes('gender')) {
+        const genderValue = patch.gender as string
+
+        // 정규화: 영문을 한글로 변환 (프론트에서 영문으로 저장된 경우 대비)
+        const genderMap: Record<string, string> = {
+          남성: '남성',
+          여성: '여성',
+          male: '남성',
+          female: '여성',
+          Male: '남성',
+          Female: '여성',
+        }
+
+        // 한글로 정규화하여 전송
+        serverPatch.gender = genderMap[genderValue] ?? genderValue
+
+        console.log('🔍 Gender 변환:', {
+          원본: genderValue,
+          서버전송값: serverPatch.gender,
+        })
+      }
+
+      if ('nickname' in patch && !readOnlyFields.includes('nickname')) {
+        serverPatch.nickname = patch.nickname
+      }
+
+      if (
+        'profileImgUrl' in patch &&
+        !readOnlyFields.includes('profileImgUrl')
+      ) {
+        serverPatch.profile_img_url = patch.profileImgUrl
+      }
+
+      // status 매핑: API 스키마에 따르면 소문자 영문으로 전송
+      if ('status' in patch && !readOnlyFields.includes('status')) {
+        const statusValue = patch.status as string
+
+        // 한글 → 영문 변환 (API 스키마: 'active' | 'inactive')
+        const statusMap: Record<string, string> = {
+          활성: 'active',
+          비활성: 'inactive',
+          탈퇴요청: 'inactive', // WITHDRAWN은 enum에 없으므로 inactive로 처리
+          ACTIVE: 'active',
+          INACTIVE: 'inactive',
+          WITHDRAWN: 'inactive',
+          active: 'active',
+          inactive: 'inactive',
+        }
+
+        serverPatch.status = statusMap[statusValue] ?? statusValue
+
+        console.log('🔍 Status 변환:', {
+          원본: statusValue,
+          서버전송값: serverPatch.status,
+        })
+      }
+
+      console.log('📤 서버로 전송할 데이터:', serverPatch)
+      console.log('📝 변경된 필드:', Object.keys(patch))
+      console.log('🔍 전체 draft 객체:', draft)
+
+      if (Object.keys(serverPatch).length === 0) {
+        console.log('⚠️ 전송할 수정 가능한 필드가 없습니다')
+        return
+      }
+
+      try {
+        await updateUser(draft.uuid, serverPatch, { mock: false })
+      } catch (error) {
+        console.error('❌ 서버 업데이트 실패:', error)
+        // 에러 응답의 상세 정보 출력
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as any
+          console.error('서버 응답:', axiosError.response?.data)
+          console.error('상태 코드:', axiosError.response?.status)
+        }
+        throw error
+      }
     },
+
     /** 저장 완료 후: 최신 데이터로 동기화 + 부모 통지 + 토스트 */
     onEdited: async (draft) => {
-      const latest = await getUserDetail(draft.id, { mock: true })
+      const latest = await getUserDetail(draft.uuid, { mock: false })
       initialRef.current = latest
       opts?.onServerUpdated?.(latest)
       triggerToast('success', '성공', '수정 반영 완료')
     },
 
-    /** 복구 */
-    onRestore: async (data) => {
-      await restoreUser(data.id, { mock: true })
-    },
-    onRestored: async (data) => {
-      const latest = await getUserDetail(data.id, { mock: true })
-      initialRef.current = latest
-      opts?.onServerUpdated?.(latest)
-      triggerToast('success', '성공', '복구 완료')
-    },
-
     /** 삭제 */
     onDelete: async (data) => {
-      await deleteUserApi(data.id, { mock: true })
+      await deleteUserApi(data.uuid, { mock: false })
     },
+
     onDeleted: () => {
       triggerToast('success', '삭제', '삭제 완료')
     },

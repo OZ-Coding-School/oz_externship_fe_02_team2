@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/Button'
-import type { WithdrawalDetail } from '@/components/ui/Modal/feature/Withdrawal/Withdrawal.types'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
 import WithdrawalModal from '@/components/ui/Modal/feature/Withdrawal/WithdrawalDetail'
 import { useState } from 'react'
 
@@ -9,19 +9,19 @@ export default function TestWithdrawalDetailPage() {
   // 더미 데이터
   const dummyWithdrawal: WithdrawalDetail = {
     id: 1,
-    profile_img_url: 'https://placehold.co/80x80?text=👤',
+    profileImgUrl: 'https://placehold.co/80x80?text=👤',
     name: '박사용',
     nickname: 'user002',
     permission: '일반회원',
     gender: '여성',
     status: '탈퇴요청',
     email: 'user2@example.com',
-    user_joined_at: '2023-04-18T20:45:00+09:00',
-    withdrawalRequestId: 'W001',
-    created_at: '2024-01-16T01:30:00+09:00',
-    due_date: '2024-02-16T01:30:00+09:00',
+    userJoinedAt: '2023-04-18T20:45:00+09:00',
+    createdAt: '2024-01-16T01:30:00+09:00',
+    dueDate: '2024-02-16T01:30:00+09:00',
     reason: '서비스 불만족',
-    reason_detail: '기능이 부족하고 사용하기 불편함',
+    reasonDetail: '기능이 부족하고 사용하기 불편함',
+    birthday: '',
   }
 
   return (

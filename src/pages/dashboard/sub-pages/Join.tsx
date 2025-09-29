@@ -1,8 +1,7 @@
 import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
-import Section from './Section'
+import { Section, DROPDOWN_PERIOD_OPTIONS } from './common'
 import { useState } from 'react'
-import { DROPDOWN_PERIOD_OPTIONS } from './constants'
-import VerticalBarChart from '../../../components/charts/VerticalBarChart/VerticalBarChart'
+import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Join() {
   const [period, setPeriod] = useState('MONTHLY')
@@ -12,7 +11,6 @@ export default function Join() {
     value: period,
     onChange: (value) => {
       setPeriod(value)
-      // TODO: 드롭다운 변경 시 차트 데이터 바뀌게
     },
     classes: {
       button: 'w-23',
@@ -21,7 +19,7 @@ export default function Join() {
 
   return (
     <Section title="회원가입 추세" dropdown={dropdownProps}>
-      <VerticalBarChart />
+      <VerticalBarChart type="join" period={period} />
     </Section>
   )
 }

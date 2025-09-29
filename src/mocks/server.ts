@@ -1,4 +1,12 @@
 import { setupServer } from 'msw/node'
-import { usersHandlers, withdrawalHandlers } from './handlers'
+import {
+  usersHandlers,
+  withdrawalHandlers,
+  studyGroupHandlers,
+} from './handlers'
 
-export const server = setupServer(...usersHandlers, ...withdrawalHandlers)
+export const server = setupServer(
+  ...usersHandlers,
+  ...withdrawalHandlers,
+  ...studyGroupHandlers
+)

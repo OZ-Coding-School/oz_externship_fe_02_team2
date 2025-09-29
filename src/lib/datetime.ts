@@ -16,3 +16,26 @@ export function formatDateTime(iso?: string) {
     return iso
   }
 }
+
+export function formatYmdHms(
+  value?: string | number | Date,
+  timeZone: string = 'Asia/Seoul'
+): string {
+  if (!value) return '-'
+  const date = value instanceof Date ? value : new Date(value)
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date)
+
+  const get = (t: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === t)?.value ?? '00'
+
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`
+}

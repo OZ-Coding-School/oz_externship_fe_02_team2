@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/Button'
-import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
+import type { UserDetail } from '@/types/User.types'
 import UserDetailModal from '@/components/ui/Modal/feature/User/UserDetail'
 
 import { useState } from 'react'
@@ -9,17 +9,17 @@ export default function TestMemberDetailPage() {
 
   // 더미 데이터
   const mockMember: UserDetail = {
-    id: 'U001',
+    uuid: 'U001',
     name: '홍길동',
     email: 'hong@example.com',
     gender: '남성',
     nickname: '길동이',
-    birth: '1995-05-20',
-    phone: '010-1234-5678',
-    role: '관리자',
-    status: '활성',
-    joinedAt: '2024-03-15 15:30:00',
-    avatarUrl: 'https://placehold.co/80x80?text=😀',
+    birthday: '1995-05-20',
+    phoneNumber: '010-1234-5678',
+    permission: 'ADMIN',
+    status: 'ACTIVE',
+    createdAt: '2024-03-15 15:30:00',
+    profileImgUrl: 'https://placehold.co/80x80?text=😀',
   }
 
   return (
