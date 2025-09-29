@@ -1,110 +1,206 @@
-import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
-import { http, withBypass } from '../http'
-import { decideBypass } from '../toggles/mockToggle'
+import { api, http, shouldUseMock, withBypass } from '../http'
+import type {
+  UserDetail,
+  ServerUserList,
+  ServerUserDetail,
+  UsersParams,
+  DjangoPageResponse,
+  PageResponse,
+  UserCreateRequest,
+  UserUpdateRequest,
+  UserPermissionUpdateRequest,
+} from '@type/User.types'
 
-export type SortOrder = 'asc' | 'desc'
-
-export type UsersParams = {
-  page?: number // 1-based
-  pageSize?: number
-  sortBy?: string
-  sortOrder?: SortOrder
-  q?: string
-  role?: string
-  status?: string | undefined
-}
-
-export type PageResp<T> = {
-  items: T[]
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-  sortBy?: string
-  sortOrder?: SortOrder
-}
-
-const DEFAULT_PAGE = 1
-const DEFAULT_PAGE_SIZE = 20
-
-// undefined/null 제거 + 기본값 채우기
-function buildParams(p: UsersParams = {}): Record<string, string | number> {
-  const params: Record<string, string | number | undefined> = {
-    page: p.page ?? DEFAULT_PAGE,
-    pageSize: p.pageSize ?? DEFAULT_PAGE_SIZE,
-    sortBy: p.sortBy,
-    sortOrder: p.sortOrder,
-    q: p.q,
-    role: p.role,
-    status: p.status,
-  }
-
-  // 빈 값 제거
-  const filteredParams: Record<string, string | number> = {}
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      filteredParams[key] = value
-    }
-  })
-
-  return filteredParams
-}
-
-/* ------------------ 엔드포인트 ------------------ */
 const BASE = '/v1/admin/users'
+const BASE1 = '/api/v1/admin/users'
+// ────────────────────────────────────────────────────────────────────────────
+// 매퍼 함수
+// ────────────────────────────────────────────────────────────────────────────
 
-// 목록 조회(듀얼 모드)
+function mapUserList(u: ServerUserList): UserDetail {
+  return {
+    uuid: u.uuid,
+    email: u.email,
+    nickname: u.nickname,
+    name: u.name,
+    birthday: u.birthday,
+    permission: u.permission,
+    permissionDisplay: u.permission_display,
+    status: u.status,
+    createdAt: u.created_at,
+    withdrawalsRequestDate: u.withdrawals_request_date,
+  }
+}
+
+function mapUserDetail(u: ServerUserDetail): UserDetail {
+  return {
+    uuid: u.uuid,
+    email: u.email,
+    nickname: u.nickname,
+    name: u.name,
+    birthday: u.birthday,
+    permission: u.permission,
+    status: u.status,
+    createdAt: u.created_at,
+    gender: u.gender,
+    phoneNumber: u.phone_number,
+    profileImgUrl: u.profile_img_url,
+  }
+}
+
+// DRF 페이지 → 클라이언트 페이지 변환
+function adaptDjangoPage<TServer, TClient>(
+  response: DjangoPageResponse<TServer>,
+  mapper: (item: TServer) => TClient,
+  page: number,
+  pageSize: number
+): PageResponse<TClient> {
+  const total = response.count
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  return {
+    items: response.results.map(mapper),
+    page,
+    pageSize,
+    total,
+    totalPages,
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// API 함수들
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 사용자 목록 조회
+ */
 export async function getUsers(
   params: UsersParams = {},
   opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.get<PageResp<UserDetail>>(
-    BASE,
-    withBypass({ params: buildParams(params) }, bypass)
+): Promise<PageResponse<UserDetail>> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const queryParams: Record<string, string | number> = {}
+
+  if (params.page) queryParams.page = params.page
+  if (params.page_size) queryParams.page_size = params.page_size
+  if (params.ordering) queryParams.ordering = params.ordering
+  if (params.search) queryParams.search = params.search
+  if (params.permission) queryParams.permission = params.permission
+  if (params.status) queryParams.status = params.status
+
+  const res = await api.get<DjangoPageResponse<ServerUserList>>(
+    `${BASE1}/`,
+    withBypass({ params: queryParams }, useMock)
   )
-  return res.data
+
+  const page = params.page ?? 1
+  const pageSize = params.page_size ?? 20
+
+  console.log(res.data)
+  return adaptDjangoPage(res.data, mapUserList, page, pageSize)
 }
 
-// 상세 조회(듀얼 모드)
-export async function getUserDetail(id: string, opts?: { mock?: boolean }) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.get<UserDetail>(
-    `${BASE}/${id}`,
-    withBypass({}, bypass)
-  )
-  return res.data
-}
-
-// 부분 수정(듀얼 모드)
-export async function updateUser(
-  id: string,
-  patch: Partial<UserDetail>,
+/**
+ * 사용자 상세 조회
+ */
+export async function getUserDetail(
+  uuid: string,
   opts?: { mock?: boolean }
-) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.patch<UserDetail>(
-    `${BASE}/${id}`,
-    patch,
-    withBypass({}, bypass)
+): Promise<UserDetail> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const res = await api.get<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
+    withBypass({}, useMock)
   )
-  return res.data
+  console.log(res.data)
+  return mapUserDetail(res.data)
 }
 
-// 복구(듀얼 모드)
-export async function restoreUser(id: string, opts?: { mock?: boolean }) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.post<UserDetail>(
-    `${BASE}/${id}/restore`,
-    {},
-    withBypass({}, bypass)
+/**
+ * 사용자 생성
+ */
+export async function createUser(
+  data: UserCreateRequest,
+  opts?: { mock?: boolean }
+): Promise<UserDetail> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const res = await http.post<ServerUserList>(
+    `${BASE}/`,
+    data,
+    withBypass({}, useMock)
   )
-  return res.data
+
+  return mapUserList(res.data)
 }
 
-// 삭제(듀얼 모드)
-export async function deleteUser(id: string, opts?: { mock?: boolean }) {
-  const bypass = decideBypass(opts?.mock)
-  const res = await http.delete<void>(`${BASE}/${id}`, withBypass({}, bypass))
-  return res.data // axios는 void면 undefined 반환 → 호출부에선 await만 하면 됨
+/**
+ * 사용자 수정 (PATCH)
+ */
+export async function updateUser(
+  uuid: string,
+  data: UserUpdateRequest,
+  opts?: { mock?: boolean }
+): Promise<UserDetail> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const res = await api.patch<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
+    data,
+    withBypass({}, useMock)
+  )
+
+  return mapUserDetail(res.data)
+}
+
+/**
+ * 사용자 전체 수정 (PUT)
+ */
+export async function replaceUser(
+  uuid: string,
+  data: UserUpdateRequest,
+  opts?: { mock?: boolean }
+): Promise<UserDetail> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const res = await api.put<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
+    data,
+    withBypass({}, useMock)
+  )
+
+  return mapUserDetail(res.data)
+}
+
+/**
+ * 사용자 삭제
+ */
+export async function deleteUser(
+  uuid: string,
+  opts?: { mock?: boolean }
+): Promise<void> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  await api.delete(`${BASE1}/${uuid}/`, withBypass({}, useMock))
+}
+
+/**
+ * 사용자 권한 수정
+ */
+export async function updateUserPermission(
+  uuid: string,
+  data: UserPermissionUpdateRequest,
+  opts?: { mock?: boolean }
+): Promise<UserDetail> {
+  const useMock = shouldUseMock(opts?.mock)
+
+  const res = await api.patch<ServerUserDetail>(
+    `${BASE1}/${uuid}/permission/`,
+    data,
+    withBypass({}, useMock)
+  )
+
+  return mapUserDetail(res.data)
 }

@@ -33,8 +33,8 @@ export default function UserDelete({
     onDelete: async (id) => {
       const run =
         customDeleteUser ??
-        (async (uid: string) => {
-          await deleteUser(uid, { mock: true })
+        (async (uuid: string) => {
+          await deleteUser(uuid, { mock: false })
         })
       await run(id)
     },

@@ -24,7 +24,7 @@ export const URL_PARAM_KEYS = {
 /** 탈퇴사유 옵션들 */
 export const WITHDRAWAL_REASONS: FilterOption[] = [
   { label: '서비스 불만족', value: 'SERVICE_DISSATISFACTION' },
-  { label: '개인정보 우려', value: 'PRIVACY_CONCERN' },
+  { label: '개인정보 우려', value: 'PRIVACY_CONCERNS' },
   { label: '사용 빈도 낮음', value: 'LOW_USAGE' },
   { label: '경쟁 서비스 이용', value: 'COMPETITOR_SERVICE' },
   { label: '기타', value: 'OTHER' },

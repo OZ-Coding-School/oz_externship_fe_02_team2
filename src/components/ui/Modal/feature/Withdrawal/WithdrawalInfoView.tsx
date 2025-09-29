@@ -1,6 +1,6 @@
 import Field from '../../fields/Field'
 import Modal from '../../Modal'
-import type { WithdrawalDetail } from './Withdrawal.types'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
 import { formatDateTime } from '@/lib/datetime'
 import { memo } from 'react'
 
@@ -27,13 +27,13 @@ function WithdrawalInfoViewBase({ form }: Props) {
           />
           <Field
             label="탈퇴요청 일시"
-            value={formatDateTime(form.created_at)}
+            value={formatDateTime(form.createdAt)}
             editing={false}
             onChange={() => {}}
           />
           <Field
             label="삭제 예정 일시"
-            value={formatDateTime(form.due_date)}
+            value={formatDateTime(form.dueDate)}
             editing={false}
             onChange={() => {}}
           />
@@ -49,7 +49,7 @@ function WithdrawalInfoViewBase({ form }: Props) {
       <div className="px-6 pt-0 pb-6">
         <Field
           label="탈퇴 상세 사유"
-          value={form.reason_detail || '-'} /* reasonDetail → reason_detail */
+          value={form.reasonDetail || '-'} /* reasonDetail → reason_detail */
           editing={false}
           onChange={() => {}}
         />

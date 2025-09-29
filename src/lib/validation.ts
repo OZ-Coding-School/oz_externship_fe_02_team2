@@ -1,5 +1,4 @@
-const PASSWORD_REGEX =
-  /^(?=\S{6,15}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*(?:[^\w\s]|_)).*$/
+const PASSWORD_REGEX = /^(?=\S{6,15}$)(?=.*[a-z])(?=.*\d)(?=.*(?:[^\w\s]|_)).*$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateEmail(email: string): string {
