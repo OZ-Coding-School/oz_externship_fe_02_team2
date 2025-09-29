@@ -1,7 +1,24 @@
 import { memo } from 'react'
-import Field from '../../fields/Field'
 import Modal from '../../Modal'
 import type { ApplyToStudyDetail } from './ApplyToStudy.types'
+import Badge from '@/components/ui/Badge/Badge'
+
+function LabeledBlock({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <div className="body-sm mb-2 font-semibold text-gray-900">{label}</div>
+      <div className="rounded-2xl bg-gray-50 px-5 py-4 text-black">
+        {children ?? '-'}
+      </div>
+    </div>
+  )
+}
 
 function ApplicationRecruitmentViewBase({
   form,
@@ -16,24 +33,9 @@ function ApplicationRecruitmentViewBase({
       </Modal.Header>
       <Modal.Body className="pt-0 pb-3">
         <div className="space-y-4">
-          <Field
-            label="공고명"
-            value={r.title}
-            editing={false}
-            onChange={() => {}}
-          />
-          <Field
-            label="모집 인원"
-            value={`${r.expectedHeadcount}명`}
-            editing={false}
-            onChange={() => {}}
-          />
-          <Field
-            label="마감 기한"
-            value={r.deadlineDate ?? `-`}
-            editing={false}
-            onChange={() => {}}
-          />
+          <LabeledBlock label="공고명">{r.title}</LabeledBlock>
+          <LabeledBlock label="모집 인원">{r.expectedHeadcount}명</LabeledBlock>
+          <LabeledBlock label="마감 기한">{r.deadlineDate ?? '-'}</LabeledBlock>
         </div>
         <div>
           <div className="body-sm mb-2 font-semibold text-gray-900">
@@ -44,10 +46,7 @@ function ApplicationRecruitmentViewBase({
           <ul className="space-y-4">
             {r.lectures.length ? (
               r.lectures.map((lec, i) => (
-                <li
-                  key={i}
-                  className="rounded-2xl bg-gray-50 px-6 py-5" // ← 테두리 X, 라운드 + 배경
-                >
+                <li key={i} className="rounded-2xl bg-gray-50 px-6 py-5">
                   <p className="text-lg leading-snug font-semibold text-black">
                     {lec.title}
                   </p>
@@ -63,21 +62,18 @@ function ApplicationRecruitmentViewBase({
         </div>
 
         <div>
-          <div className="body-sm mb-1 font-medium text-gray-700">
+          <div className="body-sm mb-2 font-semibold text-gray-900">
             사용자 정의 태그
           </div>
           <div className="flex flex-wrap gap-2">
             {r.tags.length ? (
               r.tags.map((t) => (
-                <span
-                  key={t.id}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700"
-                >
+                <Badge key={t.id} variant="warning" size="md">
                   {t.name}
-                </span>
+                </Badge>
               ))
             ) : (
-              <span className="text-sm text-gray-500">-</span>
+              <span className="body-sm text-gray-500">-</span>
             )}
           </div>
         </div>
