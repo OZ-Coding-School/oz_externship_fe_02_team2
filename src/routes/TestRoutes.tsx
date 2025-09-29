@@ -8,6 +8,8 @@ import { PATHS } from './constants'
 import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
 import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
+import CourseManagementTest from '@/pages/admin/CourseManagement'
+import ReviewManagement from '@/pages/admin/Review'
 import UserManagePage from '@/pages/admin/UserManage'
 import UserWithdrawalPage from '@/pages/admin/UserWithdrawal'
 import StudyGroupPage from '@/pages/admin/StudyManage'
@@ -38,10 +40,9 @@ export default function TestRoutes() {
             <Route path="*" element={<Navigate to="join" replace />} />
           </Route>
 
-          <Route path={PATHS.LECTURE} element={<PlaceHolderPage />} />
+          <Route path={PATHS.LECTURE} element={<CourseManagementTest />} />
           <Route path={PATHS.STUDYGROUP} element={<StudyGroupPage />} />
-          <Route path={PATHS.REVIEW} element={<PlaceHolderPage />} />
-
+          <Route path={PATHS.REVIEW} element={<ReviewManagement />} />
           <Route path={PATHS.POST} element={<PlaceHolderPage />} />
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
           <Route path="*" element={<div className="p-6">Not Found</div>} />
