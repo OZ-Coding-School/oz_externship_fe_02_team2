@@ -7,6 +7,5 @@ export function ProtectedRoute() {
   if (!hasToken) {
     return <Navigate to="/admin/login" replace />
   }
-
   return <Outlet />
 }
