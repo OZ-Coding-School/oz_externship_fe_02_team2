@@ -1,16 +1,16 @@
 import ModalSkeleton from '@/components/ui/Skeleton/ModalSkeleton'
-import type { ApplicationDetail } from './ApplyToStudy.types'
 import ApplyToStudyRecruitmentView from './ApplyToStudyRecruitmentView'
 import ApplyToStudyUserView from './ApplyToStudyUserView'
 import ApplyToStudyInfoView from './ApplyToStudyInfoView'
+import type { ApplyToStudyDetail } from './ApplyToStudy.types'
 
 type Props = {
-  form?: ApplicationDetail | null
+  form?: ApplyToStudyDetail | null
   loading?: boolean
   errorText?: string | null
 }
 
-export default function ApplicationDetailView({
+export default function ApplyToStudyDetailView({
   form,
   loading,
   errorText,

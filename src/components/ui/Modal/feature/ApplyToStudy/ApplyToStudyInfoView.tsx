@@ -3,9 +3,9 @@ import Field from '../../fields/Field'
 import { formatDateTime } from '@/lib/datetime'
 
 import { memo } from 'react'
-import type { ApplicationDetail } from './ApplyToStudy.types'
+import type { ApplyToStudyDetail } from './ApplyToStudy.types'
 
-function ApplicationInfoViewBase({ form }: { form: ApplicationDetail }) {
+function ApplicationInfoViewBase({ form }: { form: ApplyToStudyDetail }) {
   return (
     <>
       <Modal.Header className="pb-2">
@@ -78,7 +78,7 @@ function ApplicationInfoViewBase({ form }: { form: ApplicationDetail }) {
     </>
   )
 }
-function mapStatus(s: ApplicationDetail['status']) {
+function mapStatus(s: ApplyToStudyDetail['status']) {
   switch (s) {
     case 'APPROVED':
       return '승인'

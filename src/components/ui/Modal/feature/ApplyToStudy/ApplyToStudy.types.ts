@@ -1,6 +1,10 @@
 // 공통 도메인
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
-export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'INREVIEW'
+export type ApplyToStudyStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'INREVIEW'
 
 export interface Tag {
   id: string
@@ -33,7 +37,7 @@ export interface ApplicantProfile {
 }
 
 // 지원 내역 상세 도메인
-export interface ApplicationDetail {
+export interface ApplyToStudyDetail {
   applicationId: string // 예: "#APP001"
   recruitment: RecruitmentPostSummary
   applicant: ApplicantProfile
@@ -47,12 +51,12 @@ export interface ApplicationDetail {
 
   createdAt: string // ISO (서버 원본)
   updatedAt: string // ISO
-  status: ApplicationStatus // 승인/대기/거절 등
+  status: ApplyToStudyStatus // 승인/대기/거절 등
 }
 
 // UI 컴포넌트 props
-export interface ApplicationDetailModalProps {
+export interface ApplyToStudyDetailModalProps {
   open: boolean
-  data: ApplicationDetail
+  data: ApplyToStudyDetail
   onClose: () => void
 }

@@ -1,9 +1,9 @@
 import Modal from '../../Modal'
 import Field from '../../fields/Field'
 import { memo } from 'react'
-import type { ApplicationDetail } from './ApplyToStudy.types'
+import type { ApplyToStudyDetail } from './ApplyToStudy.types'
 
-function ApplicationApplicantViewBase({ form }: { form: ApplicationDetail }) {
+function ApplicationApplicantViewBase({ form }: { form: ApplyToStudyDetail }) {
   const u = form.applicant
   return (
     <>
