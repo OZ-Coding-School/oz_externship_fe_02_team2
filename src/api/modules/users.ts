@@ -1,4 +1,4 @@
-import { http, shouldUseMock, withBypass } from '../http'
+import { api, http, shouldUseMock, withBypass } from '../http'
 import type {
   UserDetail,
   ServerUserList,
@@ -12,7 +12,7 @@ import type {
 } from '@type/User.types'
 
 const BASE = '/v1/admin/users'
-
+const BASE1 = '/api/v1/admin/users'
 // ────────────────────────────────────────────────────────────────────────────
 // 매퍼 함수
 // ────────────────────────────────────────────────────────────────────────────
@@ -89,14 +89,15 @@ export async function getUsers(
   if (params.permission) queryParams.permission = params.permission
   if (params.status) queryParams.status = params.status
 
-  const res = await http.get<DjangoPageResponse<ServerUserList>>(
-    `${BASE}/`,
+  const res = await api.get<DjangoPageResponse<ServerUserList>>(
+    `${BASE1}/`,
     withBypass({ params: queryParams }, useMock)
   )
 
   const page = params.page ?? 1
   const pageSize = params.page_size ?? 20
 
+  console.log(res.data)
   return adaptDjangoPage(res.data, mapUserList, page, pageSize)
 }
 
@@ -109,11 +110,11 @@ export async function getUserDetail(
 ): Promise<UserDetail> {
   const useMock = shouldUseMock(opts?.mock)
 
-  const res = await http.get<ServerUserDetail>(
-    `${BASE}/${uuid}/`,
+  const res = await api.get<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
     withBypass({}, useMock)
   )
-
+  console.log(res.data)
   return mapUserDetail(res.data)
 }
 
@@ -145,8 +146,8 @@ export async function updateUser(
 ): Promise<UserDetail> {
   const useMock = shouldUseMock(opts?.mock)
 
-  const res = await http.patch<ServerUserDetail>(
-    `${BASE}/${uuid}/`,
+  const res = await api.patch<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
     data,
     withBypass({}, useMock)
   )
@@ -164,8 +165,8 @@ export async function replaceUser(
 ): Promise<UserDetail> {
   const useMock = shouldUseMock(opts?.mock)
 
-  const res = await http.put<ServerUserDetail>(
-    `${BASE}/${uuid}/`,
+  const res = await api.put<ServerUserDetail>(
+    `${BASE1}/${uuid}/`,
     data,
     withBypass({}, useMock)
   )
@@ -182,7 +183,7 @@ export async function deleteUser(
 ): Promise<void> {
   const useMock = shouldUseMock(opts?.mock)
 
-  await http.delete(`${BASE}/${uuid}/`, withBypass({}, useMock))
+  await api.delete(`${BASE1}/${uuid}/`, withBypass({}, useMock))
 }
 
 /**
@@ -195,8 +196,8 @@ export async function updateUserPermission(
 ): Promise<UserDetail> {
   const useMock = shouldUseMock(opts?.mock)
 
-  const res = await http.patch<ServerUserDetail>(
-    `${BASE}/${uuid}/permission/`,
+  const res = await api.patch<ServerUserDetail>(
+    `${BASE1}/${uuid}/permission/`,
     data,
     withBypass({}, useMock)
   )
