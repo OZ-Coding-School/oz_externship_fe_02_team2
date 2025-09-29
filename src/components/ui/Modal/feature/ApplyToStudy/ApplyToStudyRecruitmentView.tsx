@@ -36,20 +36,30 @@ function ApplicationRecruitmentViewBase({
           />
         </div>
         <div>
-          <div className="body-sm mb-1 font-medium text-gray-700">
+          <div className="body-sm mb-2 font-semibold text-gray-900">
             강의 목록
           </div>
-          <div className="space-y-1 rounded-md border border-gray-200 p-3">
+
+          {/* 아이템 간 간격 */}
+          <ul className="space-y-4">
             {r.lectures.length ? (
-              r.lectures.map((l, i) => (
-                <div key={i} className="body-sm text-gray-700">
-                  강의: {l.title} · 강사: {l.instructorName}
-                </div>
+              r.lectures.map((lec, i) => (
+                <li
+                  key={i}
+                  className="rounded-2xl bg-gray-50 px-6 py-5" // ← 테두리 X, 라운드 + 배경
+                >
+                  <p className="text-lg leading-snug font-semibold text-black">
+                    {lec.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-tight text-black">
+                    강사: {lec.instructorName}
+                  </p>
+                </li>
               ))
             ) : (
-              <div className="body-sm text-gray-500">-</div>
+              <li className="rounded-2xl bg-gray-50 px-6 py-5 text-black">-</li>
             )}
-          </div>
+          </ul>
         </div>
 
         <div>
