@@ -3,6 +3,15 @@
 /**
  * 상태 enum → 한글 번역
  */
+export function translateGender(gender: string | null | undefined): string {
+  const genderMap: Record<string, string> = {
+    MALE: '남성',
+    FEMALE: '여성',
+    OTHER: '기타',
+  }
+  return gender ? (genderMap[gender] ?? gender) : '알 수 없음'
+}
+
 export function translateStatus(status: string | null | undefined): string {
   const statusMap: Record<string, string> = {
     ACTIVE: '활성',
