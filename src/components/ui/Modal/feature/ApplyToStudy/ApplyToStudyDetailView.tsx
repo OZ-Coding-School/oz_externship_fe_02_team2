@@ -1,8 +1,7 @@
 import ModalSkeleton from '@/components/ui/Skeleton/ModalSkeleton'
 import ApplyToStudyRecruitmentView from './ApplyToStudyRecruitmentView'
-import ApplyToStudyUserView from './ApplyToStudyUserView'
-import ApplyToStudyInfoView from './ApplyToStudyInfoView'
 import type { ApplyToStudyDetail } from './ApplyToStudy.types'
+import ApplyToStudyUserView from './ApplyToStudyUserView'
 
 type Props = {
   form?: ApplyToStudyDetail | null
@@ -48,8 +47,6 @@ export default function ApplyToStudyDetailView({
         {/* 오른쪽 칸은 이미 div로 감싸져 있어 OK */}
         <div>
           <ApplyToStudyUserView form={form} />
-          <div className="my-4 border-b border-gray-200" />
-          <ApplyToStudyInfoView form={form} />
         </div>
       </div>
     </>
