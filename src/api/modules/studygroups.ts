@@ -78,7 +78,7 @@ function buildParams(
 }
 
 /* ------------------ 엔드포인트 ------------------ */
-const BASE = '/v1/admin/studygroups'
+const BASE = '/v1/admin/studygroups/'
 
 // 목록 조회(듀얼 모드)
 export async function getStudyGroups(
@@ -100,7 +100,7 @@ export async function getStudyGroupDetail(
 ) {
   const useMock = shouldUseMock(opts?.mock)
   const res = await http.get<StudyGroupDetail>(
-    `${BASE}/${id}`,
+    `${BASE}${id}/`,
     withBypass({}, useMock)
   )
   return res.data
@@ -113,7 +113,7 @@ export async function getStudyGroupByUuid(
 ) {
   const useMock = shouldUseMock(opts?.mock)
   const res = await http.get<StudyGroupDetail>(
-    `${BASE}/uuid/${uuid}`,
+    `${BASE}uuid/${uuid}/`,
     withBypass({}, useMock)
   )
   return res.data
@@ -123,7 +123,7 @@ export async function getStudyGroupByUuid(
 export async function getStudyGroupStats(opts?: { mock?: boolean }) {
   const bypass = decideBypass(opts?.mock)
   const res = await http.get<StudyGroupStats>(
-    `${BASE}/statistics`,
+    `${BASE}statistics/`,
     withBypass({}, bypass)
   )
   return res.data

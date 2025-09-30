@@ -23,11 +23,11 @@ export interface UserInfo {
 export const authService = {
   /**
    * 이메일 로그인
-   * POST /api/v1/auth/email/login
+   * POST /api/v1/auth/email/login/
    */
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response: AxiosResponse<LoginResponse> = await api.post(
-      '/api/v1/auth/email/login',
+      '/api/v1/auth/email/login/',
       credentials
     )
 
@@ -45,7 +45,7 @@ export const authService = {
    * 쿠키에 저장된 리프레시 토큰을 사용하여 로그아웃 처리
    */
   logout: async (): Promise<void> => {
-    await api.post('/api/v1/auth/logout')
+    await api.post('/api/v1/auth/logout/')
     // 로컬 토큰 삭제
     tokenManager.removeToken()
   },
@@ -57,7 +57,7 @@ export const authService = {
    */
   refreshToken: async (): Promise<LoginResponse> => {
     const response: AxiosResponse<LoginResponse> = await api.post(
-      '/api/v1/auth/refresh'
+      '/api/v1/auth/refresh/'
     )
 
     // 새 토큰 저장

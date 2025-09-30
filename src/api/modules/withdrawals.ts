@@ -11,7 +11,7 @@ import type {
   RestoreWithdrawalResponse,
 } from '@/types/Withdrawal.types'
 
-const BASE = '/v1/admin/withdrawals'
+const BASE = '/v1/admin/withdrawals/'
 
 // ────────────────────────────────────────────────────────────────────────────
 // 매퍼 함수
@@ -115,7 +115,7 @@ export async function getWithdrawals(
   }
 
   const res = await http.get<DjangoPageResponse<ServerWithdrawalListItem>>(
-    `${BASE}/`,
+    `${BASE}`,
     withBypass({ params: queryParams }, useMock)
   )
 
@@ -135,7 +135,7 @@ export async function getWithdrawalDetail(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await http.get<ServerWithdrawalDetail>(
-    `${BASE}/${id}/`,
+    `${BASE}${id}/`,
     withBypass({}, useMock)
   )
 
@@ -152,7 +152,7 @@ export async function restoreWithdrawal(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await http.post<RestoreWithdrawalResponse>(
-    `${BASE}/${id}/restore/`,
+    `${BASE}${id}/restore/`,
     {},
     withBypass({}, useMock)
   )
