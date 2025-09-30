@@ -10,6 +10,13 @@ import ApplyToStudyTable from '@/components/table/feature/ApplyToStudy/ApplyToSt
 import ApplyToStudyFilterBar from '@/components/table/feature/ApplyToStudy/ApplyToStudyFilter'
 import type { ApplyToStudyDetail as ApplyToStudyDetailFull } from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
 import ApplyToStudyModal from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudyModal'
+import type {
+  ApplyToStudyDetail as ApplyToStudyDetailUI,
+  Lecture as LectureUI,
+  Tag as TagUI,
+  Gender as GenderUI,
+  ApplyToStudyStatus as StatusUI,
+} from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
 
 // ── studyassistance 어댑터 유틸 ─────────────────
 const koFromEn: Record<string, '승인' | '검토 중' | '대기' | '거절'> = {
@@ -26,12 +33,30 @@ const enFromKo: Record<string, 'approved' | 'review' | 'pending' | 'rejected'> =
     대기: 'pending',
     거절: 'rejected',
   }
+
+// ── seed → UI Enum 매핑
+const genderMap: Record<string, GenderUI> = {
+  남성: 'MALE',
+  여성: 'FEMALE',
+  기타: 'OTHER',
+}
+
+const statusMap: Record<string, StatusUI> = {
+  approved: 'APPROVED',
+  review: 'INREVIEW',
+  pending: 'PENDING',
+  rejected: 'REJECTED',
+}
+
 const toAppIdString = (n: number | string) => `APP${String(n).padStart(4, '0')}`
-const digits = (id: string) => Number(String(id).replace(/\D/g, '')) || 0
 const toIso = (s: string) => {
+  if (!s) return ''
   const t = s.includes('T') ? s : s.replace(' ', 'T')
   return /\d{2}:\d{2}:\d{2}$/.test(t) ? t : `${t}:00`
 }
+const toDateOnly = (s: string) =>
+  s ? (s.split(' ')[0] ?? s.split('T')[0] ?? '') : ''
+const digits = (id: string) => Number(String(id).replace(/\D/g, '')) || 0
 
 // ==== (임시) API 타입 & 모듈 ====
 type ApplyToStudyDetail = {
@@ -119,7 +144,8 @@ async function getApplyToStudyList(params: {
 
 async function getApplyToStudyDetail(
   id: number
-): Promise<ApplyToStudyDetailFull> {
+): Promise<ApplyToStudyDetailUI> {
+  // 시드는 내부 키(예: 'APP0001')를 path로 받음
   const res = await fetch(`/api/v1/admin/studyassistance/${toAppIdString(id)}`)
   if (!res.ok) {
     const raw = (await res.text()) || ''
@@ -137,96 +163,73 @@ async function getApplyToStudyDetail(
     throw new ApiError(String(res.status), { ...json, message })
   }
 
-  const data = (await res.json()) as any
+  const a = (await res.json()) as any
+  // a: StudyApplicationDetail (seed)
+  //  - a.id: 'APP0001'
+  //  - a.ad: { id:'AD_1234', title:string }
+  //  - a.adDetail: { headcount:number, lectures:[{title, teacher}], tags:string[], deadline:'YYYY-MM-DD HH:MM' }
+  //  - a.applicant: { nickname, email, gender:'남성'|'여성'|'기타', avatarUrl? }
+  //  - a.status: 'approved'|'pending'|'rejected'|'review'
+  //  - a.appliedAt / a.updatedAt: 'YYYY-MM-DD HH:MM'
+  //  - intro/motivation/goal/availableTime/hasExperience/experienceDetail
 
-  // --- 원본 필드 정규화
-  const appIdStr = toAppIdString(id) // 'APP0001'
-  const title = data?.ad?.title ?? data?.title ?? ''
-  const ad = data?.ad ?? { id: '', title }
+  const applicationId = `#${a.id}` // 예시 포맷: "#APP0001"
 
-  const adDetailRaw = data?.adDetail ?? {}
-  const headcount = Number(adDetailRaw?.headcount ?? 0)
-  const tagsArr: string[] = Array.isArray(adDetailRaw?.tags)
-    ? [...new Set(adDetailRaw.tags)]
-    : []
-  const deadline = toIso(adDetailRaw?.deadline ?? data?.deadline ?? '')
-
-  const lecturesNorm = Array.isArray(adDetailRaw?.lectures)
-    ? adDetailRaw.lectures.map((l: any, i: number) => {
-        const lid = l?.id ?? `${ad.id || appIdStr}-lec-${i}`
-        const name = l?.title ?? l?.name ?? ''
-        const instructor = l?.teacher ?? l?.instructor ?? ''
-        return {
-          id: lid,
-          title: name, // 시드 스타일
-          name, // 컴포넌트가 name을 기대할 수도 있음
-          teacher: instructor,
-          instructor, // 컴포넌트가 instructor를 기대할 수도 있음
-        }
-      })
+  // 태그: string[] → {id,name}[]
+  const tags: TagUI[] = Array.isArray(a?.adDetail?.tags)
+    ? a.adDetail.tags.map((name: string, i: number) => ({
+        id: `${a?.ad?.id ?? a.id}-tag-${i}-${name}`,
+        name,
+      }))
     : []
 
-  const tagsWithKey = tagsArr.map((t, i) => ({
-    id: `${ad.id || appIdStr}-tag-${i}-${t}`,
-    label: t,
-  }))
+  // 강의: {title, teacher} → {title, instructorName}
+  const lectures: LectureUI[] = Array.isArray(a?.adDetail?.lectures)
+    ? a.adDetail.lectures.map((l: any) => ({
+        title: l?.title ?? '',
+        instructorName: l?.teacher ?? l?.instructor ?? '',
+      }))
+    : []
 
-  // --- 최종 반환: 모달이 쓸 모든 별칭을 중복으로 깔아줌
-  return {
-    ...data,
+  // 모집 요약
+  const recruitment = {
+    id: digits(a?.ad?.id ?? ''), // 시드엔 숫자 id 없음 → 숫자만 추출, 없으면 클릭한 id로 대체해도 됨
+    uuid: String(a?.ad?.id ?? a.id), // 시드에 uuid 없음 → ad.id를 uuid로 사용
+    title: a?.ad?.title ?? '',
+    expectedHeadcount: Number(a?.adDetail?.headcount ?? 0),
+    lectures,
+    tags,
+    deadlineDate: toDateOnly(a?.adDetail?.deadline ?? ''), // 'YYYY-MM-DD'
+  }
 
-    // 공통/기본
-    id, // number 유지 (행 클릭 시 사용)
-    applicationId: id, // 혹시 이 키를 쓰는 뷰가 있으면 대비
-    applicationCode: appIdStr, // '#APP0001' 같은 표시가 필요할 수 있음
-    title, // 루트 title도 노출
-    statusSlug: data?.status, // 영문 슬러그 보존
-    status: koFromEn[data?.status] ?? data?.status, // '승인' 등 한글 배지용
+  // 지원자
+  const applicant = {
+    userId: a?.applicant?.email ?? String(id), // 시드에 별도 userId 없음 → email 사용
+    nickname: a?.applicant?.nickname ?? '',
+    email: a?.applicant?.email ?? '',
+    gender: a?.applicant?.gender ? genderMap[a.applicant.gender] : undefined,
+    profileImageUrl: a?.applicant?.avatarUrl || undefined,
+  }
 
-    // 날짜 alias(여러 컴포넌트 호환)
-    appliedAt: toIso(data?.appliedAt),
-    submittedAt: toIso(data?.appliedAt),
-    createdAt: toIso(data?.appliedAt),
-    updatedAt: toIso(data?.updatedAt),
+  // 최종 UI 도메인
+  const ui: ApplyToStudyDetailUI = {
+    applicationId,
+    recruitment,
+    applicant,
+    selfIntroduction: a?.intro ?? null,
+    motivation: a?.motivation ?? null,
+    goal: a?.goal ?? null,
+    availableTimeDescription: a?.availableTime ?? null,
+    hasStudyExperience: Boolean(a?.hasExperience),
+    studyExperienceDetails: a?.hasExperience
+      ? (a?.experienceDetail ?? null)
+      : null,
+    createdAt: toIso(a?.appliedAt),
+    updatedAt: toIso(a?.updatedAt),
+    status: statusMap[a?.status as keyof typeof statusMap], // 'APPROVED' | 'INREVIEW' | 'PENDING' | 'REJECTED'
+  }
 
-    // 지원자(성별 포함)
-    applicant: {
-      ...(data?.applicant ?? {}),
-      gender: data?.applicant?.gender ?? '-', // 성별 표시용
-    },
-
-    // 원본 + 정규화
-    ad,
-    adDetail: {
-      headcount,
-      tags: tagsArr,
-      tagsWithKey, // key 포함 태그
-      lectures: lecturesNorm,
-      deadline,
-    },
-
-    // 모달/뷰에서 즐겨 쓰는 별칭들 (제일 중요)
-    recruitment: {
-      id: ad.id,
-      title,
-      headcount,
-      deadline,
-      tags: tagsArr,
-      customTags: tagsArr, // 다른 키를 쓰는 경우 대비
-      tagsWithKey,
-      lectures: lecturesNorm,
-    },
-    recruitmentTitle: title,
-    customTags: tagsArr,
-
-    // 자기소개/동기/목표/시간대/경험
-    intro: data?.intro ?? '',
-    motivation: data?.motivation ?? '',
-    goal: data?.goal ?? '',
-    availableTime: data?.availableTime ?? '',
-    hasExperience: Boolean(data?.hasExperience),
-    experienceDetail: data?.hasExperience ? (data?.experienceDetail ?? '') : '',
-  } as ApplyToStudyDetailFull
+  return ui
 }
 
 // ==== 헬퍼 ====

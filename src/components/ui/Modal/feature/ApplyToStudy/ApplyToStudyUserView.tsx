@@ -3,6 +3,7 @@ import Modal from '../../Modal'
 import type { ApplyToStudyDetail } from './ApplyToStudy.types'
 import { formatYmdHms } from '@/lib'
 import { genderLabel } from '@/lib/label'
+import type { ApplyToStudyStatus as StatusUI } from './ApplyToStudy.types'
 
 function LabeledCard({
   label,
@@ -27,19 +28,22 @@ export default function ApplyToStudyUserView({
   form: ApplyToStudyDetail
 }) {
   const u = form.applicant
-  const STATUS: Record<
-    string,
-    { label: string; variant: 'success' | 'danger' | 'secondary' | 'warning' }
-  > = {
-    APPROVED: { label: '승인', variant: 'success' },
-    REJECTED: { label: '거절', variant: 'danger' },
-    PENDING: { label: '대기중', variant: 'secondary' },
-    REVIEWING: { label: '검토중', variant: 'warning' },
-    UNDER_REVIEW: { label: '검토중', variant: 'warning' },
+
+  const statusLabelKo: Record<StatusUI, string> = {
+    APPROVED: '승인',
+    REJECTED: '거절',
+    PENDING: '대기중',
+    INREVIEW: '검토중',
   }
-  const sb = STATUS[form.status] ?? {
-    label: String(form.status),
-    variant: 'secondary' as const,
+
+  const statusTone: Record<
+    StatusUI,
+    'green' | 'red' | 'blue' | 'yellow' | 'gray'
+  > = {
+    APPROVED: 'green',
+    REJECTED: 'red',
+    PENDING: 'blue',
+    INREVIEW: 'yellow',
   }
   return (
     <>
@@ -103,11 +107,11 @@ export default function ApplyToStudyUserView({
               지원 상태
             </div>
             <Badge
-              variant={sb.variant}
+              tone={statusTone[form.status]}
               size="lg"
-              aria-label={`지원 상태: ${sb.label}`}
+              aria-label={`지원 상태: ${statusLabelKo[form.status]}`}
             >
-              {sb.label}
+              {statusLabelKo[form.status]}
             </Badge>
           </div>
         </div>

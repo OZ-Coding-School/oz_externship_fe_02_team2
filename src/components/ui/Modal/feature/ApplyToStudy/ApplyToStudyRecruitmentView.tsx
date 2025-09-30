@@ -33,11 +33,11 @@ function ApplicationRecruitmentViewBase({
 
   // 모집 인원 / 마감 기한
   const headcount =
-    r.expectedHeadcount ?? r.headcount ?? form.adDetail?.headcount ?? '-'
+    r.expectedHeadcount ?? r.headcount ?? form.adDetail?.headcount
   const deadline =
     r.deadlineDate ?? r.deadline ?? form.adDetail?.deadline ?? '-'
 
-  // 강의 목록 정규화 (title/name, instructorName/instructor/teacher)
+  // 강의 목록(정규화)
   const lecturesSrc: any[] = Array.isArray(r.lectures)
     ? r.lectures
     : Array.isArray(form.adDetail?.lectures)
@@ -54,7 +54,7 @@ function ApplicationRecruitmentViewBase({
     return { id, title: name, instructorName }
   })
 
-  // 태그 정규화 (tagsWithKey[{id,label}] | tags/customTags:string[])
+  // 태그(정규화)
   const tagsSrc: any[] =
     (Array.isArray(r.tagsWithKey) && r.tagsWithKey) ||
     (Array.isArray(r.tags) && r.tags) ||
@@ -79,14 +79,18 @@ function ApplicationRecruitmentViewBase({
 
   return (
     <>
-      <Modal.Header className="pb-2">
+      <Modal.Header className="flex items-center gap-3 pb-2">
         <Modal.Title>스터디 구인 공고 정보</Modal.Title>
       </Modal.Header>
 
       <Modal.Body className="pt-0 pb-3">
         <div className="space-y-4">
           <LabeledBlock label="공고명">{title}</LabeledBlock>
-          <LabeledBlock label="모집 인원">{headcount}명</LabeledBlock>
+
+          <LabeledBlock label="모집 인원">
+            {typeof headcount === 'number' ? `${headcount}명` : '-'}
+          </LabeledBlock>
+
           <LabeledBlock label="마감 기한">{deadline}</LabeledBlock>
         </div>
 
@@ -120,6 +124,7 @@ function ApplicationRecruitmentViewBase({
           </div>
           <div className="flex flex-wrap gap-2">
             {tags.length ? (
+              // 태그는 상태 뱃지가 아니라 태그 뱃지로 렌더링
               tags.map((t) => (
                 <Badge key={t.id} variant="warning" size="md">
                   {t.name}
