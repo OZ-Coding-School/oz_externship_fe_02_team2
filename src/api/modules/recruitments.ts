@@ -16,7 +16,7 @@ function mapAdminRecruitment(r: ServerAdminRecruitment): AdminRecruitment {
     id: r.id,
     uuid: r.uuid,
     title: r.title,
-    tags: r.tags,
+    tags: r.tags || [], // 태그가 없을 경우 빈 배열
     closeAt: r.close_at,
     status: r.status,
     viewsCount: r.views_count,
