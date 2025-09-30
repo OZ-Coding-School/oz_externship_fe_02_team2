@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, {
   AxiosError,
   AxiosHeaders,
@@ -86,6 +87,46 @@ export function withBypass(
 }
 
 // ───────────────────────────────────────────────
+// 토큰 갱신 로직
+// ───────────────────────────────────────────────
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (token: string) => void
+  reject: (error: any) => void
+}> = []
+
+const processQueue = (error: any = null, token: string | null = null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error)
+    } else {
+      promise.resolve(token!)
+    }
+  })
+  failedQueue = []
+}
+
+async function refreshAccessToken(): Promise<string> {
+  try {
+    // 리프레시 토큰으로 새로운 액세스 토큰 요청
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL1}/auth/refresh`,
+      {},
+      { withCredentials: true } // 쿠키의 refresh token 사용
+    )
+
+    const newToken = response.data.access_token
+    localStorage.setItem('access_token', newToken)
+    return newToken
+  } catch (error) {
+    // 리프레시 실패 시 로그인 페이지로 리다이렉트
+    localStorage.removeItem('access_token')
+    window.location.href = '/login'
+    throw error
+  }
+}
+
+// ───────────────────────────────────────────────
 // Axios 인스턴스
 // ───────────────────────────────────────────────
 
@@ -151,10 +192,50 @@ function installInterceptors(instance: AxiosInstance) {
     return config
   })
 
+  // Response 인터셉터 (토큰 갱신 로직 포함)
   instance.interceptors.response.use(
     (res) => res,
-    (err: AxiosError<ApiErrorResponse>) => {
+    async (err: AxiosError<ApiErrorResponse>) => {
+      const originalRequest = err.config as InternalAxiosRequestConfig & {
+        _retry?: boolean
+      }
       const status = err.response?.status
+
+      // 401 에러이고, 아직 재시도하지 않은 요청인 경우
+      if (status === 401 && originalRequest && !originalRequest._retry) {
+        if (isRefreshing) {
+          // 이미 토큰 갱신 중이면 큐에 추가
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject })
+          })
+            .then((token) => {
+              originalRequest.headers.set('Authorization', `Bearer ${token}`)
+              return instance(originalRequest)
+            })
+            .catch((error) => {
+              return Promise.reject(error)
+            })
+        }
+
+        originalRequest._retry = true
+        isRefreshing = true
+
+        try {
+          const newToken = await refreshAccessToken()
+          processQueue(null, newToken)
+
+          // 원래 요청에 새 토큰 적용 후 재시도
+          originalRequest.headers.set('Authorization', `Bearer ${newToken}`)
+          return instance(originalRequest)
+        } catch (refreshError) {
+          processQueue(refreshError, null)
+          return Promise.reject(refreshError)
+        } finally {
+          isRefreshing = false
+        }
+      }
+
+      // 401이 아니거나 재시도 후에도 실패한 경우
       const data = err.response?.data
       throw new ApiError(data?.message || err.message || 'Request failed', {
         status,
