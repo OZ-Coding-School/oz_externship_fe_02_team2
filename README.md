@@ -13,6 +13,20 @@
 
 ---
 
+## :link: 배포 링크
+
+> ### [StudyHub Admin](https://admin.ozcoding.site/)
+
+---
+
+## 🗣️ 프로젝트 시연 영상 & 발표 문서
+
+> ### 🗓️ 2025.08.28 - 2025.09.30
+> ### [📺 시연 영상]()
+> ### [📑 발표 문서]()
+
+---
+
 ## 🚀 주요 기능 및 장점
 1. **유저 관리 시스템**  
    - 가입한 유저의 상태, 권한, 가입일, 탈퇴 요청일 등의 데이터 확인
@@ -60,6 +74,36 @@
 - **Vercel** (배포)  
 - **GitHub Actions** (CI/CD)
 
+
+### :wrench: System Architecture
+
+<img width="1000" alt="arch_bgx" src="https://github.com/user-attachments/assets/89113088-a538-475b-acc4-da51beb89ff2" />
+" />
+
+### FE
+<div align=center>
+  <img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"> 
+  <img src="https://img.shields.io/badge/css-ca64f4?style=for-the-badge&logo=css3&logoColor=white"> 
+  <img src="https://img.shields.io/badge/typescript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"> 
+  <br>
+
+  <img src="https://img.shields.io/badge/react-00A8E1?style=for-the-badge&logo=react&logoColor=black"> 
+  <img src="https://img.shields.io/badge/figma-EF2D5E?style=for-the-badge&logo=figma&logoColor=black">
+  <img src="https://img.shields.io/badge/eslint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white">
+  <img src="https://img.shields.io/badge/prettier-FF4F8B?style=for-the-badge&logo=prettier&logoColor=white">
+  <br>
+
+  <img src="https://img.shields.io/badge/tanstack query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white">
+  <img src="https://img.shields.io/badge/axios-6935D3?style=for-the-badge&logo=axios&logoColor=white">  
+   <img src="https://img.shields.io/badge/zustand-1a1a1a?style=for-the-badge&logo=zustand&logoColor=white">
+   <img src="https://img.shields.io/badge/react router dom-CA4245?style=for-the-badge&logoColor=white"> 
+     <br>
+
+  <img src="https://img.shields.io/badge/tailwindcss-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white">
+  <img src="https://img.shields.io/badge/npm-ED1C24?style=for-the-badge&logo=npm&logoColor=white">
+  <img src="https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white">
+  <br>
+</div>
 ---
 
 ## 📂 프로젝트 구조
