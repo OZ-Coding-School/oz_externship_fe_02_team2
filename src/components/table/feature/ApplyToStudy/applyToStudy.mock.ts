@@ -26,7 +26,7 @@ export const APPLY_TO_STUDY_MOCKS: ApplyToStudyDetail[] = [
   },
   {
     id: 1003,
-    title: '알고리즘 스터디: PS 실전',
+    title: '알고리즘 스터디: PS 실전 강의',
     applicant: { nickname: '지후', email: 'jihuu@example.com' },
     status: '대기',
     appliedAt: '2025-09-28T08:55:40+09:00',
