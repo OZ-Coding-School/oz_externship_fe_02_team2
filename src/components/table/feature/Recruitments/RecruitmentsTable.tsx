@@ -4,34 +4,11 @@ import { fmtDate } from '@/lib/table'
 import type { Column, TableState } from '@type/table'
 import Badge from '@/components/ui/Badge/Badge'
 import { openStatusToTone } from '@/lib'
+import type {
+  RecruitmentRow,
+  RecruitmentsTableProps,
+} from '@/types/AdminRecruitments.types'
 
-/** 구인공고 로우 타입 */
-export type RecruitmentRow = {
-  id: string
-  uuid: string
-  title: string
-  tags: { id: number; name: string }[]
-  close_at: string | null
-  deadline: string | null
-  status: 'OPEN' | 'CLOSED'
-  views_count: number
-  bookmarks_count: number
-  created_at: string
-  updated_at: string | null
-}
-
-type RecruitmentsTableProps = {
-  rows: RecruitmentRow[]
-  loading: boolean
-  total?: number
-  totalPages?: number
-  onRequest?: (params: {
-    page: number
-    pageSize: number
-    sort?: { id: string; desc: boolean } | null
-  }) => void
-  onRowClick?: (row: RecruitmentRow) => void
-}
 const columns: Column<RecruitmentRow>[] = [
   {
     id: 'id',
@@ -52,20 +29,27 @@ const columns: Column<RecruitmentRow>[] = [
     width: '260px',
     cell: ({ row }) => {
       const tags = Array.isArray(row.tags) ? row.tags : []
+
+      // 태그가 없을 때 빈 태그 표시
+      if (tags.length === 0) {
+        return (
+          <Badge variant="secondary" size="sm">
+            태그 없음
+          </Badge>
+        )
+      }
+
       return (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, 2).map((t) => (
-            <span
-              key={t.id}
-              className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
-            >
+            <Badge key={t.id} variant="default" size="sm">
               {t.name}
-            </span>
+            </Badge>
           ))}
           {tags.length > 2 && (
-            <span className="rounded-full bg-gray-50 px-2 py-0.5 text-xs text-gray-500">
+            <Badge variant="outline" size="sm">
               +{tags.length - 2}
-            </span>
+            </Badge>
           )}
         </div>
       )
@@ -135,7 +119,6 @@ export default function RecruitmentsTable({
     sort: { id: 'created_at', desc: true },
   })
 
-  // DataTable이 상태를 바꾸면, 바로 서버 호출까지 함께 트리거
   const handleStateChange = useCallback(
     (next: Partial<TableState>) => {
       setState((s) => {
@@ -151,17 +134,14 @@ export default function RecruitmentsTable({
     [onRequest]
   )
 
-  // 최초 1회 로드
   useEffect(() => {
     onRequest?.({
       page: state.page,
       pageSize: state.pageSize,
       sort: state.sort,
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 폴백: 서버 요청(onRequest)이 없을 때, 클라이언트에서 분할/이페이지 계산
   const totalCountFallback = rows.length
   const totalPagesFallback = Math.max(
     1,
@@ -176,7 +156,6 @@ export default function RecruitmentsTable({
     [onRequest, rows, start, end]
   )
 
-  // onRequest 없을 때만 클램프
   useEffect(() => {
     if (!onRequest && state.page > finalTotalPages) {
       setState((s) => ({ ...s, page: finalTotalPages }))

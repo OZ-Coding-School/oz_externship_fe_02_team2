@@ -1,5 +1,4 @@
 export * from './admin/users'
-export * from './admin/recruitments'
 export * from './admin/withdrawals'
 export * from './admin/studygroups'
 export * from './admin/applyToStudy'

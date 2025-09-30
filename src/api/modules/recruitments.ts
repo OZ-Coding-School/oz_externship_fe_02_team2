@@ -16,7 +16,7 @@ function mapAdminRecruitment(r: ServerAdminRecruitment): AdminRecruitment {
     id: r.id,
     uuid: r.uuid,
     title: r.title,
-    tags: r.tags,
+    tags: r.tags || [], // 태그가 없을 경우 빈 배열
     closeAt: r.close_at,
     status: r.status,
     viewsCount: r.views_count,
@@ -78,6 +78,85 @@ export async function getAdminRecruitments(
   return adaptDjangoPage(res.data, mapAdminRecruitment, page, pageSize)
 }
 
+// 서버 응답 그대로
+interface ServerRecruitmentDetail {
+  id: number
+  uuid: string
+  title: string
+  content: string
+  close_at: string | null
+  status: string
+  views_count: number
+  bookmark_count: number
+  estimated_fee: number | null
+  created_at: string
+  updated_at: string | null
+  tags: { id: number; name: string }[]
+  attachments: { id: number; file_name: string; file_url: string }[]
+  lectures: any[]
+  applications: any[]
+}
+
+// UI 타입
+interface RecruitmentDetailData {
+  id: number
+  uuid: string
+  title: string
+  content: string
+  closeAt: string | null
+  status: 'OPEN' | 'CLOSED' | 'UNKNOWN'
+  viewsCount: number
+  bookmarkCount: number
+  estimatedFee: number | null
+  createdAt: string
+  updatedAt: string | null
+  tags: { id: number; name: string }[]
+  attachments: { id: number; fileName: string; fileUrl: string }[]
+  lectures: any[]
+  applications: any[]
+}
+
+// 상태 매핑 유틸
+function toUiStatus(raw: string): RecruitmentDetailData['status'] {
+  if (!raw) return 'UNKNOWN'
+  const v = raw.toLowerCase()
+  if (v === 'recruiting' || v === 'open') return 'OPEN'
+  if (v === 'closed') return 'CLOSED'
+  return 'UNKNOWN'
+}
+
+// 매핑 함수
+function adaptRecruitmentDetail(
+  dto: ServerRecruitmentDetail
+): RecruitmentDetailData {
+  return {
+    id: dto.id,
+    uuid: dto.uuid,
+    title: dto.title,
+    content: dto.content,
+    closeAt: dto.close_at,
+    status: toUiStatus(dto.status),
+    viewsCount: dto.views_count,
+    bookmarkCount: dto.bookmark_count,
+    estimatedFee: dto.estimated_fee,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+    tags: dto.tags,
+    attachments: dto.attachments.map((a) => ({
+      id: a.id,
+      fileName: a.file_name,
+      fileUrl: a.file_url,
+    })),
+    lectures: dto.lectures,
+    applications: dto.applications.map((app) => ({
+      applicantNickname: app.applicant_nickname,
+      applicantEmail: app.applicant_email,
+      appliedAt: app.applied_at,
+      status: app.status,
+    })),
+  }
+}
+
 /**
  * 관리자용 구인 공고 상세 조회
  * GET /api/v1/admin/recruitments/{recruitment_id}
@@ -85,12 +164,16 @@ export async function getAdminRecruitments(
 export async function getAdminRecruitmentDetail(
   recruitmentId: number,
   opts?: { mock?: boolean }
-): Promise<void> {
+): Promise<RecruitmentDetailData> {
   const useMock = shouldUseMock(opts?.mock)
 
-  const res = await api.get(`${BASE}/${recruitmentId}`, withBypass({}, useMock))
+  const res = await api.get<ServerRecruitmentDetail>(
+    `${BASE}/${recruitmentId}`,
+    withBypass({}, useMock)
+  )
 
-  return res.data
+  // applications 변환 포함
+  return adaptRecruitmentDetail(res.data)
 }
 
 /**
