@@ -64,6 +64,7 @@ export type TableQuery = {
   status?: Maybe<string> // 상태 필터
   role?: Maybe<string> // 권한 필터
   reason?: Maybe<string> // 탈퇴 사유 필터
+  sort?: Maybe<string> // 정렬 필터
   sortBy?: string | null // 정렬 컬럼
   sortDir?: SortDirection // 정렬 방향
   page: number // 현재 페이지
@@ -82,9 +83,11 @@ export type TableFilterConfig = {
   searchPlaceholder?: string
   statusPlaceholder?: string
   rolePlaceholder?: string
+  sortPlaceholder?: string
   withdrawalReasonPlaceholder?: string
   statusOptions?: FilterOption[]
   roleOptions?: FilterOption[]
+  sortOptions?: { label: string; value: string }[]
   withdrawalReasonOptions?: FilterOption[]
   debounceMs: number
 }
@@ -98,6 +101,7 @@ export type FilterVisibilityOptions = {
   status?: boolean
   role?: boolean
   reason?: boolean
+  sort?: boolean
 }
 // ===== 핸들러 타입들 =====
 
@@ -106,6 +110,7 @@ export type QueryChangeHandlers = {
   setSearch: (q: string, immediate?: boolean) => void
   setStatus: (status: Maybe<string>) => void
   setRole: (role: Maybe<string>) => void
+  setSort?: (sort: string | null) => void
   reset: () => void
 }
 

@@ -75,6 +75,10 @@ export default function ApplyToStudyFilterBar({
   const mergedConfig: TableFilterConfig = {
     ...defaultUsersConfig,
     ...config,
+    sortOptions: [
+      { label: '최신순', value: 'created_desc' },
+      { label: '오래된 순', value: 'created_asc' },
+    ],
   }
   return (
     <div
@@ -95,14 +99,15 @@ export default function ApplyToStudyFilterBar({
           densityBox(density)
         )}
         showLabels
-        labels={{ search: '검색', status: '스터디 상태' }}
+        labels={{ search: '검색', status: '스터디 상태', sort: '정렬' }}
         showFilters={{
           search: true,
           status: true,
+          sort: true,
           role: false,
           reason: false, // 사용자 관리에서는 탈퇴사유 숨김
         }}
-        gridColumns={3}
+        gridColumns={4}
       >
         {/* 하단 커스텀 영역: 필요 시 버튼/토글/설명 배치 */}
         {children}
