@@ -1,4 +1,3 @@
-// src/mocks/handlers/applyToStudy.handlers.ts  (MSW v2)
 import { http, HttpResponse } from 'msw'
 import { APPLY_TO_STUDY_MOCKS } from './ApplyToStudy.mock'
 
