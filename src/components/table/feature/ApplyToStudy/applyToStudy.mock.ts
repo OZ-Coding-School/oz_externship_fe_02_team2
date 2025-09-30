@@ -42,7 +42,7 @@ export const APPLY_TO_STUDY_MOCKS: ApplyToStudyDetail[] = [
   },
   {
     id: 1005,
-    title: '클린코드 스터디',
+    title: '클린코드 스터디 심화',
     applicant: { nickname: '도윤', email: 'doyoon@example.com' },
     status: '승인',
     appliedAt: '2025-09-27T10:24:18+09:00',
