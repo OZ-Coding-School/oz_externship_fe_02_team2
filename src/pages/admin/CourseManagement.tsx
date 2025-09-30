@@ -75,7 +75,7 @@ const CourseManagement = () => {
       }
 
       const data: ApiResponse = await response.json();
-      
+      console.log (data)
       // API 데이터를 프론트엔드 형식으로 변환
       const transformedCourses: Course[] = data.results.map(course => ({
         id: course.id,
