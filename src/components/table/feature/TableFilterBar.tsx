@@ -19,9 +19,6 @@ import {
 import { withAllOption } from './filterOption'
 import { countActiveFilters } from '../filterHelpers'
 
-// 탈퇴사유 상수 - 이제 중앙 타입에서 import 가능
-// import { WITHDRAWAL_REASONS } from '@/types/table'
-
 export type TableFilterBarProps = {
   query: EnhancedTableQuery
   onQueryChange: EnhancedQueryChangeHandlers
@@ -36,13 +33,22 @@ export type TableFilterBarProps = {
     status?: string
     role?: string
     withdrawalReason?: string
+    tags?: string
   }
   /** 필터 표시 옵션 - 각 필터를 선택적으로 노출 */
-  showFilters?: FilterVisibilityOptions
+  showFilters?: FilterVisibilityOptions & {
+    tags?: boolean
+  }
   /** 탈퇴사유 플레이스홀더 */
   withdrawalReasonPlaceholder?: string
+  /** 태그 필터 플레이스홀더 */
+  tagsPlaceholder?: string
   /** 그리드 컬럼 수 직접 지정 (선택사항, 미지정시 자동 계산) */
   gridColumns?: 1 | 2 | 3 | 4 | 5 | 6
+  /** 태그 필터 클릭 핸들러 */
+  onTagsFilterClick?: () => void
+  /** 선택된 태그 목록 */
+  selectedTags?: string[]
 }
 
 export function TableFilterBar({
@@ -57,17 +63,21 @@ export function TableFilterBar({
     status: '상태',
     role: '권한',
     withdrawalReason: '탈퇴사유',
+    tags: '태그 필터',
   },
   showFilters = {
     search: true,
     status: true,
     role: true,
     reason: false,
+    tags: false,
   },
-  gridColumns, // 새로 추가된 선택적 prop
+  tagsPlaceholder = '태그 선택...',
+  gridColumns,
+  onTagsFilterClick,
+  selectedTags = [],
 }: TableFilterBarProps) {
   const panelId = useId()
-  // query.search를 사용
   const [draft, setDraft] = useState<string>(query.search ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
   const [mobileOpen] = useState(false)
@@ -82,7 +92,6 @@ export function TableFilterBar({
     withdrawalReasonOptions = [],
   } = config
 
-  // query.search가 변경되면 draft 동기화
   React.useEffect(() => {
     setDraft(query.search ?? '')
   }, [query.search])
@@ -97,7 +106,6 @@ export function TableFilterBar({
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setDraft(v)
-    // 타이핑 중: 디바운스 적용
     onQueryChange.setSearch(v, false)
   }
 
@@ -116,18 +124,16 @@ export function TableFilterBar({
     [withdrawalReasonOptions]
   )
 
-  // 표시되는 필터들 계산
   const visibleFilters = useMemo(() => {
     const filters = []
     if (showFilters.search) filters.push('search')
     if (showFilters.status) filters.push('status')
     if (showFilters.role) filters.push('role')
     if (showFilters.reason) filters.push('reason')
+    if (showFilters.tags) filters.push('tags')
     return filters
   }, [showFilters])
 
-  // 그리드 컬럼 수 계산 (모든 필터 + 초기화 버튼은 항상 오른쪽 끝)
-  // gridCols 계산 수정: auto 컬럼 제거
   const gridCols = useMemo(() => {
     const count = gridColumns ?? visibleFilters.length
     const safe = Math.min(Math.max(count, 1), 6) as 1 | 2 | 3 | 4 | 5 | 6
@@ -142,7 +148,11 @@ export function TableFilterBar({
     return colsMap[safe]
   }, [visibleFilters.length, gridColumns])
 
-  const activeFilterCount = useMemo(() => countActiveFilters(query), [query])
+  const activeFilterCount = useMemo(() => {
+    const baseCount = countActiveFilters(query)
+    const tagsCount = selectedTags.length > 0 ? 1 : 0
+    return baseCount + tagsCount
+  }, [query, selectedTags])
 
   const handleStatusChange = (value: string) => {
     onQueryChange.setStatus(value === '' ? undefined : value)
@@ -178,7 +188,6 @@ export function TableFilterBar({
       aria-label="테이블 필터"
     >
       <div className="hidden items-end gap-4 sm:flex">
-        {/* 동적 그리드 레이아웃 */}
         <div className={cn('grid w-full flex-1 gap-4 pb-2', gridCols)}>
           {/* 검색 */}
           {showFilters.search && (
@@ -299,6 +308,59 @@ export function TableFilterBar({
               </div>
             </div>
           )}
+
+          {/* 태그 필터 */}
+          {showFilters.tags && (
+            <div className="w-full">
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.tags ?? '태그 필터'}
+                </label>
+              )}
+              <button
+                type="button"
+                onClick={onTagsFilterClick}
+                className="flex h-9 w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-3 text-left text-sm transition-colors hover:border-blue-500 hover:bg-white"
+                aria-label="태그 필터 열기"
+              >
+                <span className="text-gray-700">
+                  {selectedTags.length > 0
+                    ? `${selectedTags.length}개 선택됨`
+                    : tagsPlaceholder}
+                </span>
+                <svg
+                  className="h-4 w-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {selectedTags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {selectedTags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {selectedTags.length > 3 && (
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      +{selectedTags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 초기화 */}
@@ -370,6 +432,32 @@ export function TableFilterBar({
             aria-label="권한 필터(모바일)"
           />
         )}
+        {showFilters.tags && (
+          <button
+            type="button"
+            onClick={onTagsFilterClick}
+            className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-left text-sm"
+          >
+            <span className="text-gray-700">
+              {selectedTags.length > 0
+                ? `${selectedTags.length}개 선택됨`
+                : tagsPlaceholder}
+            </span>
+            <svg
+              className="h-4 w-4 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        )}
       </div>
       {children && (
         <div className="mt-4 border-t border-gray-100 pt-4">
@@ -390,6 +478,7 @@ export function TableFilterBar({
           ` 권한: ${roleOptions.find((opt) => opt.value === query.role)?.label ?? query.role}`}
         {query.reason &&
           ` 탈퇴사유: ${config.withdrawalReasonOptions?.find((opt) => opt.value === query.reason)?.label ?? query.reason}`}
+        {selectedTags.length > 0 && ` 태그: ${selectedTags.join(', ')}`}
       </div>
     </section>
   )
