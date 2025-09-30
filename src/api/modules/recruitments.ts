@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { api, shouldUseMock, withBypass } from '../http'
 import type {
   ServerAdminRecruitment,

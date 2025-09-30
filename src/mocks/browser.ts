@@ -9,6 +9,6 @@ import {
 export const worker = setupWorker(
   ...usersHandlers,
   ...withdrawalHandlers,
-  ...studyGroupHandlers
+  ...studyGroupHandlers,
   ...applyToStudyHandlers
 )

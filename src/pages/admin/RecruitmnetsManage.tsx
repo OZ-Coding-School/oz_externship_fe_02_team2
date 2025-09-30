@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from 'react'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import RecruitmentsTable from '@/components/table/feature/Recruitments/RecruitmentsTable'

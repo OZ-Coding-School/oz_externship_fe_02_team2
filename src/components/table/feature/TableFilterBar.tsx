@@ -377,7 +377,8 @@ export function TableFilterBar({
                   )}
                 </div>
               )}
-
+            </div>
+          )}
           {/* 정렬 */}
           {showFilters.sort && (
             <div className="w-full">
@@ -389,7 +390,7 @@ export function TableFilterBar({
               <div className="w-full">
                 <Dropdown
                   options={sortDropdownOptions}
-                  value={query.sortKey ?? null}
+                  value={query.sortKey ?? ''}
                   onChange={handleSortChange}
                   placeholder={sortPlaceholder}
                   classes={{
@@ -440,7 +441,7 @@ export function TableFilterBar({
         id={panelId}
         className={cn(
           'mt-4 grid grid-cols-1 gap-3 sm:hidden',
-          mobileOpen ? 'block' : 'hidden'
+          !mobileOpen && 'hidden'
         )}
       >
         {showFilters.reason && (
