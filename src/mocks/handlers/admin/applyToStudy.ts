@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { APPLY_TO_STUDY_MOCKS } from '../../../components/table/feature/ApplyToStudy/ApplyToStudy.mock'
+import { APPLY_TO_STUDY_MOCKS } from '@/components/table/feature/ApplyToStudy/ApplyToStudy.mock'
 
 export const applyToStudyHandlers = [
   http.get('/api/admin/apply-to-study', ({ request }) => {

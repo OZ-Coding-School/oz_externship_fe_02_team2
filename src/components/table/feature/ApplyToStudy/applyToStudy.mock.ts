@@ -122,7 +122,7 @@ export const APPLY_TO_STUDY_MOCKS: ApplyToStudyDetail[] = [
   },
   {
     id: 1015,
-    title: '안드로이드 Jetpack Compose',
+    title: '안드로이드 Repack Compose',
     applicant: { nickname: '도영', email: 'doyoung@example.com' },
     status: '대기',
     appliedAt: '2025-09-22T08:45:00+09:00',
