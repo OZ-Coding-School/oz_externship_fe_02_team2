@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import Modal from '../../Modal'
-import type { ApplyToStudyDetail } from './ApplyToStudy.types'
+import type { ApplyToStudyDetailCompat } from './ApplyToStudy.types'
 import Badge from '@/components/ui/Badge/Badge'
 
 function LabeledBlock({
@@ -23,10 +23,9 @@ function LabeledBlock({
 function ApplicationRecruitmentViewBase({
   form,
 }: {
-  form: ApplyToStudyDetail
+  form: ApplyToStudyDetailCompat
 }) {
   const r: any = form.recruitment ?? {}
-
   // 공고명
   const title =
     r.title ?? form.title ?? form.ad?.title ?? form.recruitmentTitle ?? '-'
@@ -41,7 +40,7 @@ function ApplicationRecruitmentViewBase({
   const lecturesSrc: any[] = Array.isArray(r.lectures)
     ? r.lectures
     : Array.isArray(form.adDetail?.lectures)
-      ? (form.adDetail?.lectures as any[])
+      ? (form.adDetail!.lectures as any[])
       : []
 
   const lectures = lecturesSrc.map((lec: any, i: number) => {
@@ -58,8 +57,8 @@ function ApplicationRecruitmentViewBase({
   const tagsSrc: any[] =
     (Array.isArray(r.tagsWithKey) && r.tagsWithKey) ||
     (Array.isArray(r.tags) && r.tags) ||
-    (Array.isArray((form as any).customTags) && (form as any).customTags) ||
-    (Array.isArray(form.adDetail?.tags) && form.adDetail?.tags) ||
+    (Array.isArray(form.customTags) && form.customTags) ||
+    (Array.isArray(form.adDetail?.tags) && form.adDetail!.tags) ||
     []
 
   const tags = tagsSrc.map((t: any, i: number) => {
