@@ -1,4 +1,3 @@
-// pages/admin/ApplyToStudyManage.tsx
 import { useCallback, useMemo, useState } from 'react'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useToast } from '@/hooks'
