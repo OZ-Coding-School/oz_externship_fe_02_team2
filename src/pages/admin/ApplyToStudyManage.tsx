@@ -139,39 +139,93 @@ async function getApplyToStudyDetail(
 
   const data = (await res.json()) as any
 
-  // 안전 가드 + 모달이 기대하는 alias들을 보강
+  // --- 원본 필드 정규화
+  const appIdStr = toAppIdString(id) // 'APP0001'
   const title = data?.ad?.title ?? data?.title ?? ''
   const ad = data?.ad ?? { id: '', title }
-  const adDetail = {
-    headcount: data?.adDetail?.headcount ?? 0,
-    lectures: Array.isArray(data?.adDetail?.lectures)
-      ? data.adDetail.lectures
-      : [],
-    tags: Array.isArray(data?.adDetail?.tags) ? data.adDetail.tags : [],
-    deadline: toIso(data?.adDetail?.deadline ?? data?.deadline ?? ''),
-  }
 
-  // 핵심: recruitment / recruitmentTitle 등 alias 추가
-  const recruitment = {
-    id: ad.id,
-    title,
-    headcount: adDetail.headcount,
-    deadline: adDetail.deadline,
-    tags: adDetail.tags,
-    lectures: adDetail.lectures,
-  }
+  const adDetailRaw = data?.adDetail ?? {}
+  const headcount = Number(adDetailRaw?.headcount ?? 0)
+  const tagsArr: string[] = Array.isArray(adDetailRaw?.tags)
+    ? [...new Set(adDetailRaw.tags)]
+    : []
+  const deadline = toIso(adDetailRaw?.deadline ?? data?.deadline ?? '')
 
+  const lecturesNorm = Array.isArray(adDetailRaw?.lectures)
+    ? adDetailRaw.lectures.map((l: any, i: number) => {
+        const lid = l?.id ?? `${ad.id || appIdStr}-lec-${i}`
+        const name = l?.title ?? l?.name ?? ''
+        const instructor = l?.teacher ?? l?.instructor ?? ''
+        return {
+          id: lid,
+          title: name, // 시드 스타일
+          name, // 컴포넌트가 name을 기대할 수도 있음
+          teacher: instructor,
+          instructor, // 컴포넌트가 instructor를 기대할 수도 있음
+        }
+      })
+    : []
+
+  const tagsWithKey = tagsArr.map((t, i) => ({
+    id: `${ad.id || appIdStr}-tag-${i}-${t}`,
+    label: t,
+  }))
+
+  // --- 최종 반환: 모달이 쓸 모든 별칭을 중복으로 깔아줌
   return {
     ...data,
-    id, // number 유지
-    title, // 루트에도 title 제공(여러 뷰에서 씀)
+
+    // 공통/기본
+    id, // number 유지 (행 클릭 시 사용)
+    applicationId: id, // 혹시 이 키를 쓰는 뷰가 있으면 대비
+    applicationCode: appIdStr, // '#APP0001' 같은 표시가 필요할 수 있음
+    title, // 루트 title도 노출
+    statusSlug: data?.status, // 영문 슬러그 보존
+    status: koFromEn[data?.status] ?? data?.status, // '승인' 등 한글 배지용
+
+    // 날짜 alias(여러 컴포넌트 호환)
+    appliedAt: toIso(data?.appliedAt),
+    submittedAt: toIso(data?.appliedAt),
+    createdAt: toIso(data?.appliedAt),
+    updatedAt: toIso(data?.updatedAt),
+
+    // 지원자(성별 포함)
+    applicant: {
+      ...(data?.applicant ?? {}),
+      gender: data?.applicant?.gender ?? '-', // 성별 표시용
+    },
+
+    // 원본 + 정규화
     ad,
-    adDetail,
-    recruitment, // ← 모달 내부 View가 기대하는 키를 맞춰줌
-    recruitmentTitle: title, // ← 혹시 이 키를 읽는 경우 대비
-    status: koFromEn[data.status as keyof typeof koFromEn] ?? data.status,
-    appliedAt: toIso(data.appliedAt),
-    updatedAt: toIso(data.updatedAt),
+    adDetail: {
+      headcount,
+      tags: tagsArr,
+      tagsWithKey, // key 포함 태그
+      lectures: lecturesNorm,
+      deadline,
+    },
+
+    // 모달/뷰에서 즐겨 쓰는 별칭들 (제일 중요)
+    recruitment: {
+      id: ad.id,
+      title,
+      headcount,
+      deadline,
+      tags: tagsArr,
+      customTags: tagsArr, // 다른 키를 쓰는 경우 대비
+      tagsWithKey,
+      lectures: lecturesNorm,
+    },
+    recruitmentTitle: title,
+    customTags: tagsArr,
+
+    // 자기소개/동기/목표/시간대/경험
+    intro: data?.intro ?? '',
+    motivation: data?.motivation ?? '',
+    goal: data?.goal ?? '',
+    availableTime: data?.availableTime ?? '',
+    hasExperience: Boolean(data?.hasExperience),
+    experienceDetail: data?.hasExperience ? (data?.experienceDetail ?? '') : '',
   } as ApplyToStudyDetailFull
 }
 
