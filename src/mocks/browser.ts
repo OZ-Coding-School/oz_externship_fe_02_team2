@@ -4,11 +4,13 @@ import {
   withdrawalHandlers,
   studyGroupHandlers,
   recruitmentHandlers,
+  applyToStudyHandlers,
 } from './handlers'
 
 export const worker = setupWorker(
   ...usersHandlers,
   ...withdrawalHandlers,
   ...studyGroupHandlers,
-  ...recruitmentHandlers
+  ...recruitmentHandlers,
+  ...applyToStudyHandlers
 )

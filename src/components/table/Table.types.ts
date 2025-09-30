@@ -47,3 +47,13 @@ export type WithdrawalRow = {
   created_at: string // 탈퇴 일시
   profileImgUrl?: string | null
 }
+
+export type ApplyToStudyRow = {
+  id: string
+  noticename: string
+  email: string
+  name: string
+  status: string
+  applied_at: string
+  updated_at: string
+}

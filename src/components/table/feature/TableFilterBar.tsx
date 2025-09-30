@@ -13,6 +13,7 @@ import Dropdown from '@/components/ui/Dropdown/Dropdown'
 import {
   DEFAULT_ROLE_PLACEHOLDER,
   DEFAULT_SEARCH_PLACEHOLDER,
+  DEFAULT_SORT_PLACEHOLDER,
   DEFAULT_STATUS_PLACEHOLDER,
   DEFAULT_WITHDRAWAL_PLACEHOLDER,
 } from '@/constants/table/ui'
@@ -23,8 +24,12 @@ import { countActiveFilters } from '../filterHelpers'
 // import { WITHDRAWAL_REASONS } from '@/types/table'
 
 export type TableFilterBarProps = {
-  query: EnhancedTableQuery
-  onQueryChange: EnhancedQueryChangeHandlers
+  query: EnhancedTableQuery & {
+    sortKey?: 'created_desc' | 'created_asc' | string | null
+  }
+  onQueryChange: EnhancedQueryChangeHandlers & {
+    setSort?: (sortKey: string | null) => void
+  }
   config: EnhancedTableFilterConfig
   className?: string
   children?: React.ReactNode
@@ -36,6 +41,7 @@ export type TableFilterBarProps = {
     status?: string
     role?: string
     withdrawalReason?: string
+    sort?: string
   }
   /** 필터 표시 옵션 - 각 필터를 선택적으로 노출 */
   showFilters?: FilterVisibilityOptions
@@ -57,12 +63,14 @@ export function TableFilterBar({
     status: '상태',
     role: '권한',
     withdrawalReason: '탈퇴사유',
+    sort: '정렬',
   },
   showFilters = {
     search: true,
     status: true,
     role: true,
     reason: false,
+    sort: false,
   },
   gridColumns, // 새로 추가된 선택적 prop
 }: TableFilterBarProps) {
@@ -77,9 +85,11 @@ export function TableFilterBar({
     statusPlaceholder = DEFAULT_STATUS_PLACEHOLDER,
     rolePlaceholder = DEFAULT_ROLE_PLACEHOLDER,
     withdrawalReasonPlaceholder = DEFAULT_WITHDRAWAL_PLACEHOLDER,
+    sortPlaceholder = DEFAULT_SORT_PLACEHOLDER,
     statusOptions = [],
     roleOptions = [],
     withdrawalReasonOptions = [],
+    sortOptions = [],
   } = config
 
   // query.search가 변경되면 draft 동기화
@@ -116,6 +126,8 @@ export function TableFilterBar({
     [withdrawalReasonOptions]
   )
 
+  const sortDropdownOptions = useMemo(() => sortOptions, [sortOptions])
+
   // 표시되는 필터들 계산
   const visibleFilters = useMemo(() => {
     const filters = []
@@ -123,6 +135,7 @@ export function TableFilterBar({
     if (showFilters.status) filters.push('status')
     if (showFilters.role) filters.push('role')
     if (showFilters.reason) filters.push('reason')
+    if (showFilters.sort) filters.push('sort')
     return filters
   }, [showFilters])
 
@@ -155,6 +168,11 @@ export function TableFilterBar({
   const handleWithdrawalReasonChange = (value: string) => {
     onQueryChange.setWithdrawalReason?.(value === '' ? undefined : value)
   }
+
+  const handleSortChange = useCallback(
+    (v: string) => onQueryChange.setSort?.(v || null),
+    [onQueryChange]
+  )
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -295,6 +313,31 @@ export function TableFilterBar({
                       'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
                   }}
                   aria-label="권한 필터"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 정렬 */}
+          {showFilters.sort && (
+            <div className="w-full">
+              {showLabels && (
+                <label className="mb-2 block text-sm font-semibold text-gray-800">
+                  {labels.sort ?? '정렬'}
+                </label>
+              )}
+              <div className="w-full">
+                <Dropdown
+                  options={sortDropdownOptions}
+                  value={query.sortKey ?? null}
+                  onChange={handleSortChange}
+                  placeholder={sortPlaceholder}
+                  classes={{
+                    wrapper: 'w-full',
+                    button:
+                      'w-full !min-w-0 !bg-gray-50 !border-gray-300 hover:!bg-white hover:!border-blue-500 transition-colors duration-200',
+                  }}
+                  aria-label="정렬 필터"
                 />
               </div>
             </div>
