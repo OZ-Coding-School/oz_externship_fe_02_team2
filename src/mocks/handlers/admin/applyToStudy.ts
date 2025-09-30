@@ -1,112 +1,106 @@
 import { http, HttpResponse } from 'msw'
-import { APPLY_TO_STUDY_MOCKS } from '@/components/table/feature/ApplyToStudy/applyToStudy.mock'
+import {
+  studyAppsDb,
+  sortByAppliedAt,
+  searchHit,
+  type ApplicationStatus,
+} from '@/mocks/seeds/studyAssistance.seed'
 
-export const applyToStudyHandlers = [
-  http.get('/api/admin/apply-to-study', ({ request }) => {
+const toInt = (v: string | null, d: number) =>
+  Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : d
+const toNumId = (id: string) => Number(String(id).replace(/\D/g, '')) || 0
+const toIso = (s: string) => {
+  const t = s.includes('T') ? s : s.replace(' ', 'T')
+  return /\d{2}:\d{2}:\d{2}$/.test(t) ? t : `${t}:00`
+}
+const KO_FROM_EN: Record<
+  ApplicationStatus,
+  '승인' | '검토 중' | '대기' | '거절'
+> = {
+  approved: '승인',
+  review: '검토 중',
+  pending: '대기',
+  rejected: '거절',
+}
+const EN_FROM_ANY: Record<string, ApplicationStatus> = {
+  approved: 'approved',
+  review: 'review',
+  pending: 'pending',
+  rejected: 'rejected',
+  승인: 'approved',
+  검토중: 'review',
+  '검토 중': 'review',
+  대기: 'pending',
+  거절: 'rejected',
+}
+
+export const applyToStudyList = http.get(
+  '/api/admin/apply-to-study',
+  ({ request }) => {
+    studyAppsDb.init()
     const url = new URL(request.url)
-    const page = Number(url.searchParams.get('page') ?? '1')
-    const size = Number(url.searchParams.get('size') ?? '10')
-    const q = (url.searchParams.get('q') ?? '').toLowerCase().trim()
-    const status = url.searchParams.get('status') ?? ''
-    const sortBy = (url.searchParams.get('sortBy') ?? 'applied_at') as
-      | 'applied_at'
-      | 'updated_at'
-    const sortOrder = (url.searchParams.get('sortOrder') ?? 'desc') as
-      | 'asc'
-      | 'desc'
+    const page = Math.max(1, toInt(url.searchParams.get('page'), 1))
+    const size = Math.max(1, toInt(url.searchParams.get('size'), 10))
+    const sortBy = (
+      url.searchParams.get('sortBy') || 'applied_at'
+    ).toLowerCase()
+    const sortOrder = (
+      url.searchParams.get('sortOrder') || 'desc'
+    ).toLowerCase()
+    const q = (url.searchParams.get('q') || '').trim()
+    const rawStatus = (url.searchParams.get('status') || '').trim()
+    const status = EN_FROM_ANY[rawStatus] || ''
 
-    let list = APPLY_TO_STUDY_MOCKS.slice()
+    const order =
+      sortBy === 'applied_at' && sortOrder === 'asc'
+        ? 'oldest'
+        : ('latest' as const)
 
-    if (q) {
-      list = list.filter((it) =>
-        [it.title, it.applicant.nickname, it.applicant.email]
-          .join(' ')
-          .toLowerCase()
-          .includes(q)
-      )
-    }
-
-    if (status) {
-      // 한글/ENUM 모두 허용
-      const toKo = (s: string) =>
-        s === 'APPROVED'
-          ? '승인'
-          : s === 'REJECTED'
-            ? '거절'
-            : s === 'INREVIEW' || s === 'REVIEWING' || s === 'UNDER_REVIEW'
-              ? '검토 중'
-              : s === 'PENDING'
-                ? '대기'
-                : s
-      const target = toKo(status)
-      list = list.filter((it) => it.status === target)
-    }
-
-    list.sort((a, b) => {
-      const av = sortBy === 'updated_at' ? a.updatedAt : a.appliedAt
-      const bv = sortBy === 'updated_at' ? b.updatedAt : b.appliedAt
-      const cmp = new Date(av).getTime() - new Date(bv).getTime()
-      return sortOrder === 'asc' ? cmp : -cmp
-    })
+    let list = [...studyAppsDb.rows]
+    if (status) list = list.filter((r) => r.status === status)
+    if (q) list = list.filter((r) => searchHit(r, q))
+    sortByAppliedAt(list, order)
 
     const total = list.length
-    const start = (page - 1) * size
-    const items = list.slice(start, start + size)
-    const totalPages = Math.max(1, Math.ceil(total / Math.max(1, size)))
+    const offset = (page - 1) * size
+    const items = list.slice(offset, offset + size).map((a) => ({
+      id: toNumId(a.id),
+      title: a.ad.title,
+      applicant: { nickname: a.applicant.nickname, email: a.applicant.email },
+      status: KO_FROM_EN[a.status],
+      appliedAt: toIso(a.appliedAt),
+      updatedAt: toIso(a.updatedAt),
+    }))
+    const totalPages = Math.max(1, Math.ceil(total / size))
+    return HttpResponse.json({ items, total, totalPages })
+  }
+)
 
-    return HttpResponse.json({ items, total, totalPages }, { status: 200 })
-  }),
-
-  http.get('/api/admin/apply-to-study/:id', ({ params }) => {
-    const id = Number(params.id)
-    const base = APPLY_TO_STUDY_MOCKS.find((x) => x.id === id)
-    if (!base)
-      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
-
-    const toEnum = (s: string) =>
-      s === '승인'
-        ? 'APPROVED'
-        : s === '거절'
-          ? 'REJECTED'
-          : s === '검토 중'
-            ? 'INREVIEW'
-            : 'PENDING'
-    const pad = (n: number, w = 3) => String(n).padStart(w, '0')
-
-    const detail = {
-      applicationId: `#APP${pad(base.id)}`,
-      recruitment: {
-        id: base.id,
-        uuid: `uuid-${base.id}`,
-        title: base.title,
-        expectedHeadcount: 8,
-        lectures: [
-          { title: '오리엔테이션', instructorName: '홍길동' },
-          { title: '실전 과제 리뷰', instructorName: '김코드' },
-        ],
-        tags: [
-          { id: 't1', name: '주 2회' },
-          { id: 't2', name: '온라인' },
-        ],
-        deadlineDate: base.appliedAt.slice(0, 10),
-      },
-      applicant: {
-        userId: String(base.id),
-        nickname: base.applicant.nickname,
-        email: base.applicant.email,
-        gender: 'OTHER',
-        profileImageUrl: '',
-      },
-      selfIntroduction: '안녕하세요. 열심히 참여하겠습니다.',
-      motivation: '실무 역량 향상',
-      goal: '프로젝트 완주',
-      availableTimeDescription: '평일 저녁 8시 이후',
-      hasStudyExperience: true,
-      studyExperienceDetails: '코테 스터디 2회 진행',
-      createdAt: base.appliedAt,
-      updatedAt: base.updatedAt,
-      status: toEnum(base.status),
+export const applyToStudyDetail = http.get(
+  '/api/admin/apply-to-study/:id',
+  ({ params }) => {
+    studyAppsDb.init()
+    const idNum = Number(params.id)
+    if (!Number.isFinite(idNum) || idNum <= 0) {
+      return HttpResponse.json({ message: 'Invalid id' }, { status: 400 })
     }
-    return HttpResponse.json(detail, { status: 200 })
-  }),
-]
+    const found = studyAppsDb.rows.find((r) => toNumId(r.id) === idNum)
+    if (!found)
+      return HttpResponse.json(
+        { message: `Application ${idNum} not found` },
+        { status: 404 }
+      )
+
+    return HttpResponse.json({
+      ...found,
+      id: idNum,
+      status: KO_FROM_EN[found.status],
+      appliedAt: toIso(found.appliedAt),
+      updatedAt: toIso(found.updatedAt),
+      adDetail: { ...found.adDetail, deadline: toIso(found.adDetail.deadline) },
+    })
+  }
+)
+
+/** 👉 이 이름으로 export 해야 함 */
+export const applyToStudyHandlers = [applyToStudyList, applyToStudyDetail]
