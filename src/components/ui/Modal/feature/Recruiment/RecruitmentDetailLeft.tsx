@@ -119,17 +119,16 @@ export default function RecruitmentDetailLeft({
       </div>
 
       {/* 날짜 정보 */}
-      <div>
-        <div className="text-sm font-semibold text-gray-600">공고 등록일시</div>
-        <div className="mt-1 text-sm">{formatDate(data.createdAt)}</div>
-      </div>
-
-      <div>
-        <div className="text-sm font-semibold text-gray-600">
-          마지막 수정일시
+      <div className="body-sm flex justify-start">
+        <div>
+          <div className="font-semibold text-gray-600">공고 등록일시</div>
+          <div className="mt-1">{formatDate(data.createdAt)}</div>
         </div>
-        <div className="mt-1 text-sm">
-          {data.updatedAt ? formatDate(data.updatedAt) : '-'}
+        <div className="ml-26">
+          <div className="font-semibold text-gray-600">마지막 수정일시</div>
+          <div className="mt-1">
+            {data.updatedAt ? formatDate(data.updatedAt) : '-'}
+          </div>
         </div>
       </div>
 
