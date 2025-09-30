@@ -102,5 +102,4 @@ export const applyToStudyDetail = http.get(
   }
 )
 
-/** 👉 이 이름으로 export 해야 함 */
 export const applyToStudyHandlers = [applyToStudyList, applyToStudyDetail]
