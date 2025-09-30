@@ -12,6 +12,7 @@ import ReviewManagement from '@/pages/admin/Review'
 import PlaceHolderPage from '@/pages/main/PlaceHolderPage'
 import CourseManagementTest from '@/pages/admin/CourseManagement'
 import MainPage from '@/pages/main/MainPage'
+import RecruitmentsManage from '@/pages/admin/RecruitmnetsManage'
 
 export default function AppRoutes() {
   return (
@@ -44,7 +45,7 @@ export default function AppRoutes() {
           <Route path={PATHS.LECTURE} element={<CourseManagementTest />} />
           <Route path={PATHS.STUDYGROUP} element={<StudyGroupPage />} />
           <Route path={PATHS.REVIEW} element={<ReviewManagement />} />
-          <Route path={PATHS.POST} element={<PlaceHolderPage />} />
+          <Route path={PATHS.POST} element={<RecruitmentsManage />} />
           <Route path={PATHS.APPLICATION} element={<PlaceHolderPage />} />
         </Route>
       </Route>
