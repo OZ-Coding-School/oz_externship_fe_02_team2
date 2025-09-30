@@ -4,43 +4,62 @@ import UsersTable from '@/components/table/feature/Users/UsersTable'
 import UserDetail from '@/components/ui/Modal/feature/User/UserDetail'
 import Modal from '@/components/ui/Modal/Modal'
 import { useToast } from '@/hooks'
-import type { UserDetail as UserDetailType } from '@/components/ui/Modal/feature/User/User.types'
+import type { UserDetail as UserDetailType } from '@type/User.types'
 import type { UserRow } from '@/components/table/Table.types'
 import type { TableQuery } from '@/types/table'
-import type { SortOrder } from '@/mocks/utils'
 import { getUserDetail, getUsers } from '@/api/modules/users'
 import { ApiError } from '@/api/http'
 import UsersFilterBar from '@/components/table/feature/Users/UsersFilterBar'
 
+// 상태 번역 함수
+function translateStatus(status: string): UserRow['status'] {
+  const statusMap: Record<string, UserRow['status']> = {
+    활성화: '활성',
+    비활성화: '비활성',
+    탈퇴진행중: '탈퇴요청',
+  }
+  return statusMap[status] ?? '활성'
+}
+
+// 권한 번역 함수
+function translatePermission(permission: string | null): string {
+  const permissionMap: Record<string, string> = {
+    ADMIN: '관리자',
+    STAFF: '스태프',
+    GENERAL: '일반회원',
+  }
+  return permission ? (permissionMap[permission] ?? '일반회원') : '일반회원'
+}
+
 // API 응답 → 테이블 로우 매핑
 function mapToRow(u: UserDetailType): UserRow {
   return {
-    memberId: u.id,
+    memberId: u.uuid,
     email: u.email,
-    nickname: u.nickname ?? '',
+    nickname: u.nickname,
     name: u.name,
-    birth: u.birth ?? '',
-    role: u.role ?? '',
-    status: (u.status ?? '활성') as UserRow['status'],
-    joinedAt: u.joinedAt ?? '',
-    withdrawnAt: null,
+    birth: u.birthday,
+    role: translatePermission(u.permission),
+    status: translateStatus(u.status),
+    joinedAt: u.createdAt,
+    withdrawnAt: u.withdrawalsRequestDate ?? null,
   }
 }
 
-// 정렬 키 매핑
+// 정렬 키 매핑 (서버 필드명으로)
 const SORT_KEY_MAP: Record<string, string> = {
-  memberId: 'id',
+  memberId: 'uuid',
   email: 'email',
   nickname: 'nickname',
   name: 'name',
-  birth: 'birth',
-  role: 'role',
+  birth: 'birthday',
+  role: 'permission',
   status: 'status',
-  joinedAt: 'joinedAt',
-  withdrawnAt: 'withdrawnAt',
+  joinedAt: 'created_at',
+  withdrawnAt: 'withdrawals_request_date',
 }
 
-export default function UsersManagePage() {
+export default function UserManagePage() {
   const { triggerToast } = useToast()
 
   // 테이블 데이터 상태
@@ -68,20 +87,43 @@ export default function UsersManagePage() {
         // 정렬 파라미터 변환
         const sortBy = query.sortBy
           ? (SORT_KEY_MAP[query.sortBy] ?? query.sortBy)
-          : 'joinedAt'
-        const sortOrder: SortOrder = query.sortDir === 'desc' ? 'desc' : 'asc'
+          : 'created_at'
 
-        const q = (query.search ?? '').trim()
+        // DRF ordering 형식으로 변환: '-created_at' 또는 'created_at'
+        const ordering = query.sortDir === 'desc' ? `-${sortBy}` : sortBy
+
+        const search = (query.search ?? '').trim()
+
+        // 필터 값 변환 (한글 → 서버 enum)
+        let permission: 'ADMIN' | 'STAFF' | 'GENERAL' | undefined
+        if (query.role) {
+          const roleMap: Record<string, 'ADMIN' | 'STAFF' | 'GENERAL'> = {
+            관리자: 'ADMIN',
+            스태프: 'STAFF',
+            일반회원: 'GENERAL',
+          }
+          permission = roleMap[query.role]
+        }
+
+        let status: 'ACTIVE' | 'INACTIVE' | 'WITHDRAWN' | undefined
+        if (query.status) {
+          const statusMap: Record<string, 'ACTIVE' | 'INACTIVE' | 'WITHDRAWN'> =
+            {
+              활성: 'ACTIVE',
+              비활성: 'INACTIVE',
+              탈퇴요청: 'WITHDRAWN',
+            }
+          status = statusMap[query.status]
+        }
 
         // API 호출 파라미터 구성
         const apiParams = {
           page: query.page,
-          pageSize: query.pageSize,
-          sortBy,
-          sortOrder,
-          ...(q && { q }), // ← 바뀐 부분
-          ...(query.status && { status: query.status }),
-          ...(query.role && { role: query.role }),
+          page_size: query.pageSize,
+          ordering,
+          ...(search && { search }),
+          ...(permission && { permission }),
+          ...(status && { status }),
         }
 
         const data = await getUsers(apiParams, { mock: true })
@@ -166,6 +208,7 @@ export default function UsersManagePage() {
 
       try {
         const userData = await getUserDetail(userId, { mock: true })
+
         setModalState((prev) => ({
           ...prev,
           detail: userData,
@@ -204,13 +247,14 @@ export default function UsersManagePage() {
     (updatedUser: UserDetailType) => {
       setTableData((prev) =>
         prev.map((row) =>
-          row.memberId === updatedUser.id ? mapToRow(updatedUser) : row
+          row.memberId === updatedUser.uuid ? mapToRow(updatedUser) : row
         )
       )
 
       setModalState((prev) => ({
         ...prev,
-        detail: prev.detail?.id === updatedUser.id ? updatedUser : prev.detail,
+        detail:
+          prev.detail?.uuid === updatedUser.uuid ? updatedUser : prev.detail,
       }))
 
       triggerToast(
@@ -228,7 +272,7 @@ export default function UsersManagePage() {
       setTableData((prev) =>
         prev.map((row) =>
           row.memberId === deletedUserId
-            ? { ...row, status: '비활성' as const }
+            ? { ...row, status: '비활성화' as const }
             : row
         )
       )
@@ -327,7 +371,7 @@ export default function UsersManagePage() {
     <div className="container mx-auto px-4 py-6">
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">유저 관리</h1>
       </div>
 
       {/* 에러 알림 */}
@@ -367,22 +411,15 @@ export default function UsersManagePage() {
 
       {/* 테이블 */}
       <div className="rounded-lg bg-white shadow">
-        {/* 필터 바 */}
         <UsersFilterBar
           query={tableFilters.query}
           onQueryChange={tableFilters.onQueryChange}
-          density="compact" // 밀도 낮추기
-          tone="elevated" // 살짝 떠 보이는 톤
-          stickyTop={64} // 상단 64px 고정 (예: 헤더 높이)
-          // config로 옵션 일부만 덮어쓰기 가능
-          // config={{ statusOptions: [...], roleOptions: [...] }}
-        >
-          {/* 오른쪽/아래쪽에 붙일 유저 전용 컨트롤들 */}
-          {/* <button className="btn btn-primary btn-sm ml-auto">일괄 처리</button> */}
-        </UsersFilterBar>
+          density="compact"
+          tone="elevated"
+          stickyTop={64}
+        />
       </div>
       <div className="mt-7">
-        {/* 테이블 */}
         <UsersTable
           rows={tableData}
           total={total}

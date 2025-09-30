@@ -18,11 +18,8 @@ const shouldUseMsw =
 
 // MSW를 켜야 한다면: 먼저 시작시키고, 끝난 뒤 렌더
 if (shouldUseMsw) {
-  import('src/mocks/startMsw') // ❗ 확장자 빼세요
+  import('src/mocks/startMsw') // 확장자 빼세요
     .then(({ startMsw }) => startMsw()) // 내부에서 await 처리
-    .then(() => {
-      console.log('[MSW] started')
-    })
     .catch((e) => {
       console.warn('[MSW] failed to start:', e)
     })

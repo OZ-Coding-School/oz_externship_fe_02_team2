@@ -4,5 +4,6 @@ export function countActiveFilters(q: TableQuery) {
   if ((q.q ?? '').trim()) c++
   if (q.status) c++
   if (q.role) c++
+  if (q.reason) c++
   return c
 }

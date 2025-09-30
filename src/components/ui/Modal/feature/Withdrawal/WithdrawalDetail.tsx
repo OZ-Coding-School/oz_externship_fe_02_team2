@@ -1,7 +1,7 @@
 import Modal from '../../Modal'
 import { Button } from '../../../Button'
 import { useFormHandlers } from '@/hooks/useFormHandlers'
-import type { WithdrawalDetail } from './Withdrawal.types'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
 import { useEffect, useState } from 'react'
 import WithdrawalDetailView from './WithdrawalDetailView'
 import WithdrawalRestore from './WithdrawalRestore'

@@ -1,30 +1,25 @@
-// MSW Users 목업 데이터 — 결정적(재현 가능) 시드 + 퍼시스트(localStorage) 옵션
-// - 기존 Users 전용 MSW 셋업과 호환됩니다.
-// - faker 없이 간단한 RNG/프리셋으로 한국어 데이터 생성
-// - 환경변수/상수로 레코드 수, 역할/상태 분포 조정 가능
-// - 페이지 새로고침 유지: localStorage 퍼시스트(선택)
-// -----------------------------------------------------------------------------
-
-import type { UserDetail } from '@/components/ui/Modal/feature/User/User.types'
+// MSW Users 시드 데이터 - 최신 스웨거 스키마 반영
+import type { UserDetail } from '@/types/User.types'
 
 // ── 설정값 ───────────────────────────────────────────────────────────────────
-const USER_COUNT = Number(import.meta.env.VITE_MSW_USERS ?? 128) // 생성할 사용자 수
-const PERSIST_KEY = '__msw_users__' // localStorage 키(퍼시스트 켜면 사용)
-const ENABLE_PERSIST = true // 새로고침해도 데이터 유지하고 싶으면 true
+const USER_COUNT = Number(import.meta.env.VITE_MSW_USERS ?? 128)
+const PERSIST_KEY = '__msw_users__'
+const ENABLE_PERSIST = true
 
-// 역할/상태 분포(%) — 합계가 100이 되도록 조정하세요
-const ROLE_DIST: Record<string, number> = {
-  일반회원: 82,
-  스태프: 12,
-  관리자: 6,
+// 서버 enum 값으로 변경
+const PERMISSION_DIST: Record<'GENERAL' | 'STAFF' | 'ADMIN', number> = {
+  GENERAL: 82,
+  STAFF: 12,
+  ADMIN: 6,
 }
-const STATUS_DIST: Record<'활성' | '비활성', number> = {
-  활성: 88,
-  비활성: 12,
+
+const STATUS_DIST: Record<'ACTIVE' | 'INACTIVE' | 'WITHDRAWN', number> = {
+  ACTIVE: 62,
+  INACTIVE: 12,
+  WITHDRAWN: 26,
 }
 
 // ── RNG(결정적) ──────────────────────────────────────────────────────────────
-// 같은 seed로 항상 동일한 결과를 얻기 위한 간단한 LCG
 function lcg(seed = 123456789) {
   let s = seed >>> 0
   return () => {
@@ -32,7 +27,7 @@ function lcg(seed = 123456789) {
     return s / 0xffffffff
   }
 }
-const rnd = lcg(20250918) // 날짜 등으로 seed 고정
+const rnd = lcg(20250918)
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(rnd() * arr.length)]
@@ -87,15 +82,12 @@ const nickSuffix = [
 ] as const
 const carriers = ['010', '011', '017'] as const
 const domains = ['oz.com', 'ozdev.kr', 'ozschool.io', 'example.com'] as const
-const genders: Array<UserDetail['gender']> = ['남성', '여성', '기타']
+const genders = ['남성', '여성', '기타'] as const
 
 // 분포 기반 라벨 선택
 function pickByDist<T extends string>(dist: Record<T, number>): T {
-  const keys = Object.keys(dist) as T[] // T로 단언
-  // 합계 계산은 키를 통해 안전하게 접근
+  const keys = Object.keys(dist) as T[]
   const total = keys.reduce((sum, k) => sum + (dist[k] ?? 0), 0)
-
-  // 총합이 0이면 첫 키로 안전하게 폴백
   if (total <= 0) return keys[0]
 
   let r = rnd() * total
@@ -104,15 +96,16 @@ function pickByDist<T extends string>(dist: Record<T, number>): T {
     if (r < v) return k
     r -= v
   }
-  // 남는 경우가 없으면 첫 키 반환(부동소수 오차 대비)
   return keys[0]
 }
 
 // ── 아이디/날짜/유틸 ─────────────────────────────────────────────────────────
 let uid = 1000
-function newId(prefix: string): string {
+function newId(): string {
   uid += 1
-  return `${prefix}_${uid}`
+  // UUID 형식으로 변경
+  const hex = uid.toString(16).padStart(8, '0')
+  return `${hex.slice(0, 8)}-${hex.slice(0, 4)}-4${hex.slice(1, 4)}-a${hex.slice(1, 4)}-${hex.slice(0, 12)}`
 }
 
 function isoNDaysAgo(n: number): string {
@@ -131,35 +124,50 @@ export function makeUser(): UserDetail {
   const fn = pick(firstLeft) + pick(firstRight)
   const name = `${ln}${fn}`
   const nickname = `${fn.toLowerCase()}${pick(nickSuffix)}`
-  const id = newId('u')
+  const uuid = newId()
 
-  const role = pickByDist(ROLE_DIST)
+  const permission = pickByDist(PERMISSION_DIST)
   const status = pickByDist(STATUS_DIST)
   const gender = pick(genders)
+
   const phone = `${pick(carriers)}-${pad2(Math.floor(rnd() * 90) + 10)}${pad2(
     Math.floor(rnd() * 90) + 10
   )}-${pad2(Math.floor(rnd() * 90) + 10)}${pad2(Math.floor(rnd() * 90) + 10)}`
-  const birth = `199${Math.floor(rnd() * 10)}-${pad2(Math.floor(rnd() * 12) + 1)}-${pad2(
-    Math.floor(rnd() * 28) + 1
-  )}`
+
+  // YYYY-MM-DD 형식
+  const year = 1980 + Math.floor(rnd() * 25) // 1980-2004
+  const month = Math.floor(rnd() * 12) + 1
+  const day = Math.floor(rnd() * 28) + 1
+  const birthday = `${year}-${pad2(month)}-${pad2(day)}`
 
   const emailLocal = `${fn.toLowerCase()}${Math.floor(rnd() * 900 + 100)}`
   const email = `${emailLocal}@${pick(domains)}`
 
-  const joinedAt = isoNDaysAgo(Math.floor(rnd() * 365))
+  const createdAt = isoNDaysAgo(Math.floor(rnd() * 365))
+
+  // 탈퇴 요청일 (WITHDRAWN 상태일 때만)
+  const withdrawalsRequestDate =
+    status === 'WITHDRAWN' ? isoNDaysAgo(Math.floor(rnd() * 30)) : null
 
   const user: UserDetail = {
-    id,
-    name,
+    uuid,
     email,
-    gender,
     nickname,
-    birth,
-    phone,
-    role,
+    name,
+    birthday,
+    permission,
+    permissionDisplay:
+      permission === 'ADMIN'
+        ? '관리자'
+        : permission === 'STAFF'
+          ? '스태프'
+          : '일반회원',
     status,
-    joinedAt,
-    avatarUrl: '',
+    createdAt,
+    withdrawalsRequestDate,
+    gender,
+    phoneNumber: phone,
+    profileImgUrl: null,
   }
   return user
 }
@@ -194,6 +202,7 @@ export function persist(users: UserDetail[]) {
 // ── 공개 API ─────────────────────────────────────────────────────────────────
 export const usersDb = {
   users: [] as UserDetail[],
+
   init(force = false) {
     if (!force) {
       const existing = loadPersisted()
@@ -205,16 +214,19 @@ export const usersDb = {
     this.users = makeUsers()
     persist(this.users)
   },
+
   reset(count = USER_COUNT) {
     this.users = makeUsers(count)
     persist(this.users)
   },
+
   add(user: UserDetail) {
     this.users.unshift(user)
     persist(this.users)
   },
-  patch(id: string, patch: Partial<UserDetail>) {
-    const idx = this.users.findIndex((u) => u.id === id)
+
+  patch(uuid: string, patch: Partial<UserDetail>) {
+    const idx = this.users.findIndex((u) => u.uuid === uuid)
     if (idx >= 0) {
       this.users[idx] = { ...this.users[idx], ...patch }
       persist(this.users)
@@ -222,8 +234,9 @@ export const usersDb = {
     }
     return null
   },
-  remove(id: string) {
-    const idx = this.users.findIndex((u) => u.id === id)
+
+  remove(uuid: string) {
+    const idx = this.users.findIndex((u) => u.uuid === uuid)
     if (idx >= 0) {
       this.users.splice(idx, 1)
       persist(this.users)
@@ -232,32 +245,3 @@ export const usersDb = {
     return false
   },
 }
-
-// ── MSW 핸들러에서 사용 예시 ────────────────────────────────────────────────
-// import { usersDb } from '@/mocks/seeds/users.seed'
-// usersDb.init()
-// http.get(`${ADMIN}/users`, ... => {
-//   let rows = [...usersDb.users]
-//   // 필터/정렬/페이지네이션 적용
-// })
-
-// ── 핸들러 연동(예시) ────────────────────────────────────────────────────────
-// mswHttp.get(`${ADMIN}/users`, async ({ request }) => {
-//   if (request.headers.get('x-bypass-mock')) return passthrough()
-//   usersDb.init()
-//   const url = new URL(request.url)
-//   const page = toInt(url.searchParams.get('page'), 1)
-//   const pageSize = toInt(url.searchParams.get('pageSize'), 20)
-//   const sortBy = url.searchParams.get('sortBy') ?? 'joinedAt'
-//   const sortOrder = (url.searchParams.get('sortOrder') ?? 'desc') as 'asc' | 'desc'
-//   const q = url.searchParams.get('q') ?? ''
-//   const role = url.searchParams.get('role')
-//   const status = url.searchParams.get('status') as '활성' | '비활성' | null
-//   let rows = [...usersDb.users]
-//   if (q) rows = rows.filter(r => `${r.name} ${r.email} ${r.nickname ?? ''}`.toLowerCase().includes(q.toLowerCase()))
-//   if (role) rows = rows.filter(r => (r.role ?? '') === role)
-//   if (status) rows = rows.filter(r => (r.status ?? '') === status)
-//   rows = sortByKey(rows as Record<string, unknown>[], sortBy, sortOrder) as UserDetail[]
-//   const pageData = paginate<UserDetail>(rows, page, pageSize)
-//   return HttpResponse.json({ ...pageData, sortBy, sortOrder })
-// })

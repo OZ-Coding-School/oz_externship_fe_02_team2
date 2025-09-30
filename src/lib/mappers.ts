@@ -50,8 +50,17 @@ export const studyToTone: Record<StudyGroupRow['status'], Tone> = {
   종료됨: 'gray',
 }
 
-export const cusToTone: Record<string,Tone> = {
+export const cusToTone: Record<string, Tone> = {
   초급: 'green',
   중급: 'yellow',
-  상급: 'red'
+  상급: 'red',
 }
+
+// 상태 → Tone 매퍼
+const statusToneMap: Record<'OPEN' | 'CLOSED', Tone> = {
+  OPEN: 'green', // success에 대응되는 Tone 값
+  CLOSED: 'neutral',
+} as const
+
+export const openStatusToTone = (status: 'OPEN' | 'CLOSED'): Tone =>
+  statusToneMap[status]

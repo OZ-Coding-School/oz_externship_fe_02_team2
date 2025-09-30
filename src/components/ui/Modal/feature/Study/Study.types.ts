@@ -1,5 +1,3 @@
-export type StudyStatus = '대기중' | '진행중' | '종료됨'
-
 export type Member = {
   id: string
   name: string
@@ -16,16 +14,16 @@ export type Course = {
 
 export type StudyGroupDetail = {
   id: number
-  uuid: string
-  name: string
-  currentMembers: number
+  coverImageUrl?: string
+  title: string
+  uuid?: string
+  enrolled: number
   capacity: number
-  startDate: string // ISO
-  endDate: string // ISO
-  status: StudyStatus
+  period: { start: string; end: string }
+  status: string
   createdAt: string // ISO
   updatedAt: string // ISO
-  coverImageUrl?: string
+
   members: Member[]
   courses: Course[]
 }

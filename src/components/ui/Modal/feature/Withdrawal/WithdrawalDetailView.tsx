@@ -1,6 +1,6 @@
 import WithdrawalUserView from './WithdrawalUserView'
 import WithdrawalInfoView from './WithdrawalInfoView'
-import type { WithdrawalDetail } from './Withdrawal.types'
+import type { WithdrawalDetail } from '@type/Withdrawal.types'
 import ModalSkeleton from '@/components/ui/Skeleton/ModalSkeleton'
 
 type Props = {

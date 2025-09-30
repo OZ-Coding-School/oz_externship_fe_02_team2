@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import Section from './Section'
-import { DROPDOWN_PERIOD_OPTIONS } from './constants'
-import type { DropdownProps } from '@/components/ui/Dropdown/Dropdown.types'
-import VerticalBarChart from '../../../components/charts/VerticalBarChart/VerticalBarChart'
+import { Section, DROPDOWN_PERIOD_OPTIONS } from './common'
+import type { DropdownProps } from '@components/ui/Dropdown/Dropdown.types'
+import VerticalBarChart from '@components/charts/VerticalBarChart/VerticalBarChart'
 
 export default function Leave() {
   const [period, setPeriod] = useState('MONTHLY')
@@ -12,7 +11,6 @@ export default function Leave() {
     value: period,
     onChange: (value) => {
       setPeriod(value)
-      // TODO: 드롭다운 변경 시 차트 데이터 바뀌게
     },
     classes: {
       button: 'w-23',
@@ -21,7 +19,7 @@ export default function Leave() {
 
   return (
     <Section title="회원탈퇴 추세" dropdown={dropdownProps}>
-      <VerticalBarChart />
+      <VerticalBarChart type="leave" period={period} />
     </Section>
   )
 }
