@@ -10,7 +10,7 @@ export type ApplyToStudyDetail = {
 export const APPLY_TO_STUDY_MOCKS: ApplyToStudyDetail[] = [
   {
     id: 1001,
-    title: '프론트엔드 스터디: React 심화',
+    title: '프론트엔드 스터디: React 심화과정',
     applicant: { nickname: '민준', email: 'minjun@example.com' },
     status: '승인',
     appliedAt: '2025-09-29T09:32:10+09:00',
