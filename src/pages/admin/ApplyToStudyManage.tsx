@@ -11,6 +11,28 @@ import ApplyToStudyFilterBar from '@/components/table/feature/ApplyToStudy/Apply
 import type { ApplyToStudyDetail as ApplyToStudyDetailFull } from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
 import ApplyToStudyModal from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudyModal'
 
+// ── studyassistance 어댑터 유틸 ─────────────────
+const koFromEn: Record<string, '승인' | '검토 중' | '대기' | '거절'> = {
+  approved: '승인',
+  review: '검토 중',
+  pending: '대기',
+  rejected: '거절',
+}
+const enFromKo: Record<string, 'approved' | 'review' | 'pending' | 'rejected'> =
+  {
+    승인: 'approved',
+    '검토 중': 'review',
+    검토중: 'review',
+    대기: 'pending',
+    거절: 'rejected',
+  }
+const toAppIdString = (n: number | string) => `APP${String(n).padStart(4, '0')}`
+const digits = (id: string) => Number(String(id).replace(/\D/g, '')) || 0
+const toIso = (s: string) => {
+  const t = s.includes('T') ? s : s.replace(' ', 'T')
+  return /\d{2}:\d{2}:\d{2}$/.test(t) ? t : `${t}:00`
+}
+
 // ==== (임시) API 타입 & 모듈 ====
 type ApplyToStudyDetail = {
   id: number
@@ -26,23 +48,30 @@ type ApplyToStudyListRes = {
   totalPages: number
 }
 
-// 실제 프로젝트의 API 모듈로 교체하세요.
 async function getApplyToStudyList(params: {
   page: number
   pageSize: number
   sortBy: string
   sortOrder: SortOrder
   q?: string
-  status?: string
+  status?: string // 한글(승인/검토 중/대기/거절) 들어옴
 }): Promise<ApplyToStudyListRes> {
-  const url = new URL('/api/admin/apply-to-study', window.location.origin)
-  url.searchParams.set('page', String(params.page))
-  url.searchParams.set('size', String(params.pageSize))
-  url.searchParams.set('sortBy', params.sortBy)
-  url.searchParams.set('sortOrder', params.sortOrder)
-  if (params.q) url.searchParams.set('q', params.q)
-  if (params.status) url.searchParams.set('status', params.status)
-  const res = await fetch(url.toString())
+  // studyassistance 규격: limit/offset/sort(latest|oldest)/status(영문)/q
+  const base = new URL('/api/v1/admin/studyassistance', window.location.origin)
+  const limit = params.pageSize
+  const offset = (params.page - 1) * params.pageSize
+  const sort =
+    params.sortBy.toLowerCase() === 'applied_at' && params.sortOrder === 'asc'
+      ? 'oldest'
+      : 'latest'
+  base.searchParams.set('limit', String(limit))
+  base.searchParams.set('offset', String(offset))
+  base.searchParams.set('sort', sort)
+  if (params.q) base.searchParams.set('q', params.q)
+  if (params.status)
+    base.searchParams.set('status', enFromKo[params.status] ?? '')
+
+  const res = await fetch(base.toString())
   if (!res.ok) {
     const raw = (await res.text()) || ''
     let json: any = {}
@@ -58,14 +87,40 @@ async function getApplyToStudyList(params: {
       'Failed to fetch'
     throw new ApiError(String(res.status), { ...json, message })
   }
-  return (await res.json()) as ApplyToStudyListRes
+
+  // studyassistance 목록 응답 → 페이지가 쓰는 형태로 매핑
+  const json = (await res.json()) as {
+    items: Array<{
+      id: string
+      ad: { title: string }
+      applicant: { nickname: string; email: string }
+      status: 'approved' | 'review' | 'pending' | 'rejected'
+      appliedAt: string
+      updatedAt: string
+    }>
+    total: number
+  }
+
+  const items: ApplyToStudyDetail[] = json.items.map((a) => ({
+    id: digits(a.id), // 'APP0001' → 1
+    title: a.ad.title,
+    applicant: a.applicant,
+    status: koFromEn[a.status],
+    appliedAt: toIso(a.appliedAt),
+    updatedAt: toIso(a.updatedAt),
+  }))
+  const total = json.total
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / Math.max(1, params.pageSize))
+  )
+  return { items, total, totalPages }
 }
 
-// 상세 API
 async function getApplyToStudyDetail(
   id: number
 ): Promise<ApplyToStudyDetailFull> {
-  const res = await fetch(`/api/admin/apply-to-study/${id}`)
+  const res = await fetch(`/api/v1/admin/studyassistance/${toAppIdString(id)}`)
   if (!res.ok) {
     const raw = (await res.text()) || ''
     let json: any = {}
@@ -81,7 +136,43 @@ async function getApplyToStudyDetail(
       'Failed to fetch'
     throw new ApiError(String(res.status), { ...json, message })
   }
-  return (await res.json()) as ApplyToStudyDetailFull
+
+  const data = (await res.json()) as any
+
+  // 안전 가드 + 모달이 기대하는 alias들을 보강
+  const title = data?.ad?.title ?? data?.title ?? ''
+  const ad = data?.ad ?? { id: '', title }
+  const adDetail = {
+    headcount: data?.adDetail?.headcount ?? 0,
+    lectures: Array.isArray(data?.adDetail?.lectures)
+      ? data.adDetail.lectures
+      : [],
+    tags: Array.isArray(data?.adDetail?.tags) ? data.adDetail.tags : [],
+    deadline: toIso(data?.adDetail?.deadline ?? data?.deadline ?? ''),
+  }
+
+  // 핵심: recruitment / recruitmentTitle 등 alias 추가
+  const recruitment = {
+    id: ad.id,
+    title,
+    headcount: adDetail.headcount,
+    deadline: adDetail.deadline,
+    tags: adDetail.tags,
+    lectures: adDetail.lectures,
+  }
+
+  return {
+    ...data,
+    id, // number 유지
+    title, // 루트에도 title 제공(여러 뷰에서 씀)
+    ad,
+    adDetail,
+    recruitment, // ← 모달 내부 View가 기대하는 키를 맞춰줌
+    recruitmentTitle: title, // ← 혹시 이 키를 읽는 경우 대비
+    status: koFromEn[data.status as keyof typeof koFromEn] ?? data.status,
+    appliedAt: toIso(data.appliedAt),
+    updatedAt: toIso(data.updatedAt),
+  } as ApplyToStudyDetailFull
 }
 
 // ==== 헬퍼 ====
