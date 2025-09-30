@@ -23,6 +23,12 @@ export type RecruitmentsFilterBarProps = {
   stickyTop?: number
   tone?: 'neutral' | 'soft' | 'elevated'
   className?: string
+
+  /** 태그 필터 관련 */
+  onTagsFilterClick?: () => void
+  selectedTags?: string[]
+  tagsPlaceholder?: string
+  showTagsFilter?: boolean
 }
 
 /** 구인공고 도메인 기본 옵션 */
@@ -67,6 +73,10 @@ export default function RecruitmentsFilterBar({
   stickyTop,
   tone = 'neutral',
   className,
+  onTagsFilterClick,
+  selectedTags = [],
+  tagsPlaceholder = '태그 선택...',
+  showTagsFilter = true,
 }: RecruitmentsFilterBarProps) {
   const mergedConfig: TableFilterConfig = {
     ...defaultRecruitmentsConfig,
@@ -88,14 +98,22 @@ export default function RecruitmentsFilterBar({
           densityBox(density)
         )}
         showLabels
-        labels={{ search: '검색', status: '공고 상태' }}
+        labels={{
+          search: '검색',
+          status: '공고 상태',
+          tags: '태그 필터',
+        }}
         showFilters={{
           search: true,
           status: true,
           role: false,
           reason: false,
+          tags: showTagsFilter,
         }}
-        gridColumns={4}
+        gridColumns={showTagsFilter ? 3 : 2}
+        onTagsFilterClick={onTagsFilterClick}
+        selectedTags={selectedTags}
+        tagsPlaceholder={tagsPlaceholder}
       >
         {children}
       </TableFilterBar>
