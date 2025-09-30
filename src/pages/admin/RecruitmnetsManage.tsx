@@ -7,6 +7,8 @@ import type { AdminRecruitment } from '@/types/AdminRecruitments.types'
 import type { TableQuery } from '@/types/table'
 import { getAdminRecruitments } from '@/api/modules/recruitments'
 import { ApiError } from '@/api/http'
+import TagFilterModal from '@/components/ui/Modal/feature/Recruiment/TagFilterModal'
+import RecruitmentDetailModal from '@/components/ui/Modal/feature/Recruiment/RecruitmentDetailModal'
 
 // API 응답 → 테이블 로우 매핑
 function mapToRow(r: AdminRecruitment): any {
@@ -49,9 +51,18 @@ export default function RecruitmentsManage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 태그 필터 상태
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false)
+
+  // 상세 정보 모달 상태
+  const [selectedRecruitmentId, setSelectedRecruitmentId] = useState<
+    number | null
+  >(null)
+
   // 서버에서 구인 공고 데이터 로드
   const loadTableData = useCallback(
-    async (query: TableQuery) => {
+    async (query: TableQuery, tags: string[]) => {
       setLoading(true)
       setError(null)
 
@@ -72,7 +83,15 @@ export default function RecruitmentsManage() {
 
         const data = await getAdminRecruitments(apiParams, { mock: false })
 
+        // 디버깅: 원본 데이터 확인
+        console.log('API Response:', data)
+        console.log('First item tags:', data.items[0]?.tags)
+
         let items = data.items.map(mapToRow)
+
+        // 디버깅: 매핑 후 데이터 확인
+        console.log('Mapped items:', items)
+        console.log('First mapped item tags:', items[0]?.tags)
 
         // 클라이언트 사이드 필터링
         if (query.status && query.status !== 'ALL') {
@@ -84,6 +103,13 @@ export default function RecruitmentsManage() {
           const searchLower = query.search.toLowerCase()
           items = items.filter((it) =>
             it.title?.toLowerCase().includes(searchLower)
+          )
+        }
+
+        // 태그 필터링 (선택된 모든 태그를 포함해야 함)
+        if (tags.length > 0) {
+          items = items.filter((it) =>
+            tags.every((tag) => it.tags?.includes(tag))
           )
         }
 
@@ -127,13 +153,20 @@ export default function RecruitmentsManage() {
     },
     syncUrl: true,
     debounceMs: 300,
-    onQueryChange: loadTableData,
+    onQueryChange: (query) => loadTableData(query, selectedTags),
   })
 
   // 초기 데이터 로드
   useEffect(() => {
-    void loadTableData(tableFilters.query)
+    void loadTableData(tableFilters.query, selectedTags)
   }, []) // 빈 배열로 마운트 시 한 번만 실행
+
+  // 태그가 변경될 때 데이터 리로드
+  useEffect(() => {
+    if (selectedTags.length >= 0) {
+      void loadTableData(tableFilters.query, selectedTags)
+    }
+  }, [selectedTags])
 
   // 테이블에서 정렬 변경 처리
   const handleTableRequest = useCallback(
@@ -170,8 +203,19 @@ export default function RecruitmentsManage() {
 
   // 새로고침 핸들러
   const refreshTable = useCallback(() => {
-    void loadTableData(tableFilters.query)
-  }, [loadTableData, tableFilters.query])
+    void loadTableData(tableFilters.query, selectedTags)
+  }, [loadTableData, tableFilters.query, selectedTags])
+
+  // 태그 필터 적용 핸들러
+  const handleTagsApply = useCallback((tags: string[]) => {
+    setSelectedTags(tags)
+  }, [])
+
+  // 초기화 핸들러 확장 (태그도 포함)
+  const handleReset = useCallback(() => {
+    setSelectedTags([])
+    tableFilters.reset()
+  }, [tableFilters])
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -221,10 +265,17 @@ export default function RecruitmentsManage() {
       <div className="rounded-lg bg-white shadow">
         <RecruitmentsFilterBar
           query={tableFilters.query}
-          onQueryChange={tableFilters.onQueryChange}
+          onQueryChange={{
+            ...tableFilters,
+            reset: handleReset,
+          }}
           density="compact"
           tone="elevated"
           stickyTop={64}
+          showTagsFilter
+          selectedTags={selectedTags}
+          onTagsFilterClick={() => setIsTagModalOpen(true)}
+          tagsPlaceholder="태그 선택..."
         />
       </div>
 
@@ -235,8 +286,24 @@ export default function RecruitmentsManage() {
           loading={loading}
           totalPages={totalPages}
           onRequest={handleTableRequest}
+          onRowClick={(row) => setSelectedRecruitmentId(Number(row.id))}
         />
       </div>
+
+      {/* 상세 정보 모달 */}
+      <RecruitmentDetailModal
+        open={selectedRecruitmentId !== null}
+        onClose={() => setSelectedRecruitmentId(null)}
+        recruitmentId={selectedRecruitmentId}
+      />
+
+      {/* 태그 필터 모달 */}
+      <TagFilterModal
+        open={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        selectedTags={selectedTags}
+        onApply={handleTagsApply}
+      />
     </div>
   )
 }
