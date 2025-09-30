@@ -89,6 +89,7 @@ export type TableFilterConfig = {
   roleOptions?: FilterOption[]
   sortOptions?: { label: string; value: string }[]
   withdrawalReasonOptions?: FilterOption[]
+  applyToStudyOptions?: FilterOption[]
   debounceMs: number
 }
 

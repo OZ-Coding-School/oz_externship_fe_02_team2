@@ -24,8 +24,12 @@ import { countActiveFilters } from '../filterHelpers'
 // import { WITHDRAWAL_REASONS } from '@/types/table'
 
 export type TableFilterBarProps = {
-  query: EnhancedTableQuery
-  onQueryChange: EnhancedQueryChangeHandlers
+  query: EnhancedTableQuery & {
+    sortKey?: 'created_desc' | 'created_asc' | string | null
+  }
+  onQueryChange: EnhancedQueryChangeHandlers & {
+    setSort?: (sortKey: string | null) => void
+  }
   config: EnhancedTableFilterConfig
   className?: string
   children?: React.ReactNode
@@ -122,10 +126,7 @@ export function TableFilterBar({
     [withdrawalReasonOptions]
   )
 
-  const sortDropdownOptions = useMemo(
-    () => sortOptions.map((o) => ({ label: o.label, value: o.value })),
-    [sortOptions]
-  )
+  const sortDropdownOptions = useMemo(() => sortOptions, [sortOptions])
 
   // 표시되는 필터들 계산
   const visibleFilters = useMemo(() => {
@@ -328,7 +329,7 @@ export function TableFilterBar({
               <div className="w-full">
                 <Dropdown
                   options={sortDropdownOptions}
-                  value={query.sort || ''}
+                  value={query.sortKey ?? null}
                   onChange={handleSortChange}
                   placeholder={sortPlaceholder}
                   classes={{

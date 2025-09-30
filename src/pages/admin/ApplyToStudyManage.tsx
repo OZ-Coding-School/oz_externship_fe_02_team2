@@ -85,6 +85,9 @@ export default function ApplyToStudyManage() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sortKeyUI, setSortKeyUI] = useState<'created_desc' | 'created_asc'>(
+    'created_desc'
+  )
 
   // 테이블 필터 훅 (URL 동기화 포함)
   const tableFilters = useTableFilters({
@@ -167,9 +170,13 @@ export default function ApplyToStudyManage() {
           sortDir !== tableFilters.query.sortDir
         ) {
           tableFilters.setSort(sortBy, sortDir)
+          if (sortBy === 'applied_at' || sortBy === 'appliedAt') {
+            setSortKeyUI(sortDir === 'asc' ? 'created_asc' : 'created_desc')
+          }
         }
       } else if (tableFilters.query.sortBy) {
         tableFilters.setSort(null)
+        setSortKeyUI('created_desc')
       }
     },
     [tableFilters]
@@ -182,6 +189,9 @@ export default function ApplyToStudyManage() {
       setSort: (sortKey) => {
         const { sortBy, sortOrder } = toBackendSort(sortKey ?? undefined)
         tableFilters.setSort(sortBy, sortOrder)
+        setSortKeyUI(
+          (sortKey as 'created_desc' | 'created_asc') ?? 'created_desc'
+        )
       },
       setStatus: (status) => {
         const newQuery = { ...tableFilters.query, status }
@@ -191,9 +201,6 @@ export default function ApplyToStudyManage() {
     }),
     [tableFilters, loadList]
   )
-
-  const sortKey =
-    tableFilters.query.sortDir === 'asc' ? 'created_asc' : 'created_desc'
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -227,7 +234,7 @@ export default function ApplyToStudyManage() {
           query={
             {
               ...tableFilters.query,
-              sortKey, // created_asc | created_desc
+              sortKey: sortKeyUI,
             } as unknown as any
           }
           onQueryChange={enhancedOnQueryChange as any}
