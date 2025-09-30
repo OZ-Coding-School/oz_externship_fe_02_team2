@@ -9,6 +9,8 @@ import { ApiError } from '@/api/http'
 
 import ApplyToStudyTable from '@/components/table/feature/ApplyToStudy/ApplyToStudyTable'
 import ApplyToStudyFilterBar from '@/components/table/feature/ApplyToStudy/ApplyToStudyFilter'
+import type { ApplyToStudyDetail as ApplyToStudyDetailFull } from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
+import ApplyToStudyModal from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudyModal'
 
 // ==== (임시) API 타입 & 모듈 ====
 type ApplyToStudyDetail = {
@@ -43,9 +45,44 @@ async function getApplyToStudyList(params: {
   if (params.status) url.searchParams.set('status', params.status)
   const res = await fetch(url.toString())
   if (!res.ok) {
-    throw new ApiError(String(res.status))
+    const raw = (await res.text()) || ''
+    let json: any = {}
+    try {
+      json = raw ? JSON.parse(raw) : {}
+    } catch {}
+    const message =
+      (json &&
+        typeof json === 'object' &&
+        (json.message || json.error || json.detail)) ||
+      raw.trim() ||
+      res.statusText ||
+      'Failed to fetch'
+    throw new ApiError(String(res.status), { ...json, message })
   }
   return (await res.json()) as ApplyToStudyListRes
+}
+
+// 상세 API
+async function getApplyToStudyDetail(
+  id: number
+): Promise<ApplyToStudyDetailFull> {
+  const res = await fetch(`/api/admin/apply-to-study/${id}`)
+  if (!res.ok) {
+    const raw = (await res.text()) || ''
+    let json: any = {}
+    try {
+      json = raw ? JSON.parse(raw) : {}
+    } catch {}
+    const message =
+      (json &&
+        typeof json === 'object' &&
+        (json.message || json.error || json.detail)) ||
+      raw.trim() ||
+      res.statusText ||
+      'Failed to fetch'
+    throw new ApiError(String(res.status), { ...json, message })
+  }
+  return (await res.json()) as ApplyToStudyDetailFull
 }
 
 // ==== 헬퍼 ====
@@ -88,6 +125,12 @@ export default function ApplyToStudyManage() {
   const [sortKeyUI, setSortKeyUI] = useState<'created_desc' | 'created_asc'>(
     'created_desc'
   )
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalData, setModalData] = useState<ApplyToStudyDetailFull | null>(
+    null
+  )
+  const [modalLoading, setModalLoading] = useState(false)
+  const [modalError, setModalError] = useState<string | null>(null)
 
   // 테이블 필터 훅 (URL 동기화 포함)
   const tableFilters = useTableFilters({
@@ -260,9 +303,38 @@ export default function ApplyToStudyManage() {
           loading={loading}
           totalPages={totalPages}
           onRequest={handleTableRequest}
-          onRowClick={() => {}}
+          onRowClick={async (row) => {
+            setModalOpen(true)
+            setModalLoading(true)
+            setModalError(null)
+            setModalData(null)
+            try {
+              const detail = await getApplyToStudyDetail((row as any).id)
+              setModalData(detail)
+            } catch (e: unknown) {
+              const msg =
+                e instanceof ApiError || e instanceof Error
+                  ? e.message
+                  : '상세 조회 실패'
+              setModalError(msg)
+              triggerToast('error', '상세 정보 로딩 실패', msg)
+            } finally {
+              setModalLoading(false)
+            }
+          }}
         />
       </div>
+      <ApplyToStudyModal
+        open={modalOpen}
+        data={modalData ?? undefined}
+        loading={modalLoading}
+        errorText={modalError ?? undefined}
+        onClose={() => {
+          setModalOpen(false)
+          setModalData(null)
+          setModalError(null)
+        }}
+      />
     </div>
   )
 }
