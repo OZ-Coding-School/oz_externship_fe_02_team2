@@ -53,7 +53,7 @@ const BASE = '/api/v1/admin/recruitments'
 
 /**
  * 관리자용 구인 공고 목록 조회
- * GET /api/v1/admin/recruitments
+ * GET /api/v1/admin/recruitments/
  */
 export async function getAdminRecruitments(
   params: AdminRecruitmentsParams = {},

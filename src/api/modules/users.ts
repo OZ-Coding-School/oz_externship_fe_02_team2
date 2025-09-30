@@ -12,7 +12,7 @@ import type {
 } from '@type/User.types'
 
 const BASE = '/v1/admin/users'
-const BASE1 = '/api/v1/admin/users'
+const BASE1 = '/api/v1/admin/users/'
 // ────────────────────────────────────────────────────────────────────────────
 // 매퍼 함수
 // ────────────────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ export async function getUsers(
   if (params.status) queryParams.status = params.status
 
   const res = await api.get<DjangoPageResponse<ServerUserList>>(
-    `${BASE1}/`,
+    BASE1,
     withBypass({ params: queryParams }, useMock)
   )
 
@@ -111,7 +111,7 @@ export async function getUserDetail(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await api.get<ServerUserDetail>(
-    `${BASE1}/${uuid}/`,
+    `${BASE1}${uuid}/`,
     withBypass({}, useMock)
   )
   console.log(res.data)
@@ -128,7 +128,7 @@ export async function createUser(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await http.post<ServerUserList>(
-    `${BASE}/`,
+    `${BASE}`,
     data,
     withBypass({}, useMock)
   )
@@ -147,7 +147,7 @@ export async function updateUser(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await api.patch<ServerUserDetail>(
-    `${BASE1}/${uuid}/`,
+    `${BASE1}${uuid}/`,
     data,
     withBypass({}, useMock)
   )
@@ -166,7 +166,7 @@ export async function replaceUser(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await api.put<ServerUserDetail>(
-    `${BASE1}/${uuid}/`,
+    `${BASE1}${uuid}/`,
     data,
     withBypass({}, useMock)
   )
@@ -183,7 +183,7 @@ export async function deleteUser(
 ): Promise<void> {
   const useMock = shouldUseMock(opts?.mock)
 
-  await api.delete(`${BASE1}/${uuid}/`, withBypass({}, useMock))
+  await api.delete(`${BASE1}${uuid}/`, withBypass({}, useMock))
 }
 
 /**
@@ -197,7 +197,7 @@ export async function updateUserPermission(
   const useMock = shouldUseMock(opts?.mock)
 
   const res = await api.patch<ServerUserDetail>(
-    `${BASE1}/${uuid}/permission/`,
+    `${BASE1}${uuid}/permission/`,
     data,
     withBypass({}, useMock)
   )
