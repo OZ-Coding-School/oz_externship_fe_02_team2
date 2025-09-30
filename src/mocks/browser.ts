@@ -4,8 +4,8 @@ import {
   withdrawalHandlers,
   studyGroupHandlers,
   recruitmentHandlers,
+  applyToStudyHandlers,
 } from './handlers'
-import { applyToStudyHandlers } from '@/components/table/feature/ApplyToStudy/applyToStudy.handlers'
 
 export const worker = setupWorker(
   ...usersHandlers,
