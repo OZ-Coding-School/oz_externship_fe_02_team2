@@ -121,7 +121,7 @@ async function refreshAccessToken(): Promise<string> {
   } catch (error) {
     // 리프레시 실패 시 로그인 페이지로 리다이렉트
     localStorage.removeItem('access_token')
-    window.location.href = '/login'
+    window.location.href = '/admin/login'
     throw error
   }
 }
