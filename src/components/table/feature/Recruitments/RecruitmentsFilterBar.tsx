@@ -110,7 +110,7 @@ export default function RecruitmentsFilterBar({
           reason: false,
           tags: showTagsFilter,
         }}
-        gridColumns={showTagsFilter ? 3 : 2}
+        gridColumns={4}
         onTagsFilterClick={onTagsFilterClick}
         selectedTags={selectedTags}
         tagsPlaceholder={tagsPlaceholder}
