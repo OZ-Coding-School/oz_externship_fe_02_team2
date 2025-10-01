@@ -22,8 +22,8 @@
 ## 🗣️ 프로젝트 시연 영상 & 발표 문서
 
 > ### 🗓️ 2025.08.28 - 2025.09.30
-> ### [📺 시연 영상]()
-> ### [📑 발표 문서]()
+> ### [📺 시연 영상](https://drive.google.com/file/d/1q14PVZgPt1ggfKAKCvDODefUJ38R-BUy/view?usp=drive_link)
+> ### [📑 발표 문서](https://drive.google.com/file/d/12LsQrwC1Mi3i7l7aXke5DCMDdbl9QF_K/view?usp=drive_link)
 
 ---
 
