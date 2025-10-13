@@ -1,4 +1,3 @@
-// pages/admin/ApplyToStudyManage.tsx
 import { useCallback, useMemo, useState } from 'react'
 import { useTableFilters } from '@/hooks/useTableFilters'
 import { useToast } from '@/hooks'
@@ -11,6 +10,53 @@ import ApplyToStudyTable from '@/components/table/feature/ApplyToStudy/ApplyToSt
 import ApplyToStudyFilterBar from '@/components/table/feature/ApplyToStudy/ApplyToStudyFilter'
 import type { ApplyToStudyDetail as ApplyToStudyDetailFull } from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
 import ApplyToStudyModal from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudyModal'
+import type {
+  ApplyToStudyDetail as ApplyToStudyDetailUI,
+  Lecture as LectureUI,
+  Tag as TagUI,
+  Gender as GenderUI,
+  ApplyToStudyStatus as StatusUI,
+} from '@/components/ui/Modal/feature/ApplyToStudy/ApplyToStudy.types'
+
+// ── studyassistance 어댑터 유틸 ─────────────────
+const koFromEn: Record<string, '승인' | '검토 중' | '대기' | '거절'> = {
+  approved: '승인',
+  review: '검토 중',
+  pending: '대기',
+  rejected: '거절',
+}
+const enFromKo: Record<string, 'approved' | 'review' | 'pending' | 'rejected'> =
+  {
+    승인: 'approved',
+    '검토 중': 'review',
+    검토중: 'review',
+    대기: 'pending',
+    거절: 'rejected',
+  }
+
+// ── seed → UI Enum 매핑
+const genderMap: Record<string, GenderUI> = {
+  남성: 'MALE',
+  여성: 'FEMALE',
+  기타: 'OTHER',
+}
+
+const statusMap: Record<string, StatusUI> = {
+  approved: 'APPROVED',
+  review: 'INREVIEW',
+  pending: 'PENDING',
+  rejected: 'REJECTED',
+}
+
+const toAppIdString = (n: number | string) => `APP${String(n).padStart(4, '0')}`
+const toIso = (s: string) => {
+  if (!s) return ''
+  const t = s.includes('T') ? s : s.replace(' ', 'T')
+  return /\d{2}:\d{2}:\d{2}$/.test(t) ? t : `${t}:00`
+}
+const toDateOnly = (s: string) =>
+  s ? (s.split(' ')[0] ?? s.split('T')[0] ?? '') : ''
+const digits = (id: string) => Number(String(id).replace(/\D/g, '')) || 0
 
 // ==== (임시) API 타입 & 모듈 ====
 type ApplyToStudyDetail = {
@@ -27,23 +73,30 @@ type ApplyToStudyListRes = {
   totalPages: number
 }
 
-// 실제 프로젝트의 API 모듈로 교체하세요.
 async function getApplyToStudyList(params: {
   page: number
   pageSize: number
   sortBy: string
   sortOrder: SortOrder
   q?: string
-  status?: string
+  status?: string // 한글(승인/검토 중/대기/거절) 들어옴
 }): Promise<ApplyToStudyListRes> {
-  const url = new URL('/api/admin/apply-to-study', window.location.origin)
-  url.searchParams.set('page', String(params.page))
-  url.searchParams.set('size', String(params.pageSize))
-  url.searchParams.set('sortBy', params.sortBy)
-  url.searchParams.set('sortOrder', params.sortOrder)
-  if (params.q) url.searchParams.set('q', params.q)
-  if (params.status) url.searchParams.set('status', params.status)
-  const res = await fetch(url.toString())
+  // studyassistance 규격: limit/offset/sort(latest|oldest)/status(영문)/q
+  const base = new URL('/api/v1/admin/studyassistance', window.location.origin)
+  const limit = params.pageSize
+  const offset = (params.page - 1) * params.pageSize
+  const sort =
+    params.sortBy.toLowerCase() === 'applied_at' && params.sortOrder === 'asc'
+      ? 'oldest'
+      : 'latest'
+  base.searchParams.set('limit', String(limit))
+  base.searchParams.set('offset', String(offset))
+  base.searchParams.set('sort', sort)
+  if (params.q) base.searchParams.set('q', params.q)
+  if (params.status)
+    base.searchParams.set('status', enFromKo[params.status] ?? '')
+
+  const res = await fetch(base.toString())
   if (!res.ok) {
     const raw = (await res.text()) || ''
     let json: any = {}
@@ -59,14 +112,41 @@ async function getApplyToStudyList(params: {
       'Failed to fetch'
     throw new ApiError(String(res.status), { ...json, message })
   }
-  return (await res.json()) as ApplyToStudyListRes
+
+  // studyassistance 목록 응답 → 페이지가 쓰는 형태로 매핑
+  const json = (await res.json()) as {
+    items: Array<{
+      id: string
+      ad: { title: string }
+      applicant: { nickname: string; email: string }
+      status: 'approved' | 'review' | 'pending' | 'rejected'
+      appliedAt: string
+      updatedAt: string
+    }>
+    total: number
+  }
+
+  const items: ApplyToStudyDetail[] = json.items.map((a) => ({
+    id: digits(a.id), // 'APP0001' → 1
+    title: a.ad.title,
+    applicant: a.applicant,
+    status: koFromEn[a.status],
+    appliedAt: toIso(a.appliedAt),
+    updatedAt: toIso(a.updatedAt),
+  }))
+  const total = json.total
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / Math.max(1, params.pageSize))
+  )
+  return { items, total, totalPages }
 }
 
-// 상세 API
 async function getApplyToStudyDetail(
   id: number
-): Promise<ApplyToStudyDetailFull> {
-  const res = await fetch(`/api/admin/apply-to-study/${id}`)
+): Promise<ApplyToStudyDetailUI> {
+  // 시드는 내부 키(예: 'APP0001')를 path로 받음
+  const res = await fetch(`/api/v1/admin/studyassistance/${toAppIdString(id)}`)
   if (!res.ok) {
     const raw = (await res.text()) || ''
     let json: any = {}
@@ -82,7 +162,74 @@ async function getApplyToStudyDetail(
       'Failed to fetch'
     throw new ApiError(String(res.status), { ...json, message })
   }
-  return (await res.json()) as ApplyToStudyDetailFull
+
+  const a = (await res.json()) as any
+  // a: StudyApplicationDetail (seed)
+  //  - a.id: 'APP0001'
+  //  - a.ad: { id:'AD_1234', title:string }
+  //  - a.adDetail: { headcount:number, lectures:[{title, teacher}], tags:string[], deadline:'YYYY-MM-DD HH:MM' }
+  //  - a.applicant: { nickname, email, gender:'남성'|'여성'|'기타', avatarUrl? }
+  //  - a.status: 'approved'|'pending'|'rejected'|'review'
+  //  - a.appliedAt / a.updatedAt: 'YYYY-MM-DD HH:MM'
+  //  - intro/motivation/goal/availableTime/hasExperience/experienceDetail
+
+  const applicationId = `#${a.id}` // 예시 포맷: "#APP0001"
+
+  // 태그: string[] → {id,name}[]
+  const tags: TagUI[] = Array.isArray(a?.adDetail?.tags)
+    ? a.adDetail.tags.map((name: string, i: number) => ({
+        id: `${a?.ad?.id ?? a.id}-tag-${i}-${name}`,
+        name,
+      }))
+    : []
+
+  // 강의: {title, teacher} → {title, instructorName}
+  const lectures: LectureUI[] = Array.isArray(a?.adDetail?.lectures)
+    ? a.adDetail.lectures.map((l: any) => ({
+        title: l?.title ?? '',
+        instructorName: l?.teacher ?? l?.instructor ?? '',
+      }))
+    : []
+
+  // 모집 요약
+  const recruitment = {
+    id: digits(a?.ad?.id ?? ''), // 시드엔 숫자 id 없음 → 숫자만 추출, 없으면 클릭한 id로 대체해도 됨
+    uuid: String(a?.ad?.id ?? a.id), // 시드에 uuid 없음 → ad.id를 uuid로 사용
+    title: a?.ad?.title ?? '',
+    expectedHeadcount: Number(a?.adDetail?.headcount ?? 0),
+    lectures,
+    tags,
+    deadlineDate: toDateOnly(a?.adDetail?.deadline ?? ''), // 'YYYY-MM-DD'
+  }
+
+  // 지원자
+  const applicant = {
+    userId: a?.applicant?.email ?? String(id), // 시드에 별도 userId 없음 → email 사용
+    nickname: a?.applicant?.nickname ?? '',
+    email: a?.applicant?.email ?? '',
+    gender: a?.applicant?.gender ? genderMap[a.applicant.gender] : undefined,
+    profileImageUrl: a?.applicant?.avatarUrl || undefined,
+  }
+
+  // 최종 UI 도메인
+  const ui: ApplyToStudyDetailUI = {
+    applicationId,
+    recruitment,
+    applicant,
+    selfIntroduction: a?.intro ?? null,
+    motivation: a?.motivation ?? null,
+    goal: a?.goal ?? null,
+    availableTimeDescription: a?.availableTime ?? null,
+    hasStudyExperience: Boolean(a?.hasExperience),
+    studyExperienceDetails: a?.hasExperience
+      ? (a?.experienceDetail ?? null)
+      : null,
+    createdAt: toIso(a?.appliedAt),
+    updatedAt: toIso(a?.updatedAt),
+    status: statusMap[a?.status as keyof typeof statusMap], // 'APPROVED' | 'INREVIEW' | 'PENDING' | 'REJECTED'
+  }
+
+  return ui
 }
 
 // ==== 헬퍼 ====

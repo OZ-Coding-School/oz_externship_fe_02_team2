@@ -60,3 +60,25 @@ export interface ApplyToStudyDetailModalProps {
   data: ApplyToStudyDetail
   onClose: () => void
 }
+
+export type ApplyToStudyDetailCompat = ApplyToStudyDetail & {
+  // seed/기존 코드에서 쓰던 비표준 필드들(전부 optional)
+  title?: string
+  adDetail?: {
+    headcount?: number
+    lectures?: Array<{
+      id?: string
+      title?: string
+      name?: string
+      teacher?: string
+      instructorName?: string
+    }>
+    tags?: Array<string | { id?: string; name?: string; label?: string }>
+    deadline?: string
+  }
+  ad?: { title?: string; id?: string | number }
+  recruitmentTitle?: string
+  applicationCode?: string | number
+  id?: string | number
+  customTags?: string[]
+}
